@@ -87,6 +87,43 @@ pub fn export_settings(store: State<'_, SettingsStore>) -> AeroResult<String> {
     store.export_json()
 }
 
+/// Write settings JSON to the user's Downloads folder; returns the path.
+#[tauri::command]
+pub fn export_settings_file(app: AppHandle, store: State<'_, SettingsStore>) -> AeroResult<String> {
+    use tauri::Manager;
+    let dir = app.path().download_dir()?;
+    let stamp = std::time::SystemTime::now()
+        .duration_since(std::time::UNIX_EPOCH)
+        .map(|d| d.as_secs())
+        .unwrap_or(0);
+    let path = dir.join(format!("aero-dock-settings-{stamp}.json"));
+    std::fs::write(&path, store.export_json()?)?;
+    Ok(path.to_string_lossy().to_string())
+}
+
+/// Open (or focus) the settings window. Async on purpose: building a
+/// WebView2 inside a sync command deadlocks on Windows (the command
+/// blocks the main thread the webview needs for creation).
+#[tauri::command]
+pub async fn open_settings(app: AppHandle) -> AeroResult<()> {
+    use tauri::Manager;
+    if let Some(w) = app.get_webview_window("settings") {
+        w.show()?;
+        w.set_focus()?;
+        return Ok(());
+    }
+    tauri::WebviewWindowBuilder::new(
+        &app,
+        "settings",
+        tauri::WebviewUrl::App("index.html?window=settings".into()),
+    )
+    .title("Aero Dock Settings")
+    .inner_size(820.0, 640.0)
+    .min_inner_size(660.0, 500.0)
+    .build()?;
+    Ok(())
+}
+
 #[tauri::command]
 pub fn import_settings(
     app: AppHandle,

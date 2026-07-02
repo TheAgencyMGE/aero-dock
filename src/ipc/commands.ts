@@ -24,7 +24,9 @@ export const ipc = {
   firstRunImport: (items: PinnedItem[]) =>
     invoke<Settings>("first_run_import", { items }),
   exportSettings: () => invoke<string>("export_settings"),
+  exportSettingsFile: () => invoke<string>("export_settings_file"),
   importSettings: (json: string) => invoke<Settings>("import_settings", { json }),
+  openSettings: () => invoke<void>("open_settings"),
 
   // apps
   listApps: () => invoke<AppEntry[]>("list_apps"),

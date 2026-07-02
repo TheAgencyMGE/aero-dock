@@ -67,6 +67,12 @@ function buildActions(item: DockItemView, settings: Settings): Action[] {
     });
   }
 
+  actions.push({
+    label: "Dock settings…",
+    separatorAbove: true,
+    run: () => ipc.openSettings(),
+  });
+
   if (item.windows.length === 1) {
     actions.push({
       label: "Minimize",

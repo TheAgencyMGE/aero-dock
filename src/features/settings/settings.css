@@ -1,0 +1,266 @@
+/* Settings window: a Frutiger Aero control panel — sky, sun bloom,
+   grass horizon, glass cards. */
+
+.settings-root {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  background:
+    radial-gradient(ellipse 90% 60% at 18% -10%, rgba(255, 255, 235, 0.85), transparent 60%),
+    radial-gradient(ellipse 120% 90% at 50% 118%, rgba(122, 208, 58, 0.55), transparent 55%),
+    linear-gradient(180deg, #8fd3f2 0%, #5cb0e6 45%, #3f8fd0 78%, #67b96a 100%);
+}
+
+.settings-header {
+  padding: 22px 30px 10px;
+  color: #0d3a5c;
+}
+
+.settings-header h1 {
+  font-size: 26px;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  text-shadow: 0 1px 0 rgba(255, 255, 255, 0.6);
+}
+
+.settings-header p {
+  font-size: 13px;
+  color: rgba(13, 58, 92, 0.75);
+}
+
+.settings-scroll {
+  flex: 1;
+  overflow-y: auto;
+  padding: 8px 30px 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.settings-scroll::-webkit-scrollbar {
+  width: 10px;
+}
+.settings-scroll::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.5);
+  border-radius: 5px;
+  border: 2px solid transparent;
+  background-clip: content-box;
+}
+
+.settings-card {
+  padding: 16px 20px 14px;
+}
+
+.settings-card h2 {
+  font-size: 15px;
+  font-weight: 700;
+  color: #0d3a5c;
+  margin-bottom: 10px;
+  position: relative;
+  z-index: 3;
+  text-shadow: 0 1px 0 rgba(255, 255, 255, 0.55);
+}
+
+.settings-footer {
+  text-align: center;
+  font-size: 11.5px;
+  color: rgba(13, 58, 92, 0.65);
+  padding: 6px 0 2px;
+  text-shadow: 0 1px 0 rgba(255, 255, 255, 0.4);
+}
+
+.settings-note {
+  font-size: 11.5px;
+  color: rgba(13, 58, 92, 0.8);
+  padding: 4px 2px 0;
+  position: relative;
+  z-index: 3;
+  word-break: break-all;
+}
+
+/* ---- theme swatches ---- */
+
+.theme-grid {
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  gap: 10px;
+  position: relative;
+  z-index: 3;
+}
+
+.theme-swatch {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 5px;
+  padding: 6px;
+  border: 2px solid transparent;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.18);
+  cursor: pointer;
+  font-family: inherit;
+}
+
+.theme-swatch[data-active="true"] {
+  border-color: rgba(255, 255, 255, 0.95);
+  background: rgba(255, 255, 255, 0.35);
+  box-shadow: 0 0 14px rgba(255, 255, 255, 0.55);
+}
+
+.theme-swatch-preview {
+  width: 100%;
+  aspect-ratio: 1.7;
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.6);
+  box-shadow: inset 0 6px 10px -4px rgba(255, 255, 255, 0.8), 0 2px 6px rgba(10, 45, 80, 0.25);
+}
+
+.theme-swatch-name {
+  font-size: 11.5px;
+  font-weight: 600;
+  color: #0d3a5c;
+}
+
+/* ---- control rows ---- */
+
+.ctl-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 7px 0;
+  position: relative;
+  z-index: 3;
+}
+
+.ctl-label {
+  flex: 0 0 220px;
+  font-size: 13px;
+  font-weight: 600;
+  color: #0d3a5c;
+  text-shadow: 0 1px 0 rgba(255, 255, 255, 0.45);
+}
+
+.ctl-value {
+  flex: 0 0 52px;
+  text-align: right;
+  font-size: 12px;
+  font-weight: 600;
+  color: rgba(13, 58, 92, 0.85);
+  font-variant-numeric: tabular-nums;
+}
+
+/* slider: glass track with glossy thumb */
+.ctl-slider {
+  flex: 1;
+  appearance: none;
+  height: 8px;
+  border-radius: 4px;
+  outline: none;
+  background:
+    linear-gradient(90deg, var(--aero-accent), var(--aero-life)) 0 0 / var(--fill, 50%) 100% no-repeat,
+    rgba(255, 255, 255, 0.35);
+  border: 1px solid rgba(255, 255, 255, 0.65);
+  box-shadow: inset 0 1px 3px rgba(10, 45, 80, 0.25);
+}
+
+.ctl-slider::-webkit-slider-thumb {
+  appearance: none;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background:
+    radial-gradient(circle at 35% 28%, #ffffff 0%, #eaf6ff 45%, #b8dcf2 100%);
+  border: 1px solid rgba(60, 120, 170, 0.7);
+  box-shadow: 0 2px 5px rgba(10, 45, 80, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.9);
+  cursor: pointer;
+}
+
+/* toggle: little glass capsule */
+.ctl-toggle {
+  width: 46px;
+  height: 24px;
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.65);
+  background: rgba(255, 255, 255, 0.3);
+  box-shadow: inset 0 1px 3px rgba(10, 45, 80, 0.3);
+  position: relative;
+  cursor: pointer;
+  transition: background 0.25s ease;
+}
+
+.ctl-toggle[data-on="true"] {
+  background: linear-gradient(180deg, var(--aero-life), var(--aero-accent));
+}
+
+.ctl-toggle-thumb {
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 28%, #ffffff, #dceefb 60%, #b8dcf2);
+  border: 1px solid rgba(60, 120, 170, 0.55);
+  box-shadow: 0 1px 3px rgba(10, 45, 80, 0.4);
+  transition: transform 0.22s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.ctl-toggle[data-on="true"] .ctl-toggle-thumb {
+  transform: translateX(22px);
+}
+
+/* segmented picker */
+.ctl-segmented {
+  display: flex;
+  gap: 2px;
+  padding: 2px;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.28);
+  border: 1px solid rgba(255, 255, 255, 0.6);
+  box-shadow: inset 0 1px 3px rgba(10, 45, 80, 0.22);
+}
+
+.ctl-segmented button {
+  padding: 5px 14px;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  background: none;
+  font-family: inherit;
+  font-size: 12.5px;
+  font-weight: 600;
+  color: rgba(13, 58, 92, 0.8);
+  cursor: pointer;
+}
+
+.ctl-segmented button[data-active="true"] {
+  background: linear-gradient(180deg, #ffffff, #dbeefb);
+  border-color: rgba(255, 255, 255, 0.9);
+  box-shadow: 0 1px 4px rgba(10, 45, 80, 0.3), inset 0 1px 0 #fff;
+  color: #0d3a5c;
+}
+
+/* buttons */
+.ctl-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.aero-button {
+  padding: 6px 16px;
+  border-radius: 9px;
+  border: 1px solid rgba(255, 255, 255, 0.75);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.9), rgba(210, 236, 252, 0.75));
+  font-family: inherit;
+  font-size: 12.5px;
+  font-weight: 600;
+  color: #0d3a5c;
+  cursor: pointer;
+  box-shadow: 0 2px 6px rgba(10, 45, 80, 0.25), inset 0 1px 0 #fff;
+}
+
+.aero-button:hover {
+  background: linear-gradient(180deg, #ffffff, rgba(190, 230, 252, 0.9));
+  box-shadow: 0 2px 10px rgba(120, 200, 255, 0.5), inset 0 1px 0 #fff;
+}
