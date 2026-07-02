@@ -5,7 +5,7 @@
  * headroom + tooltip space + flyout space when a menu is open).
  */
 
-import { Reorder, useMotionValue } from "motion/react";
+import { motion, Reorder, useMotionValue } from "motion/react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { springs } from "../../engine/animation/springs";
 import { ipc } from "../../ipc/commands";
@@ -25,6 +25,9 @@ const LABEL_SPACE = 44; // tooltip pill above icons
 const EDGE_SLACK = 24; // window slack so magnified end-icons never clip
 const MENU_SPACE = 360; // extra cross-axis room while a context menu is open
 const WIDGET_SPACE = 128; // clock + status glyph cluster
+const REVEAL_STRIP = 8; // window height while auto-hidden (mouse sensor)
+const HIDE_DELAY_MS = 1400;
+const HIDE_ANIM_MS = 380;
 
 interface DockBarProps {
   settings: Settings;
@@ -58,6 +61,41 @@ export function DockBar({ settings, items, onLaunch }: DockBarProps) {
   const peak = magnification ? magnificationScale : 1;
   const menuOpen = menu.item !== null;
 
+  // ---- auto-hide state machine ----
+  // hidden=false + hover/menu keeps it visible; idle slides it out,
+  // then the window shrinks to a reveal strip; any mouse contact with
+  // the strip brings it back.
+  const [hidden, setHidden] = useState(false);
+  const [windowShrunk, setWindowShrunk] = useState(false);
+  const [pointerInside, setPointerInside] = useState(false);
+  const hideTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
+  const shrinkTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
+
+  const autoHide = settings.dock.autoHide;
+  useEffect(() => {
+    clearTimeout(hideTimer.current);
+    clearTimeout(shrinkTimer.current);
+    if (!autoHide) {
+      setHidden(false);
+      setWindowShrunk(false);
+      return;
+    }
+    if (pointerInside || menuOpen) {
+      setHidden(false);
+      setWindowShrunk(false);
+      return;
+    }
+    hideTimer.current = setTimeout(() => {
+      setHidden(true);
+      // shrink the OS window only after the slide-out finishes
+      shrinkTimer.current = setTimeout(() => setWindowShrunk(true), HIDE_ANIM_MS);
+    }, HIDE_DELAY_MS);
+    return () => {
+      clearTimeout(hideTimer.current);
+      clearTimeout(shrinkTimer.current);
+    };
+  }, [autoHide, pointerInside, menuOpen]);
+
   // Deterministic window size: no ResizeObserver, no feedback loops.
   const windowSize = useMemo(() => {
     const n = Math.max(items.length, 1);
@@ -66,9 +104,10 @@ export function DockBar({ settings, items, onLaunch }: DockBarProps) {
     // neighbors near the cursor grow too; ~2.5 icons' worth covers the worst case
     const mainGrowth = iconSize * (peak - 1) * 2.5;
     const main = mainBase + mainGrowth + EDGE_SLACK + WIDGET_SPACE;
-    const cross = iconSize * peak + PAD_CROSS * 2 + LABEL_SPACE + (menuOpen ? MENU_SPACE : 0);
+    const crossFull = iconSize * peak + PAD_CROSS * 2 + LABEL_SPACE + (menuOpen ? MENU_SPACE : 0);
+    const cross = windowShrunk ? REVEAL_STRIP : crossFull;
     return vertical ? { width: cross, height: main } : { width: main, height: cross };
-  }, [items.length, runningItems.length, iconSize, peak, vertical, menuOpen]);
+  }, [items.length, runningItems.length, iconSize, peak, vertical, menuOpen, windowShrunk]);
 
   useEffect(() => {
     ipc.resizeDock(windowSize.width, windowSize.height).catch((e) => {
@@ -116,11 +155,22 @@ export function DockBar({ settings, items, onLaunch }: DockBarProps) {
     onContext: openMenu,
   };
 
+  const slideOut = vertical
+    ? { x: edge === "left" ? "-118%" : "118%", y: 0 }
+    : { y: edge === "top" ? "-118%" : "118%", x: 0 };
+
   return (
-    <div className="dock-viewport" data-edge={edge}>
-      <div
+    <div
+      className="dock-viewport"
+      data-edge={edge}
+      onMouseEnter={() => setPointerInside(true)}
+      onMouseLeave={() => setPointerInside(false)}
+    >
+      <motion.div
         className="dock-bar glass"
         data-vertical={vertical}
+        animate={hidden ? { ...slideOut, opacity: 0.6 } : { x: 0, y: 0, opacity: 1 }}
+        transition={springs.slide}
         onMouseMove={handleMove}
         onMouseLeave={handleLeave}
       >
@@ -159,7 +209,7 @@ export function DockBar({ settings, items, onLaunch }: DockBarProps) {
         ))}
         <span className="dock-divider" aria-hidden />
         <WidgetCluster />
-      </div>
+      </motion.div>
       <ContextMenu settings={settings} edge={edge} />
       <FolderFlyout edge={edge} />
     </div>
