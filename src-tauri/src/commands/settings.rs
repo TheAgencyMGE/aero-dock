@@ -64,6 +64,24 @@ pub fn reorder_pinned(
     })
 }
 
+/// Atomic first-run import: pins the starter set and marks onboarding
+/// complete in one settings transaction. Safe to call any number of
+/// times (React StrictMode double-fires effects in dev) — only the
+/// first call through the lock does anything.
+#[tauri::command]
+pub fn first_run_import(
+    app: AppHandle,
+    store: State<'_, SettingsStore>,
+    items: Vec<PinnedItem>,
+) -> AeroResult<Settings> {
+    store.update(&app, |s| {
+        if !s.onboarding_complete && s.pinned.is_empty() {
+            s.pinned = items;
+            s.onboarding_complete = true;
+        }
+    })
+}
+
 #[tauri::command]
 pub fn export_settings(store: State<'_, SettingsStore>) -> AeroResult<String> {
     store.export_json()

@@ -49,6 +49,7 @@ pub fn run() {
             commands::settings::pin_item,
             commands::settings::unpin_item,
             commands::settings::reorder_pinned,
+            commands::settings::first_run_import,
             commands::settings::export_settings,
             commands::settings::import_settings,
             commands::apps::list_apps,

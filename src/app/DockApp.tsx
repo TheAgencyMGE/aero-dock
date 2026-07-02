@@ -49,21 +49,16 @@ async function firstRunImport(): Promise<void> {
       picked.set(app.targetPath, app);
     }
   }
-  let index = 0;
-  for (const app of picked.values()) {
-    const item: PinnedItem = {
-      id: `pin-${crypto.randomUUID()}`,
-      kind: "app",
-      path: app.targetPath,
-      name: app.name,
-      icon: app.icon,
-      children: [],
-    };
-    await ipc.pinItem(item, index++);
-  }
-  const settings = await ipc.getSettings();
-  settings.onboardingComplete = true;
-  await ipc.setSettings(settings);
+  const items: PinnedItem[] = [...picked.values()].map((app) => ({
+    id: `pin-${crypto.randomUUID()}`,
+    kind: "app",
+    path: app.targetPath,
+    name: app.name,
+    icon: app.icon,
+    children: [],
+  }));
+  // single atomic transaction on the Rust side; re-entry is a no-op
+  await ipc.firstRunImport(items);
 }
 
 export function DockApp() {

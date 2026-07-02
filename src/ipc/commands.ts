@@ -14,6 +14,8 @@ export const ipc = {
     invoke<Settings>("pin_item", { item, index: index ?? null }),
   unpinItem: (id: string) => invoke<Settings>("unpin_item", { id }),
   reorderPinned: (ids: string[]) => invoke<Settings>("reorder_pinned", { ids }),
+  firstRunImport: (items: PinnedItem[]) =>
+    invoke<Settings>("first_run_import", { items }),
   exportSettings: () => invoke<string>("export_settings"),
   importSettings: (json: string) => invoke<Settings>("import_settings", { json }),
 
