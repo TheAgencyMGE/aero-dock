@@ -8,6 +8,7 @@ import type {
   AppEntry,
   MonitorInfoEx,
   PinnedItem,
+  RecentFile,
   RunningSnapshot,
   Settings,
   SystemStatus,
@@ -39,6 +40,10 @@ export const ipc = {
   openFileLocation: (target: string) =>
     invoke<void>("open_file_location", { target }),
   resolveDrop: (path: string) => invoke<AppEntry>("resolve_drop", { path }),
+  listRecentFiles: (limit?: number) =>
+    invoke<RecentFile[]>("list_recent_files", { limit: limit ?? null }),
+  setDockFocusable: (focusable: boolean) =>
+    invoke<void>("set_dock_focusable", { focusable }),
   listFolder: (path: string, limit?: number) =>
     invoke<{ name: string; path: string; isDir: boolean }[]>("list_folder", {
       path,

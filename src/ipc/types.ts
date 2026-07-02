@@ -85,6 +85,13 @@ export interface RunningSnapshot {
   focused: number;
 }
 
+export interface RecentFile {
+  name: string;
+  path: string;
+  icon: string;
+  usedAt: number;
+}
+
 export interface SystemStatus {
   battery: { present: boolean; percent: number; charging: boolean };
   internet: boolean;

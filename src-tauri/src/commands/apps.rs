@@ -126,6 +126,16 @@ pub async fn resolve_drop(path: String) -> AeroResult<AppEntry> {
     .map_err(|e| AeroError::other(format!("resolve task failed: {e}")))?
 }
 
+/// Recently used files from the Windows Recent folder.
+#[tauri::command]
+pub async fn list_recent_files(limit: Option<usize>) -> AeroResult<Vec<crate::platform::windows::recent::RecentFile>> {
+    tauri::async_runtime::spawn_blocking(move || {
+        crate::platform::windows::recent::list_recent(limit.unwrap_or(20))
+    })
+    .await
+    .map_err(|e| AeroError::other(format!("recent files task failed: {e}")))?
+}
+
 #[derive(serde::Serialize, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct FolderEntry {

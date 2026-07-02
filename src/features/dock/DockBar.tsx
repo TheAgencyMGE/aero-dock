@@ -11,6 +11,7 @@ import { springs } from "../../engine/animation/springs";
 import { ipc } from "../../ipc/commands";
 import type { Settings } from "../../ipc/types";
 import type { DockItemView } from "../../state/dockStore";
+import { SearchOverlay, useSearch } from "../search/SearchOverlay";
 import { WidgetCluster } from "../widgets/WidgetCluster";
 import { ContextMenu } from "./ContextMenu";
 import { DockIcon } from "./DockIcon";
@@ -59,7 +60,9 @@ export function DockBar({ settings, items, onLaunch }: DockBarProps) {
   }, [order, pinnedItems]);
 
   const peak = magnification ? magnificationScale : 1;
-  const menuOpen = menu.item !== null;
+  const searchOpen = useSearch((s) => s.open);
+  const setSearchOpen = useSearch((s) => s.setOpen);
+  const menuOpen = menu.item !== null || searchOpen;
 
   // ---- auto-hide state machine ----
   // hidden=false + hover/menu keeps it visible; idle slides it out,
@@ -174,6 +177,16 @@ export function DockBar({ settings, items, onLaunch }: DockBarProps) {
         onMouseMove={handleMove}
         onMouseLeave={handleLeave}
       >
+        <button
+          className="dock-search-btn"
+          title="Search apps and files"
+          onClick={() => setSearchOpen(!searchOpen)}
+        >
+          <svg viewBox="0 0 24 24" fill="none">
+            <circle cx="10.5" cy="10.5" r="6" stroke="#1c5f8f" strokeWidth="2.4" />
+            <line x1="15" y1="15" x2="20.5" y2="20.5" stroke="#1c5f8f" strokeWidth="2.6" strokeLinecap="round" />
+          </svg>
+        </button>
         <Reorder.Group
           as="div"
           className="dock-section"
@@ -212,6 +225,7 @@ export function DockBar({ settings, items, onLaunch }: DockBarProps) {
       </motion.div>
       <ContextMenu settings={settings} edge={edge} />
       <FolderFlyout edge={edge} />
+      <SearchOverlay />
     </div>
   );
 }

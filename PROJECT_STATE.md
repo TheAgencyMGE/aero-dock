@@ -38,15 +38,33 @@
 - [x] Drop .lnk/.exe/folders from Explorer to pin (resolve_drop)
 - [x] Folder flyout: glass grid, staggered bloom, list_folder command
 
-### In progress
-- [ ] Folder flyout visual verification
+- [x] Folder flyout verified live (glass grid, staggered bloom, real icons)
+- [x] Effects engine: PixiJS layer + bus; ClickRipple / LaunchBurst /
+      DustField; edge-anchored coords (survive flyout window growth);
+      ticker sleeps when nothing alive. Verified live.
+- [x] System widgets: battery/network/volume(WASAPI)/recycle bin in Rust,
+      20s poller + instant push; clock/date; scroll-volume, click-mute,
+      bin open/empty. Verified live with real data.
+- [x] Settings window (?window=settings route): theme swatches, dock
+      position/size/magnification, glass sliders, autostart, export/import.
+      open_settings MUST be async (sync deadlocks WebView2 creation).
+- [x] Theme engine: 6 themes as token sets (themes.ts); cross-window
+      live switch verified.
+- [x] Wallpaper sync: SPI_GETDESKWALLPAPER + hue-bucket accent
+      (load_from_memory — TranscodedWallpaper has no extension).
+- [x] Auto-hide: slide out after 1.4s idle → shrink window to 8px strip;
+      mouse contact reveals. Verified live.
 
-### Backlog (task list mirrors this)
-5. Effects engine (PixiJS: bloom, ripple, burst, dust) — task #7
-6. System widgets (clock, battery, network, volume, recycle bin) — #8
-7. Settings window + theme engine + wallpaper sync — #10
-8. Auto-hide with edge reveal — #12
-9. Search, recent files, window previews, onboarding, tray, installer — #11
+### Backlog (task #11 + polish)
+1. Tray icon (show/hide dock, settings, quit)
+2. Recent files (Windows Recent folder) — surface in search/context menu
+3. Search overlay (apps + recent files, keyboard-first)
+4. Onboarding (first-run welcome with import — basic auto-import works)
+5. Window previews on hover (DWM thumbnails — hard; needs native region)
+6. Production build: app icons (need Aero droplet icon set), NSIS
+   bundle, autostart arg check, perf pass on integrated GPU
+7. Multi-monitor picker UI in settings (backend list_monitors exists)
+8. Stacks (grouping pinned items into a dock folder) — deferred
 
 ### Dev/debug infrastructure
 - WebView console/DOM access: launch dev with

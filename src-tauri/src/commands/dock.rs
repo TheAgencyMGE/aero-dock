@@ -84,6 +84,24 @@ pub fn list_monitors() -> AeroResult<Vec<MonitorInfoEx>> {
     enumerate_monitors()
 }
 
+/// Let the dock take keyboard focus (search overlay) or give its
+/// focus-immunity back when the overlay closes.
+#[tauri::command]
+pub fn set_dock_focusable(app: AppHandle, focusable: bool) -> AeroResult<()> {
+    let window = app
+        .get_webview_window("dock")
+        .ok_or_else(|| AeroError::other("dock window missing"))?;
+    let hwnd = window.hwnd()?;
+    crate::platform::windows::dock_window::set_no_activate(
+        windows::Win32::Foundation::HWND(hwnd.0),
+        !focusable,
+    )?;
+    if focusable {
+        window.set_focus()?;
+    }
+    Ok(())
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;

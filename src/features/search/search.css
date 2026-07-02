@@ -1,0 +1,151 @@
+/* Search overlay: the deep glass family, centered above the dock. */
+
+/* position/width/z-index set inline by the component (HMR-safe) */
+.search-overlay {
+  padding: 10px;
+  --glass-tint-top: rgba(120, 185, 235, 0.62);
+  --glass-tint-mid: rgba(35, 95, 155, 0.58);
+  --glass-tint-bottom: rgba(18, 60, 110, 0.7);
+  --glass-radius: 16px;
+  transform-origin: bottom center;
+}
+
+.search-input {
+  width: 100%;
+  padding: 10px 14px;
+  border-radius: 11px;
+  border: 1px solid rgba(255, 255, 255, 0.55);
+  background: rgba(255, 255, 255, 0.22);
+  box-shadow: inset 0 1px 4px rgba(8, 40, 70, 0.35), inset 0 -1px 0 rgba(255, 255, 255, 0.25);
+  font-family: inherit;
+  font-size: 14px;
+  font-weight: 500;
+  color: #f4fbff;
+  outline: none;
+  position: relative;
+  z-index: 3;
+}
+
+.search-input::placeholder {
+  color: rgba(235, 248, 255, 0.65);
+}
+
+.search-input:focus {
+  border-color: rgba(255, 255, 255, 0.85);
+  box-shadow: inset 0 1px 4px rgba(8, 40, 70, 0.3), 0 0 14px rgba(140, 210, 255, 0.45);
+}
+
+.search-results {
+  margin-top: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  position: relative;
+  z-index: 3;
+  max-height: 330px;
+  overflow-y: auto;
+}
+
+.search-results::-webkit-scrollbar {
+  width: 6px;
+}
+.search-results::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.35);
+  border-radius: 3px;
+}
+
+.search-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 7px 10px;
+  border: 1px solid transparent;
+  border-radius: 10px;
+  background: none;
+  cursor: pointer;
+  font-family: inherit;
+  text-align: left;
+}
+
+.search-row[data-selected="true"] {
+  background: linear-gradient(
+    180deg,
+    rgba(255, 255, 255, 0.36),
+    rgba(160, 220, 255, 0.16) 55%,
+    rgba(120, 195, 245, 0.28)
+  );
+  border-color: rgba(255, 255, 255, 0.45);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.5), 0 0 10px rgba(140, 210, 255, 0.3);
+}
+
+.search-row img,
+.search-row-glyph {
+  width: 26px;
+  height: 26px;
+  flex: none;
+  filter: drop-shadow(0 2px 3px rgba(8, 40, 70, 0.5));
+  font-size: 18px;
+  line-height: 26px;
+  text-align: center;
+  color: #d9f4ff;
+}
+
+.search-row-text {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.search-row-name {
+  font-size: 13px;
+  font-weight: 600;
+  color: #f4fbff;
+  text-shadow: 0 1px 3px rgba(8, 40, 70, 0.7);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.search-row-detail {
+  font-size: 10.5px;
+  color: rgba(230, 246, 255, 0.7);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.search-empty {
+  padding: 16px 0;
+  text-align: center;
+  font-size: 12.5px;
+  color: rgba(235, 248, 255, 0.7);
+}
+
+/* the round search button on the dock */
+.dock-search-btn {
+  width: 30px;
+  height: 30px;
+  flex: none;
+  align-self: center;
+  margin-right: 2px;
+  border-radius: 50%;
+  border: 1px solid rgba(255, 255, 255, 0.6);
+  background:
+    radial-gradient(circle at 35% 28%, rgba(255, 255, 255, 0.85), rgba(190, 230, 255, 0.35) 55%, rgba(120, 190, 240, 0.3));
+  box-shadow: 0 2px 6px rgba(10, 45, 80, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.8);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  z-index: 3;
+}
+
+.dock-search-btn:hover {
+  box-shadow: 0 0 12px rgba(150, 220, 255, 0.7), inset 0 1px 0 rgba(255, 255, 255, 0.9);
+}
+
+.dock-search-btn svg {
+  width: 15px;
+  height: 15px;
+}

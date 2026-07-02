@@ -45,6 +45,7 @@ pub fn run() {
             #[cfg(windows)]
             platform::windows::running::start(handle.clone());
             commands::system_cmd::start_poller(handle.clone());
+            setup_tray(app)?;
             Ok(())
         })
         .invoke_handler(tauri::generate_handler![
@@ -65,8 +66,10 @@ pub fn run() {
             commands::apps::open_file_location,
             commands::apps::resolve_drop,
             commands::apps::list_folder,
+            commands::apps::list_recent_files,
             commands::dock::resize_dock,
             commands::dock::list_monitors,
+            commands::dock::set_dock_focusable,
             commands::windows_cmd::get_running,
             commands::windows_cmd::activate_window,
             commands::windows_cmd::minimize_window,
@@ -79,4 +82,64 @@ pub fn run() {
         ])
         .run(tauri::generate_context!())
         .expect("error while running Aero Dock");
+}
+
+/// Tray icon: the dock's home base. Left-click toggles dock visibility;
+/// the menu covers show/hide, settings, and quit.
+fn setup_tray(app: &tauri::App) -> tauri::Result<()> {
+    use tauri::menu::{Menu, MenuItem};
+    use tauri::tray::{MouseButton, MouseButtonState, TrayIconBuilder, TrayIconEvent};
+
+    let toggle = MenuItem::with_id(app, "toggle", "Show/hide dock", true, None::<&str>)?;
+    let settings = MenuItem::with_id(app, "settings", "Settings…", true, None::<&str>)?;
+    let quit = MenuItem::with_id(app, "quit", "Quit Aero Dock", true, None::<&str>)?;
+    let menu = Menu::with_items(app, &[&toggle, &settings, &quit])?;
+
+    fn toggle_dock(app: &tauri::AppHandle) {
+        if let Some(w) = app.get_webview_window("dock") {
+            match w.is_visible() {
+                Ok(true) => {
+                    let _ = w.hide();
+                }
+                _ => {
+                    let _ = w.show();
+                }
+            }
+        }
+    }
+
+    TrayIconBuilder::with_id("aero-dock-tray")
+        .icon(
+            app.default_window_icon()
+                .expect("bundle has a default icon")
+                .clone(),
+        )
+        .tooltip("Aero Dock")
+        .menu(&menu)
+        .show_menu_on_left_click(false)
+        .on_menu_event(|app, event| match event.id.as_ref() {
+            "toggle" => toggle_dock(app),
+            "settings" => {
+                let app = app.clone();
+                tauri::async_runtime::spawn(async move {
+                    if let Err(e) = commands::settings::open_settings(app).await {
+                        log::error!("open settings from tray failed: {e}");
+                    }
+                });
+            }
+            "quit" => app.exit(0),
+            _ => {}
+        })
+        .on_tray_icon_event(|tray, event| {
+            if let TrayIconEvent::Click {
+                button: MouseButton::Left,
+                button_state: MouseButtonState::Up,
+                ..
+            } = event
+            {
+                toggle_dock(tray.app_handle());
+            }
+        })
+        .build(app)?;
+    Ok(())
 }
