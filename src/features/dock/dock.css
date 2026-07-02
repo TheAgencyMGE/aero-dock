@@ -1,0 +1,125 @@
+/* Dock layout + icon visuals. Geometry comes from tokens; all motion is
+   transform/opacity only so everything stays on the compositor. */
+
+.dock-viewport {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+}
+
+.dock-viewport[data-edge="top"] {
+  align-items: flex-start;
+}
+.dock-viewport[data-edge="left"] {
+  align-items: center;
+  justify-content: flex-start;
+}
+.dock-viewport[data-edge="right"] {
+  align-items: center;
+  justify-content: flex-end;
+}
+
+.dock-bar {
+  display: flex;
+  align-items: flex-end;
+  gap: var(--icon-gap);
+  padding: var(--dock-pad-y) var(--dock-pad-x);
+  opacity: var(--dock-opacity);
+}
+
+.dock-bar[data-vertical="true"] {
+  flex-direction: column;
+  align-items: center;
+  padding: var(--dock-pad-x) var(--dock-pad-y);
+}
+
+/* ---- icons ---- */
+
+.dock-icon {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-end;
+  width: var(--icon-size);
+  height: var(--icon-size);
+  border: none;
+  background: none;
+  cursor: pointer;
+  transform-origin: bottom center;
+  z-index: 3;
+}
+
+.dock-bar[data-vertical="true"] .dock-icon {
+  transform-origin: center center;
+}
+
+.dock-icon img,
+.dock-icon .dock-icon-glyph {
+  width: 100%;
+  height: 100%;
+  filter: var(--shadow-icon);
+  -webkit-box-reflect: below 2px
+    linear-gradient(
+      transparent,
+      transparent 55%,
+      rgba(255, 255, 255, calc(0.45 * var(--reflection-strength)))
+    );
+}
+
+/* fallback glyph when an icon can't be extracted */
+.dock-icon-glyph {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 22%;
+  background: linear-gradient(160deg, var(--aero-accent), var(--aero-accent-deep));
+  color: #fff;
+  font-weight: 600;
+  font-size: calc(var(--icon-size) * 0.42);
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.4);
+}
+
+/* hover bloom: soft radial light behind the icon */
+.dock-icon::before {
+  content: "";
+  position: absolute;
+  inset: -30%;
+  border-radius: 50%;
+  background: radial-gradient(circle, var(--bloom-color) 0%, var(--bloom-soft) 40%, transparent 70%);
+  opacity: 0;
+  transition: opacity calc(0.35s / var(--anim-speed)) ease;
+  pointer-events: none;
+  z-index: -1;
+}
+
+.dock-icon:hover::before {
+  opacity: calc(0.9 * var(--bloom-amount));
+}
+
+/* ---- tooltip label: tiny glass pill ---- */
+
+.dock-label {
+  position: absolute;
+  bottom: calc(100% + 14px);
+  left: 50%;
+  padding: 4px 12px;
+  border-radius: 10px;
+  white-space: nowrap;
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--aero-text-on-glass);
+  text-shadow: 0 1px 4px rgba(10, 45, 80, 0.8);
+  background: linear-gradient(
+    180deg,
+    rgba(90, 160, 215, 0.75),
+    rgba(25, 90, 150, 0.82)
+  );
+  border: 1px solid rgba(255, 255, 255, 0.55);
+  box-shadow: 0 4px 14px rgba(10, 45, 80, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.5);
+  backdrop-filter: blur(8px);
+  pointer-events: none;
+  z-index: 10;
+}

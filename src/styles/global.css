@@ -1,0 +1,105 @@
+@import "./tokens.css";
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  width: 100%;
+  height: 100%;
+  background: transparent;
+  overflow: hidden;
+}
+
+body {
+  font-family: "Segoe UI Variable Display", "Segoe UI", "Frutiger", system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  color: var(--aero-text);
+  user-select: none;
+  cursor: default;
+}
+
+img {
+  -webkit-user-drag: none;
+}
+
+/* ------------------------------------------------------------------ */
+/* Glass surface: the signature Aero material. Layered tint + blur +   */
+/* a specular top-gloss pseudo-element + inner light rim.              */
+/* ------------------------------------------------------------------ */
+
+.glass {
+  position: relative;
+  border-radius: var(--glass-radius);
+  background: linear-gradient(
+    180deg,
+    var(--glass-tint-top) 0%,
+    var(--glass-tint-mid) 46%,
+    rgba(255, 255, 255, 0.04) 52%,
+    var(--glass-tint-bottom) 100%
+  );
+  backdrop-filter: blur(calc(var(--glass-blur) * var(--glass-intensity)))
+    saturate(var(--glass-saturate));
+  border: 1px solid var(--glass-border);
+  border-bottom-color: var(--glass-border-dark);
+  box-shadow:
+    var(--shadow-dock),
+    inset 0 1px 0 rgba(255, 255, 255, 0.75),
+    inset 0 -1px 12px rgba(140, 210, 255, 0.18);
+  isolation: isolate;
+}
+
+/* Vista's curved top-gloss highlight */
+.glass::before {
+  content: "";
+  position: absolute;
+  inset: 1px 1px 52% 1px;
+  border-radius: calc(var(--glass-radius) - 2px) calc(var(--glass-radius) - 2px) 40% 40%;
+  background: linear-gradient(
+    180deg,
+    rgba(255, 255, 255, calc(0.85 * var(--gloss-strength))),
+    rgba(255, 255, 255, calc(0.25 * var(--gloss-strength))) 60%,
+    rgba(255, 255, 255, 0)
+  );
+  pointer-events: none;
+  z-index: 2;
+}
+
+/* slow ambient light sweep across the glass */
+.glass::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: linear-gradient(
+    115deg,
+    transparent 30%,
+    rgba(255, 255, 255, 0.14) 45%,
+    rgba(255, 255, 255, 0.05) 55%,
+    transparent 70%
+  );
+  background-size: 300% 100%;
+  animation: glass-sweep calc(14s / var(--anim-speed)) ease-in-out infinite;
+  pointer-events: none;
+  z-index: 1;
+}
+
+@keyframes glass-sweep {
+  0%,
+  100% {
+    background-position: 110% 0;
+  }
+  50% {
+    background-position: -10% 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .glass::after {
+    animation: none;
+  }
+}

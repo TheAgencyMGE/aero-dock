@@ -1,0 +1,155 @@
+//! Installed-app discovery: walks the Start Menu (system + user) and the
+//! Desktop (user + public) for shortcuts, resolves each `.lnk` through
+//! `IShellLinkW`, and dedupes by launch target. Runs on a blocking thread
+//! with its own COM apartment.
+
+use std::collections::HashSet;
+use std::path::{Path, PathBuf};
+
+use windows::core::PCWSTR;
+use windows::Win32::System::Com::{CoCreateInstance, IPersistFile, CLSCTX_INPROC_SERVER, STGM_READ};
+use windows::Win32::UI::Shell::{IShellLinkW, ShellLink, SLGP_UNCPRIORITY};
+
+use super::util::{from_wide, path_key, to_wide};
+use crate::core::AeroResult;
+use crate::platform::{AppEntry, ComApartment};
+
+const MAX_PATH_LEN: usize = 260;
+
+/// Shortcut names that are never things a user pins to a dock.
+const EXCLUDED_NAME_FRAGMENTS: &[&str] = &["uninstall", "readme", "release notes", "help", "documentation", "website"];
+
+/// Target executables that are launchers-of-launchers or noise.
+const EXCLUDED_TARGETS: &[&str] = &["unins000.exe", "uninstall.exe", "setup.exe", "install.exe", "repair.exe"];
+
+struct ScanRoot {
+    dir: PathBuf,
+    source: &'static str,
+}
+
+fn scan_roots() -> Vec<ScanRoot> {
+    let mut roots = Vec::new();
+    if let Ok(pd) = std::env::var("ProgramData") {
+        roots.push(ScanRoot {
+            dir: Path::new(&pd).join(r"Microsoft\Windows\Start Menu\Programs"),
+            source: "start-menu",
+        });
+    }
+    if let Ok(ad) = std::env::var("APPDATA") {
+        roots.push(ScanRoot {
+            dir: Path::new(&ad).join(r"Microsoft\Windows\Start Menu\Programs"),
+            source: "start-menu",
+        });
+    }
+    if let Ok(up) = std::env::var("USERPROFILE") {
+        roots.push(ScanRoot {
+            dir: Path::new(&up).join("Desktop"),
+            source: "desktop",
+        });
+    }
+    if let Ok(pb) = std::env::var("PUBLIC") {
+        roots.push(ScanRoot {
+            dir: Path::new(&pb).join("Desktop"),
+            source: "desktop",
+        });
+    }
+    roots
+}
+
+/// Enumerate installed apps. Call from `spawn_blocking`.
+pub fn enumerate_apps() -> AeroResult<Vec<AppEntry>> {
+    let _com = ComApartment::new();
+    let link: IShellLinkW = unsafe { CoCreateInstance(&ShellLink, None, CLSCTX_INPROC_SERVER)? };
+    let persist: IPersistFile = windows::core::Interface::cast(&link)?;
+
+    let mut seen: HashSet<String> = HashSet::new();
+    let mut apps: Vec<AppEntry> = Vec::new();
+
+    for root in scan_roots() {
+        let mut lnk_files = Vec::new();
+        collect_lnk_files(&root.dir, &mut lnk_files, 0);
+        for lnk in lnk_files {
+            if let Some(entry) = resolve_shortcut(&link, &persist, &lnk, root.source) {
+                let dedupe = format!("{}|{}", entry.target_path.to_lowercase(), entry.args.to_lowercase());
+                if seen.insert(dedupe) {
+                    apps.push(entry);
+                }
+            }
+        }
+    }
+
+    apps.sort_by(|a, b| a.name.to_lowercase().cmp(&b.name.to_lowercase()));
+    Ok(apps)
+}
+
+fn collect_lnk_files(dir: &Path, out: &mut Vec<PathBuf>, depth: usize) {
+    if depth > 4 {
+        return;
+    }
+    let Ok(entries) = std::fs::read_dir(dir) else {
+        return;
+    };
+    for entry in entries.flatten() {
+        let path = entry.path();
+        if path.is_dir() {
+            collect_lnk_files(&path, out, depth + 1);
+        } else if path
+            .extension()
+            .is_some_and(|e| e.eq_ignore_ascii_case("lnk"))
+        {
+            out.push(path);
+        }
+    }
+}
+
+fn resolve_shortcut(
+    link: &IShellLinkW,
+    persist: &IPersistFile,
+    lnk_path: &Path,
+    source: &'static str,
+) -> Option<AppEntry> {
+    let name = lnk_path.file_stem()?.to_string_lossy().to_string();
+    let name_lower = name.to_lowercase();
+    if EXCLUDED_NAME_FRAGMENTS.iter().any(|f| name_lower.contains(f)) {
+        return None;
+    }
+
+    let wide = to_wide(&lnk_path.to_string_lossy());
+    unsafe { persist.Load(PCWSTR(wide.as_ptr()), STGM_READ).ok()? };
+
+    let mut target_buf = [0u16; MAX_PATH_LEN];
+    unsafe {
+        link.GetPath(&mut target_buf, std::ptr::null_mut(), SLGP_UNCPRIORITY.0 as u32)
+            .ok()?
+    };
+    let target = from_wide(&target_buf);
+    if target.is_empty() {
+        return None; // UWP/advertised shortcut without a filesystem target
+    }
+
+    let target_lower = target.to_lowercase();
+    if !target_lower.ends_with(".exe") || !Path::new(&target).exists() {
+        return None;
+    }
+    if EXCLUDED_TARGETS
+        .iter()
+        .any(|t| target_lower.ends_with(t))
+    {
+        return None;
+    }
+
+    let mut args_buf = [0u16; 1024];
+    let args = match unsafe { link.GetArguments(&mut args_buf) } {
+        Ok(()) => from_wide(&args_buf),
+        Err(_) => String::new(),
+    };
+
+    Some(AppEntry {
+        icon: Some(path_key(&target)),
+        name,
+        shortcut_path: Some(lnk_path.to_string_lossy().to_string()),
+        target_path: target,
+        args,
+        source: source.to_string(),
+    })
+}

@@ -1,0 +1,52 @@
+/*
+ * Aero Dock design tokens.
+ * The theme engine rewrites these custom properties at runtime; every
+ * component styles itself exclusively from tokens, never raw colors.
+ *
+ * Defaults below = "Aero" theme (Vista sky: cyan light, deep blue water,
+ * spring green life).
+ */
+
+:root {
+  /* ---- color: light, water, life ---- */
+  --aero-accent: #2f9de3;
+  --aero-accent-deep: #145a9e;
+  --aero-life: #7ad03a; /* the Frutiger Aero grass-green spark */
+  --aero-text: #0d3a5c;
+  --aero-text-on-glass: #ffffff;
+
+  /* ---- glass ---- */
+  --glass-tint-top: rgba(255, 255, 255, 0.52);
+  --glass-tint-mid: rgba(210, 238, 255, 0.16);
+  --glass-tint-bottom: rgba(120, 190, 235, 0.28);
+  --glass-border: rgba(255, 255, 255, 0.65);
+  --glass-border-dark: rgba(30, 90, 140, 0.35);
+  --glass-blur: 22px;
+  --glass-saturate: 1.45;
+  --glass-radius: 20px;
+
+  /* ---- light ---- */
+  --bloom-color: rgba(160, 225, 255, 0.9);
+  --bloom-soft: rgba(160, 225, 255, 0.35);
+  --gloss-strength: 0.55; /* top-half specular highlight opacity */
+  --ambient-glow: rgba(90, 180, 240, 0.25);
+
+  /* ---- depth ---- */
+  --shadow-dock:
+    0 10px 40px rgba(10, 45, 80, 0.35),
+    0 2px 10px rgba(10, 45, 80, 0.25);
+  --shadow-icon: drop-shadow(0 3px 6px rgba(8, 40, 70, 0.45));
+
+  /* ---- user-tunable (settings-driven, written by ThemeApplier) ---- */
+  --dock-opacity: 0.92;
+  --glass-intensity: 0.8;
+  --bloom-amount: 0.7;
+  --reflection-strength: 0.6;
+  --anim-speed: 1;
+
+  /* ---- geometry ---- */
+  --icon-size: 48px;
+  --icon-gap: 6px;
+  --dock-pad-x: 18px;
+  --dock-pad-y: 10px;
+}
