@@ -4,4 +4,5 @@ pub mod icons;
 pub mod monitors;
 pub mod running;
 pub mod system;
+pub mod wallpaper;
 pub mod util;

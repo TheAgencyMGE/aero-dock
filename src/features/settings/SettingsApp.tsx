@@ -189,6 +189,12 @@ export function SettingsApp() {
             format={pctFmt}
             onChange={(v) => set((d) => void (d.appearance.particleDensity = v))}
           />
+          <AeroToggle
+            label="Tint from wallpaper"
+            checked={appearance.wallpaperSync}
+            hint="Derives the accent color from your current wallpaper"
+            onChange={(v) => set((d) => void (d.appearance.wallpaperSync = v))}
+          />
           <AeroSlider
             label="Animation speed"
             value={appearance.animationSpeed}

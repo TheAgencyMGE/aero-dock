@@ -57,6 +57,14 @@ pub async fn empty_recycle_bin(app: AppHandle) -> AeroResult<()> {
     .map_err(|e| AeroError::other(format!("empty bin task failed: {e}")))?
 }
 
+/// Current wallpaper's dominant vibrant color as `#rrggbb`.
+#[tauri::command]
+pub async fn get_wallpaper_accent() -> AeroResult<String> {
+    tauri::async_runtime::spawn_blocking(crate::platform::windows::wallpaper::wallpaper_accent)
+        .await
+        .map_err(|e| AeroError::other(format!("wallpaper task failed: {e}")))?
+}
+
 /// Background poller: pushes system status every POLL_SECS while the
 /// app runs. Cheap reads; skipped entirely when the dock is hidden
 /// would be an over-optimization at this cadence.

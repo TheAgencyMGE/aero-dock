@@ -14,6 +14,7 @@ import type { PinnedItem } from "../ipc/types";
 import { buildDockItems, useDockIcons, type DockItemView } from "../state/dockStore";
 import { useRunning } from "../state/runningStore";
 import { useSettings } from "../state/settingsStore";
+import { useState } from "react";
 
 /** Apps most people actually keep on a dock, matched by shortcut name. */
 const STARTER_APP_HINTS = [
@@ -105,10 +106,23 @@ export function DockApp() {
     };
   }, []);
 
+  // wallpaper accent, fetched when sync is enabled
+  const [accent, setAccent] = useState<string | null>(null);
+  useEffect(() => {
+    if (settings?.appearance.wallpaperSync) {
+      ipc
+        .getWallpaperAccent()
+        .then(setAccent)
+        .catch((e) => console.warn("wallpaper accent unavailable", e));
+    } else {
+      setAccent(null);
+    }
+  }, [settings?.appearance.wallpaperSync]);
+
   // appearance tokens track settings
   useEffect(() => {
-    if (settings) applyAppearance(settings);
-  }, [settings]);
+    if (settings) applyAppearance(settings, accent);
+  }, [settings, accent]);
 
   // first run: import a starter set so launch #1 already looks alive
   useEffect(() => {

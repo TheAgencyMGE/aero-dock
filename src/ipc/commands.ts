@@ -57,6 +57,7 @@ export const ipc = {
     invoke<void>("set_volume", { level: level ?? null, mute: mute ?? null }),
   openRecycleBin: () => invoke<void>("open_recycle_bin"),
   emptyRecycleBin: () => invoke<void>("empty_recycle_bin"),
+  getWallpaperAccent: () => invoke<string>("get_wallpaper_accent"),
 
   // dock window
   resizeDock: (width: number, height: number) =>

@@ -75,6 +75,7 @@ pub fn run() {
             commands::system_cmd::set_volume,
             commands::system_cmd::open_recycle_bin,
             commands::system_cmd::empty_recycle_bin,
+            commands::system_cmd::get_wallpaper_accent,
         ])
         .run(tauri::generate_context!())
         .expect("error while running Aero Dock");
