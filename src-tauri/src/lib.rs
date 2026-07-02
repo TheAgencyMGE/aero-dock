@@ -44,6 +44,7 @@ pub fn run() {
 
             #[cfg(windows)]
             platform::windows::running::start(handle.clone());
+            commands::system_cmd::start_poller(handle.clone());
             Ok(())
         })
         .invoke_handler(tauri::generate_handler![
@@ -68,6 +69,10 @@ pub fn run() {
             commands::windows_cmd::activate_window,
             commands::windows_cmd::minimize_window,
             commands::windows_cmd::close_window,
+            commands::system_cmd::get_system_status,
+            commands::system_cmd::set_volume,
+            commands::system_cmd::open_recycle_bin,
+            commands::system_cmd::empty_recycle_bin,
         ])
         .run(tauri::generate_context!())
         .expect("error while running Aero Dock");

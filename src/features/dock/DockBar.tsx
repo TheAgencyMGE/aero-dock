@@ -11,6 +11,7 @@ import { springs } from "../../engine/animation/springs";
 import { ipc } from "../../ipc/commands";
 import type { Settings } from "../../ipc/types";
 import type { DockItemView } from "../../state/dockStore";
+import { WidgetCluster } from "../widgets/WidgetCluster";
 import { ContextMenu } from "./ContextMenu";
 import { DockIcon } from "./DockIcon";
 import { FolderFlyout } from "./FolderFlyout";
@@ -23,6 +24,7 @@ const PAD_CROSS = 10; // dock padding across the axis
 const LABEL_SPACE = 44; // tooltip pill above icons
 const EDGE_SLACK = 24; // window slack so magnified end-icons never clip
 const MENU_SPACE = 360; // extra cross-axis room while a context menu is open
+const WIDGET_SPACE = 128; // clock + status glyph cluster
 
 interface DockBarProps {
   settings: Settings;
@@ -63,7 +65,7 @@ export function DockBar({ settings, items, onLaunch }: DockBarProps) {
     const mainBase = n * iconSize + (n - 1 + dividers) * GAP + dividers * 8 + PAD_MAIN * 2;
     // neighbors near the cursor grow too; ~2.5 icons' worth covers the worst case
     const mainGrowth = iconSize * (peak - 1) * 2.5;
-    const main = mainBase + mainGrowth + EDGE_SLACK;
+    const main = mainBase + mainGrowth + EDGE_SLACK + WIDGET_SPACE;
     const cross = iconSize * peak + PAD_CROSS * 2 + LABEL_SPACE + (menuOpen ? MENU_SPACE : 0);
     return vertical ? { width: cross, height: main } : { width: main, height: cross };
   }, [items.length, runningItems.length, iconSize, peak, vertical, menuOpen]);
@@ -155,6 +157,8 @@ export function DockBar({ settings, items, onLaunch }: DockBarProps) {
         {runningItems.map((item, i) => (
           <DockIcon key={item.id} item={item} index={orderedPinned.length + i} {...iconProps} />
         ))}
+        <span className="dock-divider" aria-hidden />
+        <WidgetCluster />
       </div>
       <ContextMenu settings={settings} edge={edge} />
       <FolderFlyout edge={edge} />

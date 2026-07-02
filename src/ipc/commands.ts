@@ -10,6 +10,7 @@ import type {
   PinnedItem,
   RunningSnapshot,
   Settings,
+  SystemStatus,
 } from "./types";
 
 export const ipc = {
@@ -47,6 +48,13 @@ export const ipc = {
   activateWindow: (hwnd: number) => invoke<void>("activate_window", { hwnd }),
   minimizeWindow: (hwnd: number) => invoke<void>("minimize_window", { hwnd }),
   closeWindow: (hwnd: number) => invoke<void>("close_window", { hwnd }),
+
+  // system widgets
+  getSystemStatus: () => invoke<SystemStatus>("get_system_status"),
+  setVolume: (level?: number, mute?: boolean) =>
+    invoke<void>("set_volume", { level: level ?? null, mute: mute ?? null }),
+  openRecycleBin: () => invoke<void>("open_recycle_bin"),
+  emptyRecycleBin: () => invoke<void>("empty_recycle_bin"),
 
   // dock window
   resizeDock: (width: number, height: number) =>

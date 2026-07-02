@@ -85,8 +85,16 @@ export interface RunningSnapshot {
   focused: number;
 }
 
+export interface SystemStatus {
+  battery: { present: boolean; percent: number; charging: boolean };
+  internet: boolean;
+  volume: { available: boolean; level: number; muted: boolean };
+  recycleBin: { items: number; bytes: number };
+}
+
 /** Event channel names pushed from Rust. */
 export const EVENTS = {
   settingsChanged: "settings://changed",
   runningChanged: "apps://running-changed",
+  systemStatus: "system://status",
 } as const;
