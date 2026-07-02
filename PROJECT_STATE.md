@@ -55,16 +55,22 @@
 - [x] Auto-hide: slide out after 1.4s idle → shrink window to 8px strip;
       mouse contact reveals. Verified live.
 
-### Backlog (task #11 + polish)
-1. Tray icon (show/hide dock, settings, quit)
-2. Recent files (Windows Recent folder) — surface in search/context menu
-3. Search overlay (apps + recent files, keyboard-first)
-4. Onboarding (first-run welcome with import — basic auto-import works)
-5. Window previews on hover (DWM thumbnails — hard; needs native region)
-6. Production build: app icons (need Aero droplet icon set), NSIS
-   bundle, autostart arg check, perf pass on integrated GPU
-7. Multi-monitor picker UI in settings (backend list_monitors exists)
-8. Stacks (grouping pinned items into a dock folder) — deferred
+- [x] Tray icon: left-click toggles dock; menu (show/hide, settings, quit)
+- [x] Recent files (Recent folder .lnk resolution, mtime order)
+- [x] Search overlay: apps + recent, keyboard-first; set_dock_focusable
+      lifts WS_EX_NOACTIVATE while open. Verified live incl. typing.
+- [x] Aero orb app icon generated (System.Drawing script in scratchpad),
+      tauri icon set regenerated
+
+### Backlog (remaining polish)
+1. Production build validation (NSIS) — in progress this session
+2. Window previews on hover (DWM thumbnails — hard; needs native region)
+3. Onboarding welcome surface (basic auto-import works already)
+4. Multi-monitor picker UI in settings (backend list_monitors exists)
+5. Stacks (grouping pinned items into a dock folder) — deferred
+6. Perf pass: idle CPU/GPU measurement, dust field budget on iGPU
+7. Live effects modes (rain/snow/ocean/aurora scenes) — deferred
+8. Music visualization + cursor light — deferred
 
 ### Dev/debug infrastructure
 - WebView console/DOM access: launch dev with
