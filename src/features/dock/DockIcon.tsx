@@ -25,6 +25,7 @@ interface DockIconProps {
   vertical: boolean;
   index: number;
   onLaunch: (item: DockItemView) => void;
+  onContext: (item: DockItemView, target: HTMLElement) => void;
 }
 
 export function DockIcon({
@@ -36,6 +37,7 @@ export function DockIcon({
   vertical,
   index,
   onLaunch,
+  onContext,
 }: DockIconProps) {
   const ref = useRef<HTMLButtonElement>(null);
   const [hovered, setHovered] = useState(false);
@@ -111,6 +113,10 @@ export function DockIcon({
       className="dock-icon"
       style={vertical ? { height: width, width: "var(--icon-size)", x, y } : { width, x, y }}
       onClick={handleClick}
+      onContextMenu={(e) => {
+        e.preventDefault();
+        onContext(item, e.currentTarget);
+      }}
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
       aria-label={item.name}

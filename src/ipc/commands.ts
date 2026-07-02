@@ -31,6 +31,11 @@ export const ipc = {
     invoke<Record<string, string>>("resolve_icons", { targets }),
   launch: (target: string, args?: string) =>
     invoke<void>("launch", { target, args: args || null }),
+  launchAsAdmin: (target: string, args?: string) =>
+    invoke<void>("launch_as_admin", { target, args: args || null }),
+  openFileLocation: (target: string) =>
+    invoke<void>("open_file_location", { target }),
+  resolveDrop: (path: string) => invoke<AppEntry>("resolve_drop", { path }),
 
   // running windows
   getRunning: () => invoke<RunningSnapshot>("get_running"),

@@ -4,6 +4,7 @@
  * and renders the bar.
  */
 
+import { getCurrentWebview } from "@tauri-apps/api/webview";
 import { useEffect, useMemo } from "react";
 import { DockBar } from "../features/dock/DockBar";
 import { applyAppearance } from "../engine/themes/applyTheme";
@@ -72,6 +73,36 @@ export function DockApp() {
     hydrate();
     hydrateRunning();
   }, [hydrate, hydrateRunning]);
+
+  // pin files/shortcuts dropped onto the dock from Explorer
+  useEffect(() => {
+    const unlisten = getCurrentWebview().onDragDropEvent(async (event) => {
+      if (event.payload.type !== "drop") return;
+      for (const path of event.payload.paths) {
+        try {
+          const entry = await ipc.resolveDrop(path);
+          const current = await ipc.getSettings();
+          const exists = current.pinned.some(
+            (p) => p.path.toLowerCase() === entry.targetPath.toLowerCase(),
+          );
+          if (exists) continue;
+          await ipc.pinItem({
+            id: `pin-${crypto.randomUUID()}`,
+            kind: "app",
+            path: entry.targetPath,
+            name: entry.name,
+            icon: entry.icon,
+            children: [],
+          });
+        } catch (e) {
+          console.error(`could not pin dropped file ${path}`, e);
+        }
+      }
+    });
+    return () => {
+      unlisten.then((fn) => fn());
+    };
+  }, []);
 
   // appearance tokens track settings
   useEffect(() => {

@@ -49,7 +49,7 @@ pub async fn launch(target: String, args: Option<String>) -> AeroResult<()> {
         .map_err(|e| AeroError::other(format!("launch task failed: {e}")))?
 }
 
-fn launch_blocking(target: &str, args: Option<&str>) -> AeroResult<()> {
+fn shell_execute(verb: &str, target: &str, args: Option<&str>) -> AeroResult<()> {
     use windows::core::PCWSTR;
     use windows::Win32::UI::Shell::ShellExecuteW;
     use windows::Win32::UI::WindowsAndMessaging::SW_SHOWNORMAL;
@@ -59,7 +59,7 @@ fn launch_blocking(target: &str, args: Option<&str>) -> AeroResult<()> {
     let _com = crate::platform::ComApartment::new();
     let target_w = to_wide(target);
     let args_w = args.map(to_wide);
-    let verb = to_wide("open");
+    let verb_w = to_wide(verb);
     let workdir = std::path::Path::new(target)
         .parent()
         .map(|p| to_wide(&p.to_string_lossy()));
@@ -67,7 +67,7 @@ fn launch_blocking(target: &str, args: Option<&str>) -> AeroResult<()> {
     let hinst = unsafe {
         ShellExecuteW(
             None,
-            PCWSTR(verb.as_ptr()),
+            PCWSTR(verb_w.as_ptr()),
             PCWSTR(target_w.as_ptr()),
             args_w.as_ref().map_or(PCWSTR::null(), |a| PCWSTR(a.as_ptr())),
             workdir.as_ref().map_or(PCWSTR::null(), |w| PCWSTR(w.as_ptr())),
@@ -77,9 +77,51 @@ fn launch_blocking(target: &str, args: Option<&str>) -> AeroResult<()> {
     // ShellExecuteW returns a value > 32 on success (legacy contract).
     if hinst.0 as isize <= 32 {
         return Err(AeroError::other(format!(
-            "failed to launch {target} (code {})",
+            "shell {verb} failed for {target} (code {})",
             hinst.0 as isize
         )));
     }
     Ok(())
+}
+
+fn launch_blocking(target: &str, args: Option<&str>) -> AeroResult<()> {
+    shell_execute("open", target, args)
+}
+
+/// Launch elevated (UAC prompt) — the "Run as administrator" menu action.
+#[tauri::command]
+pub async fn launch_as_admin(target: String, args: Option<String>) -> AeroResult<()> {
+    tauri::async_runtime::spawn_blocking(move || {
+        shell_execute("runas", &target, args.as_deref())
+    })
+    .await
+    .map_err(|e| AeroError::other(format!("launch task failed: {e}")))?
+}
+
+/// Open Explorer with the target file selected.
+#[tauri::command]
+pub async fn open_file_location(target: String) -> AeroResult<()> {
+    tauri::async_runtime::spawn_blocking(move || {
+        if !std::path::Path::new(&target).exists() {
+            return Err(AeroError::other(format!("path not found: {target}")));
+        }
+        std::process::Command::new("explorer.exe")
+            .arg(format!("/select,{target}"))
+            .spawn()
+            .map_err(AeroError::Io)?;
+        Ok(())
+    })
+    .await
+    .map_err(|e| AeroError::other(format!("explorer task failed: {e}")))?
+}
+
+/// Resolve a dropped file into a pinnable (name, target) pair.
+/// `.lnk` shortcuts are dereferenced; anything else pins as itself.
+#[tauri::command]
+pub async fn resolve_drop(path: String) -> AeroResult<AppEntry> {
+    tauri::async_runtime::spawn_blocking(move || {
+        crate::platform::windows::apps::resolve_single(&path)
+    })
+    .await
+    .map_err(|e| AeroError::other(format!("resolve task failed: {e}")))?
 }

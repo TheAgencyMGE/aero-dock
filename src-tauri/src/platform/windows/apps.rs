@@ -82,6 +82,69 @@ pub fn enumerate_apps() -> AeroResult<Vec<AppEntry>> {
     Ok(apps)
 }
 
+/// Resolve one dropped/browsed path into a pinnable entry. `.lnk` files
+/// are dereferenced through the shell; exes and documents pin as-is.
+/// Call from `spawn_blocking`.
+pub fn resolve_single(path: &str) -> AeroResult<AppEntry> {
+    let p = Path::new(path);
+    if !p.exists() {
+        return Err(crate::core::AeroError::other(format!("path not found: {path}")));
+    }
+    let is_lnk = p
+        .extension()
+        .is_some_and(|e| e.eq_ignore_ascii_case("lnk"));
+
+    if is_lnk {
+        let _com = ComApartment::new();
+        let link: IShellLinkW = unsafe { CoCreateInstance(&ShellLink, None, CLSCTX_INPROC_SERVER)? };
+        let persist: IPersistFile = windows::core::Interface::cast(&link)?;
+        // resolve without the launcher-noise filtering used for bulk scans:
+        // an explicit user drop should always pin
+        let wide = to_wide(path);
+        unsafe { persist.Load(PCWSTR(wide.as_ptr()), STGM_READ)? };
+        let mut target_buf = [0u16; MAX_PATH_LEN];
+        unsafe {
+            link.GetPath(&mut target_buf, std::ptr::null_mut(), SLGP_UNCPRIORITY.0 as u32)?
+        };
+        let target = from_wide(&target_buf);
+        if target.is_empty() || !Path::new(&target).exists() {
+            return Err(crate::core::AeroError::other(
+                "shortcut has no filesystem target",
+            ));
+        }
+        let mut args_buf = [0u16; 1024];
+        let args = match unsafe { link.GetArguments(&mut args_buf) } {
+            Ok(()) => from_wide(&args_buf),
+            Err(_) => String::new(),
+        };
+        let name = p
+            .file_stem()
+            .map(|s| s.to_string_lossy().to_string())
+            .unwrap_or_else(|| target.clone());
+        return Ok(AppEntry {
+            icon: Some(path_key(&target)),
+            name,
+            shortcut_path: Some(path.to_string()),
+            target_path: target,
+            args,
+            source: "desktop".to_string(),
+        });
+    }
+
+    let name = p
+        .file_stem()
+        .map(|s| s.to_string_lossy().to_string())
+        .unwrap_or_else(|| path.to_string());
+    Ok(AppEntry {
+        icon: Some(path_key(path)),
+        name,
+        shortcut_path: None,
+        target_path: path.to_string(),
+        args: String::new(),
+        source: "desktop".to_string(),
+    })
+}
+
 fn collect_lnk_files(dir: &Path, out: &mut Vec<PathBuf>, depth: usize) {
     if depth > 4 {
         return;

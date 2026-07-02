@@ -2,6 +2,7 @@
    transform/opacity only so everything stays on the compositor. */
 
 .dock-viewport {
+  position: relative;
   width: 100%;
   height: 100%;
   display: flex;
@@ -35,13 +36,22 @@
   padding: var(--dock-pad-x) var(--dock-pad-y);
 }
 
-.dock-slot {
+/* reorderable pinned section mirrors the bar's layout */
+.dock-section {
   display: flex;
   align-items: flex-end;
   gap: var(--icon-gap);
+  list-style: none;
 }
 
-.dock-bar[data-vertical="true"] .dock-slot {
+.dock-section > div {
+  display: flex;
+  align-items: flex-end;
+  position: relative;
+  z-index: 3;
+}
+
+.dock-bar[data-vertical="true"] .dock-section {
   flex-direction: column;
   align-items: center;
 }
