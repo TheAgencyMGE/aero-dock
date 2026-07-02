@@ -35,6 +35,67 @@
   padding: var(--dock-pad-x) var(--dock-pad-y);
 }
 
+.dock-slot {
+  display: flex;
+  align-items: flex-end;
+  gap: var(--icon-gap);
+}
+
+.dock-bar[data-vertical="true"] .dock-slot {
+  flex-direction: column;
+  align-items: center;
+}
+
+/* glass ridge separating pinned apps from running-only apps */
+.dock-divider {
+  align-self: stretch;
+  width: 2px;
+  margin: 4px 3px;
+  border-radius: 1px;
+  background: linear-gradient(
+    180deg,
+    transparent,
+    rgba(255, 255, 255, 0.55) 30%,
+    rgba(20, 80, 130, 0.35) 70%,
+    transparent
+  );
+  box-shadow: 1px 0 0 rgba(255, 255, 255, 0.25);
+}
+
+.dock-bar[data-vertical="true"] .dock-divider {
+  width: auto;
+  height: 2px;
+  align-self: stretch;
+  margin: 3px 4px;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(255, 255, 255, 0.55) 30%,
+    rgba(20, 80, 130, 0.35) 70%,
+    transparent
+  );
+}
+
+/* running indicator: a tiny glowing droplet under the icon */
+.dock-indicator {
+  position: absolute;
+  bottom: -7px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 30%, #ffffff, var(--aero-life) 55%, #3f8f1d);
+  box-shadow: 0 0 6px 1px rgba(122, 208, 58, 0.8);
+  pointer-events: none;
+}
+
+.dock-indicator[data-focused="true"] {
+  width: 7px;
+  height: 7px;
+  box-shadow: 0 0 10px 2px rgba(122, 208, 58, 0.95);
+}
+
 /* ---- icons ---- */
 
 .dock-icon {

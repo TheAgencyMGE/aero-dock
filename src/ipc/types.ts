@@ -73,7 +73,20 @@ export interface MonitorInfoEx {
   isPrimary: boolean;
 }
 
+export interface WindowInfo {
+  hwnd: number;
+  title: string;
+  exe: string;
+  pid: number;
+}
+
+export interface RunningSnapshot {
+  windows: WindowInfo[];
+  focused: number;
+}
+
 /** Event channel names pushed from Rust. */
 export const EVENTS = {
   settingsChanged: "settings://changed",
+  runningChanged: "apps://running-changed",
 } as const;

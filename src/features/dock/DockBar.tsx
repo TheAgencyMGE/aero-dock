@@ -70,17 +70,22 @@ export function DockBar({ settings, items, onLaunch }: DockBarProps) {
         onMouseLeave={handleLeave}
       >
         {items.map((item, i) => (
-          <DockIcon
-            key={item.id}
-            item={item}
-            index={i}
-            mouseAxis={mouseAxis}
-            iconSize={iconSize}
-            magnify={magnification}
-            magScale={magnificationScale}
-            vertical={vertical}
-            onLaunch={onLaunch}
-          />
+          <div className="dock-slot" key={item.id}>
+            {/* glass ridge between pinned apps and running-only apps */}
+            {i > 0 && item.pinned === false && items[i - 1].pinned && (
+              <span className="dock-divider" aria-hidden />
+            )}
+            <DockIcon
+              item={item}
+              index={i}
+              mouseAxis={mouseAxis}
+              iconSize={iconSize}
+              magnify={magnification}
+              magScale={magnificationScale}
+              vertical={vertical}
+              onLaunch={onLaunch}
+            />
+          </div>
         ))}
       </div>
     </div>

@@ -41,6 +41,9 @@ pub fn run() {
 
             commands::dock::position_dock(&handle)?;
             window.show()?;
+
+            #[cfg(windows)]
+            platform::windows::running::start(handle.clone());
             Ok(())
         })
         .invoke_handler(tauri::generate_handler![
@@ -57,6 +60,10 @@ pub fn run() {
             commands::apps::launch,
             commands::dock::resize_dock,
             commands::dock::list_monitors,
+            commands::windows_cmd::get_running,
+            commands::windows_cmd::activate_window,
+            commands::windows_cmd::minimize_window,
+            commands::windows_cmd::close_window,
         ])
         .run(tauri::generate_context!())
         .expect("error while running Aero Dock");

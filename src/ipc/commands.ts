@@ -4,7 +4,13 @@
  */
 
 import { invoke } from "@tauri-apps/api/core";
-import type { AppEntry, MonitorInfoEx, PinnedItem, Settings } from "./types";
+import type {
+  AppEntry,
+  MonitorInfoEx,
+  PinnedItem,
+  RunningSnapshot,
+  Settings,
+} from "./types";
 
 export const ipc = {
   // settings
@@ -25,6 +31,12 @@ export const ipc = {
     invoke<Record<string, string>>("resolve_icons", { targets }),
   launch: (target: string, args?: string) =>
     invoke<void>("launch", { target, args: args || null }),
+
+  // running windows
+  getRunning: () => invoke<RunningSnapshot>("get_running"),
+  activateWindow: (hwnd: number) => invoke<void>("activate_window", { hwnd }),
+  minimizeWindow: (hwnd: number) => invoke<void>("minimize_window", { hwnd }),
+  closeWindow: (hwnd: number) => invoke<void>("close_window", { hwnd }),
 
   // dock window
   resizeDock: (width: number, height: number) =>

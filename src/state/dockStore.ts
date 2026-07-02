@@ -1,13 +1,15 @@
 /**
- * Dock view model: pinned items (from settings) plus resolved icon URLs.
- * Icons live in an on-disk PNG cache on the Rust side; here we only hold
- * `target path -> asset URL` so <img> elements can load them directly.
+ * Dock view model: pinned items (from settings) merged with live running
+ * windows, plus resolved icon URLs. Icons live in an on-disk PNG cache on
+ * the Rust side; here we only hold `target path -> asset URL` so <img>
+ * elements load them directly with zero IPC per render.
  */
 
 import { convertFileSrc } from "@tauri-apps/api/core";
 import { create } from "zustand";
 import { ipc } from "../ipc/commands";
-import type { PinnedItem } from "../ipc/types";
+import type { PinnedItem, WindowInfo } from "../ipc/types";
+import { exeDisplayName, windowsByExe } from "./runningStore";
 
 export interface DockItemView {
   id: string;
@@ -17,17 +19,22 @@ export interface DockItemView {
   kind: PinnedItem["kind"];
   iconSrc: string | null;
   children: PinnedItem[];
+  pinned: boolean;
+  /** Open windows belonging to this app (empty = not running). */
+  windows: WindowInfo[];
+  /** One of this app's windows is foreground. */
+  focused: boolean;
 }
 
-interface DockState {
+interface IconState {
   /** target path -> asset:// URL of the cached PNG */
   iconUrls: Record<string, string>;
-  /** targets currently being resolved (dedupe in-flight work) */
+  /** targets currently being resolved (dedupes in-flight work) */
   pendingIcons: Set<string>;
   resolveIcons: (targets: string[]) => Promise<void>;
 }
 
-export const useDockIcons = create<DockState>((set, get) => ({
+export const useDockIcons = create<IconState>((set, get) => ({
   iconUrls: {},
   pendingIcons: new Set(),
 
@@ -54,17 +61,52 @@ export const useDockIcons = create<DockState>((set, get) => ({
   },
 }));
 
-/** Merge pinned items with resolved icons into render-ready views. */
-export function toDockItems(
+/**
+ * Build the dock model: pinned items in user order (with live window
+ * state attached), then one icon per running-but-unpinned app.
+ */
+export function buildDockItems(
   pinned: PinnedItem[],
+  runningWindows: WindowInfo[],
+  focused: number,
   iconUrls: Record<string, string>,
+  showRunningApps: boolean,
 ): DockItemView[] {
-  return pinned.map((p) => ({
-    id: p.id,
-    name: p.name,
-    target: p.path,
-    kind: p.kind,
-    iconSrc: p.path ? (iconUrls[p.path] ?? null) : null,
-    children: p.children,
-  }));
+  const byExe = windowsByExe(runningWindows);
+  const pinnedTargets = new Set(pinned.map((p) => p.path.toLowerCase()).filter(Boolean));
+
+  const items: DockItemView[] = pinned.map((p) => {
+    const windows = byExe.get(p.path.toLowerCase()) ?? [];
+    return {
+      id: p.id,
+      name: p.name,
+      target: p.path,
+      kind: p.kind,
+      iconSrc: p.path ? (iconUrls[p.path] ?? null) : null,
+      children: p.children,
+      pinned: true,
+      windows,
+      focused: windows.some((w) => w.hwnd === focused),
+    };
+  });
+
+  if (showRunningApps) {
+    for (const [exe, windows] of byExe) {
+      if (pinnedTargets.has(exe)) continue;
+      const original = windows[0].exe; // preserve original casing for icon lookup
+      items.push({
+        id: `run-${exe}`,
+        name: windows.length === 1 ? windows[0].title : exeDisplayName(original),
+        target: original,
+        kind: "app",
+        iconSrc: iconUrls[original] ?? null,
+        children: [],
+        pinned: false,
+        windows,
+        focused: windows.some((w) => w.hwnd === focused),
+      });
+    }
+  }
+
+  return items;
 }

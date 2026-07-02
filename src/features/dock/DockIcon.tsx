@@ -130,6 +130,9 @@ export function DockIcon({
       ) : (
         <span className="dock-icon-glyph">{initial}</span>
       )}
+      {item.windows.length > 0 && (
+        <span className="dock-indicator" data-focused={item.focused} />
+      )}
     </motion.button>
   );
 }

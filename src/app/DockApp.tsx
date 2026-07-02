@@ -1,6 +1,7 @@
 /**
- * Dock window root: hydrates settings, applies appearance tokens,
- * performs the first-run app import, resolves icons, and renders the bar.
+ * Dock window root: hydrates settings + running windows, applies
+ * appearance tokens, performs the first-run app import, resolves icons,
+ * and renders the bar.
  */
 
 import { useEffect, useMemo } from "react";
@@ -8,7 +9,8 @@ import { DockBar } from "../features/dock/DockBar";
 import { applyAppearance } from "../engine/themes/applyTheme";
 import { ipc } from "../ipc/commands";
 import type { PinnedItem } from "../ipc/types";
-import { toDockItems, useDockIcons, type DockItemView } from "../state/dockStore";
+import { buildDockItems, useDockIcons, type DockItemView } from "../state/dockStore";
+import { useRunning } from "../state/runningStore";
 import { useSettings } from "../state/settingsStore";
 
 /** Apps most people actually keep on a dock, matched by shortcut name. */
@@ -63,11 +65,13 @@ async function firstRunImport(): Promise<void> {
 
 export function DockApp() {
   const { settings, hydrate } = useSettings();
+  const { windows, focused, hydrate: hydrateRunning } = useRunning();
   const { iconUrls, resolveIcons } = useDockIcons();
 
   useEffect(() => {
     hydrate();
-  }, [hydrate]);
+    hydrateRunning();
+  }, [hydrate, hydrateRunning]);
 
   // appearance tokens track settings
   useEffect(() => {
@@ -81,23 +85,44 @@ export function DockApp() {
     }
   }, [settings]);
 
-  // resolve icons for whatever is pinned
-  useEffect(() => {
-    if (!settings) return;
-    const targets = settings.pinned.map((p) => p.path).filter(Boolean);
-    if (targets.length) resolveIcons(targets);
-  }, [settings, resolveIcons]);
-
   const items = useMemo(
-    () => (settings ? toDockItems(settings.pinned, iconUrls) : []),
-    [settings, iconUrls],
+    () =>
+      settings
+        ? buildDockItems(
+            settings.pinned,
+            windows,
+            focused,
+            iconUrls,
+            settings.dock.showRunningApps,
+          )
+        : [],
+    [settings, windows, focused, iconUrls],
   );
+
+  // resolve icons for everything visible (pinned + running)
+  useEffect(() => {
+    const targets = items.filter((i) => !i.iconSrc && i.target).map((i) => i.target);
+    if (targets.length) resolveIcons(targets);
+  }, [items, resolveIcons]);
 
   if (!settings) return null;
 
-  const launch = (item: DockItemView) => {
-    ipc.launch(item.target, item.args).catch((e) => console.error("launch failed", e));
+  const activate = (item: DockItemView) => {
+    if (item.windows.length === 0) {
+      ipc.launch(item.target, item.args).catch((e) => console.error("launch failed", e));
+      return;
+    }
+    // running: focus it; if already focused, cycle windows (or minimize a single one)
+    const focusedIdx = item.windows.findIndex((w) => w.hwnd === focused);
+    if (focusedIdx === -1) {
+      ipc.activateWindow(item.windows[0].hwnd);
+    } else if (item.windows.length === 1) {
+      ipc.minimizeWindow(item.windows[0].hwnd);
+    } else {
+      const next = item.windows[(focusedIdx + 1) % item.windows.length];
+      ipc.activateWindow(next.hwnd);
+    }
   };
 
-  return <DockBar settings={settings} items={items} onLaunch={launch} />;
+  return <DockBar settings={settings} items={items} onLaunch={activate} />;
 }
