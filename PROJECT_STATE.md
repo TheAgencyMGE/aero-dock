@@ -62,15 +62,24 @@
 - [x] Aero orb app icon generated (System.Drawing script in scratchpad),
       tauri icon set regenerated
 
-### Backlog (remaining polish)
-1. Production build validation (NSIS) — in progress this session
-2. Window previews on hover (DWM thumbnails — hard; needs native region)
-3. Onboarding welcome surface (basic auto-import works already)
-4. Multi-monitor picker UI in settings (backend list_monitors exists)
-5. Stacks (grouping pinned items into a dock folder) — deferred
-6. Perf pass: idle CPU/GPU measurement, dust field budget on iGPU
-7. Live effects modes (rain/snow/ocean/aurora scenes) — deferred
-8. Music visualization + cursor light — deferred
+- [x] Production build validated: NSIS installer builds clean
+      (src-tauri/target/release/bundle/nsis/Aero Dock_0.1.0_x64-setup.exe,
+      2.6 MB)
+- [x] Perf pass: idle was ~84% CPU across webviews → now ~6% (dev mode).
+      Fixes: icon float = CSS transform animation (was per-icon rAF),
+      glass sweep = translated gradient layer (was background-position
+      repainting the blur), Pixi capped 30fps when only dust alive, and
+      ALL ambient motion sleeps after 45s idle (animation-play-state
+      paused + ticker stop), waking instantly on hover. Verified live.
+
+### Backlog (remaining)
+1. Window previews on hover (DWM thumbnails — hard; needs native region)
+2. Onboarding welcome surface (basic auto-import works already)
+3. Multi-monitor picker UI in settings (backend list_monitors exists)
+4. Stacks (grouping pinned items into a dock folder) — deferred
+5. Live effects modes (rain/snow/ocean/aurora scenes) — deferred
+6. Music visualization + cursor light — deferred
+7. Release-build smoke test (install the NSIS setup, check autostart)
 
 ### Dev/debug infrastructure
 - WebView console/DOM access: launch dev with
