@@ -11,8 +11,8 @@ import {
   useTransform,
   type MotionValue,
 } from "motion/react";
-import { useCallback, useEffect, useRef, useState } from "react";
-import { idleFloat, springs } from "../../engine/animation/springs";
+import { useCallback, useRef, useState } from "react";
+import { springs } from "../../engine/animation/springs";
 import { effectsBus } from "../../engine/effects/effectsBus";
 import type { DockItemView } from "../../state/dockStore";
 
@@ -61,42 +61,11 @@ export function DockIcon({
   ]);
   const width = useSpring(targetWidth, springs.magnify);
 
-  // launch bounce (offset perpendicular to the dock edge)
+  // launch bounce (offset perpendicular to the dock edge); idle float
+  // is pure CSS on the inner wrapper — zero JS per frame
   const bounce = useMotionValue(0);
-
-  // idle float: phase-offset sine drift so the dock feels alive
-  const float = useMotionValue(0);
-  useEffect(() => {
-    let raf = 0;
-    let running = true;
-    const phase = index * 0.9;
-    const tick = (t: number) => {
-      if (!running) return;
-      float.set(Math.sin((t / 1000 / idleFloat.period) * Math.PI * 2 + phase) * idleFloat.amplitude);
-      raf = requestAnimationFrame(tick);
-    };
-    const onVisibility = () => {
-      running = document.visibilityState === "visible";
-      if (running) raf = requestAnimationFrame(tick);
-      else cancelAnimationFrame(raf);
-    };
-    document.addEventListener("visibilitychange", onVisibility);
-    if (!window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
-      raf = requestAnimationFrame(tick);
-    }
-    return () => {
-      running = false;
-      cancelAnimationFrame(raf);
-      document.removeEventListener("visibilitychange", onVisibility);
-    };
-  }, [float, index]);
-
-  const y = useTransform<number, number>([bounce, float], ([b, f]) =>
-    vertical ? 0 : (b as number) + (f as number),
-  );
-  const x = useTransform<number, number>([bounce, float], ([b, f]) =>
-    vertical ? (b as number) + (f as number) : 0,
-  );
+  const y = useTransform(bounce, (b) => (vertical ? 0 : b));
+  const x = useTransform(bounce, (b) => (vertical ? b : 0));
 
   const handleClick = useCallback(
     (e: React.MouseEvent<HTMLButtonElement>) => {
@@ -142,11 +111,16 @@ export function DockIcon({
           {item.name}
         </motion.span>
       )}
-      {item.iconSrc ? (
-        <img src={item.iconSrc} alt="" draggable={false} />
-      ) : (
-        <span className="dock-icon-glyph">{initial}</span>
-      )}
+      <span
+        className="dock-icon-float"
+        style={{ animationDelay: `${(index * -0.9).toFixed(2)}s` }}
+      >
+        {item.iconSrc ? (
+          <img src={item.iconSrc} alt="" draggable={false} />
+        ) : (
+          <span className="dock-icon-glyph">{initial}</span>
+        )}
+      </span>
       {item.windows.length > 0 && (
         <span className="dock-indicator" data-focused={item.focused} />
       )}

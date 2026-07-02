@@ -13,6 +13,12 @@
 .dock-viewport[data-edge="top"] {
   align-items: flex-start;
 }
+
+/* idle sleep: ambient motion pauses so the GPU can rest */
+.dock-viewport[data-asleep="true"] .dock-icon-float,
+.dock-viewport[data-asleep="true"] .glass::after {
+  animation-play-state: paused;
+}
 .dock-viewport[data-edge="left"] {
   align-items: center;
   justify-content: flex-start;
@@ -125,6 +131,31 @@
 
 .dock-bar[data-vertical="true"] .dock-icon {
   transform-origin: center center;
+}
+
+/* idle float: compositor-only transform animation, phase-offset per icon */
+.dock-icon-float {
+  display: block;
+  width: 100%;
+  height: 100%;
+  animation: icon-float 5.2s ease-in-out infinite;
+  will-change: transform;
+}
+
+@keyframes icon-float {
+  0%,
+  100% {
+    transform: translateY(1.6px);
+  }
+  50% {
+    transform: translateY(-1.6px);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .dock-icon-float {
+    animation: none;
+  }
 }
 
 .dock-icon img,

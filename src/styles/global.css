@@ -69,32 +69,40 @@ img {
   z-index: 2;
 }
 
-/* slow ambient light sweep across the glass */
+/* slow ambient light sweep across the glass — a translated gradient
+   layer, so the animation stays on the compositor (no repaints) */
+.glass {
+  overflow: hidden;
+}
+
 .glass::after {
   content: "";
   position: absolute;
-  inset: 0;
-  border-radius: inherit;
+  top: 0;
+  bottom: 0;
+  left: -60%;
+  width: 55%;
   background: linear-gradient(
-    115deg,
-    transparent 30%,
-    rgba(255, 255, 255, 0.14) 45%,
-    rgba(255, 255, 255, 0.05) 55%,
-    transparent 70%
+    100deg,
+    transparent,
+    rgba(255, 255, 255, 0.13) 45%,
+    rgba(255, 255, 255, 0.04) 60%,
+    transparent
   );
-  background-size: 300% 100%;
   animation: glass-sweep calc(14s / var(--anim-speed)) ease-in-out infinite;
+  will-change: transform;
   pointer-events: none;
   z-index: 1;
 }
 
 @keyframes glass-sweep {
   0%,
-  100% {
-    background-position: 110% 0;
+  12% {
+    transform: translateX(0);
   }
-  50% {
-    background-position: -10% 0;
+  55%,
+  100% {
+    transform: translateX(400%);
   }
 }
 

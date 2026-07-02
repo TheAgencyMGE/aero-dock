@@ -11,6 +11,7 @@ import { springs } from "../../engine/animation/springs";
 import { ipc } from "../../ipc/commands";
 import type { Settings } from "../../ipc/types";
 import type { DockItemView } from "../../state/dockStore";
+import { useAmbient } from "../../state/ambientStore";
 import { SearchOverlay, useSearch } from "../search/SearchOverlay";
 import { WidgetCluster } from "../widgets/WidgetCluster";
 import { ContextMenu } from "./ContextMenu";
@@ -29,6 +30,9 @@ const WIDGET_SPACE = 128; // clock + status glyph cluster
 const REVEAL_STRIP = 8; // window height while auto-hidden (mouse sensor)
 const HIDE_DELAY_MS = 1400;
 const HIDE_ANIM_MS = 380;
+// ambient animations (float, sweep) pause after this much no-interaction
+// so an idle dock costs ~zero GPU; they wake the moment the cursor returns
+const SLEEP_AFTER_MS = 45_000;
 
 interface DockBarProps {
   settings: Settings;
@@ -73,6 +77,20 @@ export function DockBar({ settings, items, onLaunch }: DockBarProps) {
   const [pointerInside, setPointerInside] = useState(false);
   const hideTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
   const shrinkTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
+
+  // ambient-motion sleep: cheap idle, alive on approach
+  const asleep = useAmbient((s) => s.asleep);
+  const setAsleep = useAmbient((s) => s.setAsleep);
+  const sleepTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
+  useEffect(() => {
+    clearTimeout(sleepTimer.current);
+    if (pointerInside || menuOpen) {
+      setAsleep(false);
+      return;
+    }
+    sleepTimer.current = setTimeout(() => setAsleep(true), SLEEP_AFTER_MS);
+    return () => clearTimeout(sleepTimer.current);
+  }, [pointerInside, menuOpen, setAsleep]);
 
   const autoHide = settings.dock.autoHide;
   useEffect(() => {
@@ -166,6 +184,7 @@ export function DockBar({ settings, items, onLaunch }: DockBarProps) {
     <div
       className="dock-viewport"
       data-edge={edge}
+      data-asleep={asleep}
       onMouseEnter={() => setPointerInside(true)}
       onMouseLeave={() => setPointerInside(false)}
     >

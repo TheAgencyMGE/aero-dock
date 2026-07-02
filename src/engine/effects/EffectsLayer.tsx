@@ -11,6 +11,7 @@
 import { Application, Container, Ticker } from "pixi.js";
 import { useEffect, useRef } from "react";
 import type { DockEdge, Settings } from "../../ipc/types";
+import { useAmbient } from "../../state/ambientStore";
 import { ClickRipple, DustField, getGlowTexture, LaunchBurst, type Effect } from "./effects";
 import { effectsBus } from "./effectsBus";
 
@@ -59,6 +60,19 @@ export function EffectsLayer({ settings }: EffectsLayerProps) {
   const density = settings.appearance.particleDensity;
   const bloom = settings.appearance.bloomAmount;
   const speed = settings.appearance.animationSpeed;
+  const asleep = useAmbient((s) => s.asleep);
+
+  // dust sleeps with the rest of the ambient motion
+  useEffect(() => {
+    const st = stateRef.current;
+    const app = st.app;
+    if (!app) return;
+    if (asleep) {
+      app.ticker.stop();
+    } else if (st.effects.length > 0 && document.visibilityState === "visible") {
+      app.ticker.start();
+    }
+  }, [asleep]);
 
   // one-time Pixi init
   useEffect(() => {
@@ -97,6 +111,9 @@ export function EffectsLayer({ settings }: EffectsLayerProps) {
 
       app.ticker.add((ticker: Ticker) => {
         const dt = (ticker.deltaMS / 1000) * (stateRef.current.speedRef ?? 1);
+        // ambient dust alone doesn't justify full-rate rendering
+        const onlyDust = st.effects.length > 0 && st.effects.every((fx) => fx === st.dust);
+        app.ticker.maxFPS = onlyDust ? 30 : 0;
         const a = anchorPoint(
           stateRef.current.edgeRef ?? "bottom",
           app.screen.width,
