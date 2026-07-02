@@ -13,7 +13,8 @@ import type { Settings } from "../../ipc/types";
 import type { DockItemView } from "../../state/dockStore";
 import { ContextMenu } from "./ContextMenu";
 import { DockIcon } from "./DockIcon";
-import { useMenu, type MenuAnchor } from "./menuStore";
+import { FolderFlyout } from "./FolderFlyout";
+import { anchorFor, useMenu } from "./menuStore";
 import "./dock.css";
 
 const GAP = 6;
@@ -86,27 +87,21 @@ export function DockBar({ settings, items, onLaunch }: DockBarProps) {
 
   const openMenu = useCallback(
     (item: DockItemView, target: HTMLElement) => {
-      const r = target.getBoundingClientRect();
-      const anchor: MenuAnchor = {
-        left: r.left,
-        top: r.top,
-        right: r.right,
-        bottom: r.bottom,
-        cx: r.left + r.width / 2,
-        cy: r.top + r.height / 2,
-        winW: window.innerWidth,
-        winH: window.innerHeight,
-      };
-      menu.open(item, anchor);
+      menu.open("menu", item, anchorFor(target));
     },
     [menu],
   );
 
   const launchGuarded = useCallback(
-    (item: DockItemView) => {
-      if (!draggingRef.current) onLaunch(item);
+    (item: DockItemView, target?: HTMLElement) => {
+      if (draggingRef.current) return;
+      if (item.kind === "folder" && target) {
+        menu.open("folder", item, anchorFor(target));
+        return;
+      }
+      onLaunch(item);
     },
-    [onLaunch],
+    [onLaunch, menu],
   );
 
   const iconProps = {
@@ -162,6 +157,7 @@ export function DockBar({ settings, items, onLaunch }: DockBarProps) {
         ))}
       </div>
       <ContextMenu settings={settings} edge={edge} />
+      <FolderFlyout edge={edge} />
     </div>
   );
 }

@@ -27,19 +27,42 @@
       idle float, tooltips, reflections), DockApp (hydrate, first-run import)
 - [x] cargo test green (6 tests), pnpm build green
 
+- [x] Live dev run verified by screenshot: glass bar, real icons,
+      magnification + tooltips, first-run import (atomic, StrictMode-safe)
+- [x] Running-apps tracker: shell hook window (RegisterShellHookWindow) on
+      own thread, live snapshots, activate (Alt trick) / minimize / close;
+      dock shows divider + running-only apps + droplet indicators
+- [x] Context menus (Aero glass, bloom open): open, run as admin, open
+      file location, pin/unpin, minimize/close, window list
+- [x] Drag reorder (Reorder.Group, springs), persists via reorder_pinned
+- [x] Drop .lnk/.exe/folders from Explorer to pin (resolve_drop)
+- [x] Folder flyout: glass grid, staggered bloom, list_folder command
+
 ### In progress
-- [ ] First live dev run + visual verification
+- [ ] Folder flyout visual verification
 
 ### Backlog (task list mirrors this)
-1. Settings engine (Rust core/settings.rs)
-2. App enumeration + icon extraction (platform/windows)
-3. Running-apps tracker (WinEvent hooks)
-4. Dock UI foundation (glass bar, magnification, launch)
-5. Effects engine (PixiJS: bloom, ripple, burst, dust)
-6. System widgets (clock, battery, network, volume, recycle bin)
-7. Pinning, drag reorder, folders, context menus
-8. Settings window + theme engine + wallpaper sync
-9. Search, recent files, window previews, onboarding, tray, installer
+5. Effects engine (PixiJS: bloom, ripple, burst, dust) — task #7
+6. System widgets (clock, battery, network, volume, recycle bin) — #8
+7. Settings window + theme engine + wallpaper sync — #10
+8. Auto-hide with edge reveal — #12
+9. Search, recent files, window previews, onboarding, tray, installer — #11
+
+### Dev/debug infrastructure
+- WebView console/DOM access: launch dev with
+  `WEBVIEW2_ADDITIONAL_BROWSER_ARGUMENTS=--remote-debugging-port=9223`,
+  then `node <scratchpad>/cdp.mjs "<js>"` evaluates in the page.
+- `withGlobalTauri: true` → `window.__TAURI__.core.invoke` for testing.
+- Synthetic input via PowerShell mouse_event; screenshots via
+  System.Drawing CopyFromScreen (see session scratchpad).
+
+### Gotchas learned
+- .glass sets position:relative — flyouts must inline position:absolute
+  (vite HMR reorders stylesheets, CSS-order fixes are fragile).
+- Window grows transparently (MENU_SPACE) to host flyouts; anchor math
+  must be relative to the dock's screen edge, not window top-left.
+- React StrictMode double-fires effects: any first-run/one-shot IPC needs
+  an atomic idempotent Rust transaction.
 
 ### Decisions log
 - 2026-07-01: Stack locked: Tauri v2 + React 19 + Vite + motion + PixiJS + zustand.

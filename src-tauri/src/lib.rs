@@ -61,6 +61,7 @@ pub fn run() {
             commands::apps::launch_as_admin,
             commands::apps::open_file_location,
             commands::apps::resolve_drop,
+            commands::apps::list_folder,
             commands::dock::resize_dock,
             commands::dock::list_monitors,
             commands::windows_cmd::get_running,

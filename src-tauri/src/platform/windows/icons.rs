@@ -42,14 +42,17 @@ fn extract_rgba(target: &str) -> AeroResult<image::RgbaImage> {
     let wide = to_wide(target);
     let factory: IShellItemImageFactory =
         unsafe { SHCreateItemFromParsingName(PCWSTR(wide.as_ptr()), None)? };
+    let size = SIZE {
+        cx: ICON_SIZE,
+        cy: ICON_SIZE,
+    };
+    // ICONONLY fails for some shell items (known folders with custom
+    // icons, e.g. Downloads); fall back to the general image path.
     let hbitmap: HBITMAP = unsafe {
-        factory.GetImage(
-            SIZE {
-                cx: ICON_SIZE,
-                cy: ICON_SIZE,
-            },
-            SIIGBF_ICONONLY | SIIGBF_BIGGERSIZEOK,
-        )?
+        match factory.GetImage(size, SIIGBF_ICONONLY | SIIGBF_BIGGERSIZEOK) {
+            Ok(h) => h,
+            Err(_) => factory.GetImage(size, SIIGBF_BIGGERSIZEOK)?,
+        }
     };
     let result = hbitmap_to_rgba(hbitmap);
     unsafe {
@@ -120,4 +123,23 @@ fn hbitmap_to_rgba(hbitmap: HBITMAP) -> AeroResult<image::RgbaImage> {
 
     image::RgbaImage::from_raw(width as u32, height as u32, pixels)
         .ok_or_else(|| AeroError::other("icon pixel buffer size mismatch"))
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn extracts_folder_icon() {
+        let dir = std::env::temp_dir().join("aero-icon-test");
+        let result = ensure_icon(r"C:\Windows", &dir);
+        assert!(result.is_ok(), "folder icon failed: {:?}", result.err());
+    }
+
+    #[test]
+    fn extracts_exe_icon() {
+        let dir = std::env::temp_dir().join("aero-icon-test");
+        let result = ensure_icon(r"C:\Windows\System32\notepad.exe", &dir);
+        assert!(result.is_ok(), "exe icon failed: {:?}", result.err());
+    }
 }

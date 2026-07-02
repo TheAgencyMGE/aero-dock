@@ -13,6 +13,7 @@ import {
 } from "motion/react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { idleFloat, springs } from "../../engine/animation/springs";
+import { effectsBus } from "../../engine/effects/effectsBus";
 import type { DockItemView } from "../../state/dockStore";
 
 interface DockIconProps {
@@ -24,7 +25,7 @@ interface DockIconProps {
   magScale: number;
   vertical: boolean;
   index: number;
-  onLaunch: (item: DockItemView) => void;
+  onLaunch: (item: DockItemView, target?: HTMLElement) => void;
   onContext: (item: DockItemView, target: HTMLElement) => void;
 }
 
@@ -97,13 +98,23 @@ export function DockIcon({
     vertical ? (b as number) + (f as number) : 0,
   );
 
-  const handleClick = useCallback(() => {
-    // water-drop bounce away from the edge, then settle
-    animate(bounce, vertical ? -14 : -22, springs.bounce).then(() =>
-      animate(bounce, 0, springs.bounce),
-    );
-    onLaunch(item);
-  }, [bounce, item, onLaunch, vertical]);
+  const handleClick = useCallback(
+    (e: React.MouseEvent<HTMLButtonElement>) => {
+      // water-drop bounce away from the edge, then settle
+      animate(bounce, vertical ? -14 : -22, springs.bounce).then(() =>
+        animate(bounce, 0, springs.bounce),
+      );
+      const r = e.currentTarget.getBoundingClientRect();
+      const cx = r.left + r.width / 2;
+      const win = { winW: window.innerWidth, winH: window.innerHeight };
+      effectsBus.emit("ripple", { x: cx, y: r.bottom - 4, ...win });
+      if (item.windows.length === 0 && item.kind !== "folder") {
+        effectsBus.emit("burst", { x: cx, y: r.top + r.height / 2, ...win });
+      }
+      onLaunch(item, e.currentTarget);
+    },
+    [bounce, item, onLaunch, vertical],
+  );
 
   const initial = item.name.trim().charAt(0).toUpperCase() || "?";
 

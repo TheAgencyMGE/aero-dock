@@ -141,7 +141,7 @@ pub fn resolve_single(path: &str) -> AeroResult<AppEntry> {
         shortcut_path: None,
         target_path: path.to_string(),
         args: String::new(),
-        source: "desktop".to_string(),
+        source: if p.is_dir() { "folder" } else { "desktop" }.to_string(),
     })
 }
 

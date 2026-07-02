@@ -91,7 +91,8 @@ function buildActions(item: DockItemView, settings: Settings): Action[] {
 }
 
 export function ContextMenu({ settings, edge }: ContextMenuProps) {
-  const { item, anchor, close } = useMenu();
+  const { kind, item: openItem, anchor, close } = useMenu();
+  const item = kind === "menu" ? openItem : null;
 
   // close on any click outside / Escape
   useEffect(() => {

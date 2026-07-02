@@ -7,6 +7,7 @@
 import { getCurrentWebview } from "@tauri-apps/api/webview";
 import { useEffect, useMemo } from "react";
 import { DockBar } from "../features/dock/DockBar";
+import { EffectsLayer } from "../engine/effects/EffectsLayer";
 import { applyAppearance } from "../engine/themes/applyTheme";
 import { ipc } from "../ipc/commands";
 import type { PinnedItem } from "../ipc/types";
@@ -88,7 +89,7 @@ export function DockApp() {
           if (exists) continue;
           await ipc.pinItem({
             id: `pin-${crypto.randomUUID()}`,
-            kind: "app",
+            kind: entry.source === "folder" ? "folder" : "app",
             path: entry.targetPath,
             name: entry.name,
             icon: entry.icon,
@@ -155,5 +156,10 @@ export function DockApp() {
     }
   };
 
-  return <DockBar settings={settings} items={items} onLaunch={activate} />;
+  return (
+    <>
+      <EffectsLayer settings={settings} />
+      <DockBar settings={settings} items={items} onLaunch={activate} />
+    </>
+  );
 }

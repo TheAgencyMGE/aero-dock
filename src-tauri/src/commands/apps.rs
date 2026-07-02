@@ -31,7 +31,7 @@ pub async fn resolve_icons(
                 Ok(path) => {
                     out.insert(target, path.to_string_lossy().to_string());
                 }
-                Err(e) => log::debug!("no icon for {target}: {e}"),
+                Err(e) => eprintln!("[icons] no icon for {target}: {e}"),
             }
         }
         out
@@ -124,4 +124,43 @@ pub async fn resolve_drop(path: String) -> AeroResult<AppEntry> {
     })
     .await
     .map_err(|e| AeroError::other(format!("resolve task failed: {e}")))?
+}
+
+#[derive(serde::Serialize, Clone)]
+#[serde(rename_all = "camelCase")]
+pub struct FolderEntry {
+    pub name: String,
+    pub path: String,
+    pub is_dir: bool,
+}
+
+/// List a pinned folder's contents for the flyout grid: directories
+/// first, then files, alphabetical, hidden/system files skipped.
+#[tauri::command]
+pub async fn list_folder(path: String, limit: Option<usize>) -> AeroResult<Vec<FolderEntry>> {
+    tauri::async_runtime::spawn_blocking(move || {
+        let limit = limit.unwrap_or(30);
+        let mut entries: Vec<FolderEntry> = Vec::new();
+        for entry in std::fs::read_dir(&path)?.flatten() {
+            let name = entry.file_name().to_string_lossy().to_string();
+            if name.starts_with('.') || name.eq_ignore_ascii_case("desktop.ini") {
+                continue;
+            }
+            let is_dir = entry.file_type().map(|t| t.is_dir()).unwrap_or(false);
+            entries.push(FolderEntry {
+                name,
+                path: entry.path().to_string_lossy().to_string(),
+                is_dir,
+            });
+        }
+        entries.sort_by(|a, b| {
+            b.is_dir
+                .cmp(&a.is_dir)
+                .then_with(|| a.name.to_lowercase().cmp(&b.name.to_lowercase()))
+        });
+        entries.truncate(limit);
+        Ok(entries)
+    })
+    .await
+    .map_err(|e| AeroError::other(format!("folder list task failed: {e}")))?
 }

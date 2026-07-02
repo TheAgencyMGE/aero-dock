@@ -55,7 +55,7 @@ export interface AppEntry {
   targetPath: string;
   args: string;
   icon: string | null;
-  source: "start-menu" | "desktop";
+  source: "start-menu" | "desktop" | "folder";
 }
 
 export interface Rect {

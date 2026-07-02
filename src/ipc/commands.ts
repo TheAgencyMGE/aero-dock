@@ -36,6 +36,11 @@ export const ipc = {
   openFileLocation: (target: string) =>
     invoke<void>("open_file_location", { target }),
   resolveDrop: (path: string) => invoke<AppEntry>("resolve_drop", { path }),
+  listFolder: (path: string, limit?: number) =>
+    invoke<{ name: string; path: string; isDir: boolean }[]>("list_folder", {
+      path,
+      limit: limit ?? null,
+    }),
 
   // running windows
   getRunning: () => invoke<RunningSnapshot>("get_running"),
