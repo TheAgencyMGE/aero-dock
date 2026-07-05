@@ -8,6 +8,8 @@
   align-self: center;
   position: relative;
   z-index: 3;
+  /* never let the flex row squeeze the clock into wrapping */
+  flex: none;
 }
 
 .widget-clock {
@@ -24,6 +26,7 @@
   color: #f4fbff;
   text-shadow: 0 1px 4px rgba(8, 40, 70, 0.75);
   letter-spacing: 0.02em;
+  white-space: nowrap;
 }
 
 .widget-date {
@@ -31,6 +34,7 @@
   font-weight: 600;
   color: rgba(238, 250, 255, 0.85);
   text-shadow: 0 1px 3px rgba(8, 40, 70, 0.7);
+  white-space: nowrap;
 }
 
 .widget-glyphs {

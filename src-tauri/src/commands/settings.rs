@@ -19,7 +19,14 @@ pub fn set_settings(
     store: State<'_, SettingsStore>,
     settings: Settings,
 ) -> AeroResult<Settings> {
-    store.replace(&app, settings)
+    let result = store.replace(&app, settings)?;
+    // edge/monitor/floating changes must move the window even when its
+    // size is unchanged (bottom<->top keeps identical dimensions, so the
+    // frontend's resize path never fires)
+    if let Err(e) = crate::commands::dock::position_dock(&app) {
+        log::warn!("reposition after settings change failed: {e}");
+    }
+    Ok(result)
 }
 
 #[tauri::command]
@@ -130,5 +137,9 @@ pub fn import_settings(
     store: State<'_, SettingsStore>,
     json: String,
 ) -> AeroResult<Settings> {
-    store.import_json(&app, &json)
+    let result = store.import_json(&app, &json)?;
+    if let Err(e) = crate::commands::dock::position_dock(&app) {
+        log::warn!("reposition after import failed: {e}");
+    }
+    Ok(result)
 }

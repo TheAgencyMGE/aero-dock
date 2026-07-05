@@ -127,6 +127,9 @@
 
 .settings-card {
   padding: 16px 20px 14px;
+  /* cards must never shrink to the viewport — the column scrolls;
+     .glass clips overflow, so a shrunken card would swallow controls */
+  flex: none;
 }
 
 .settings-card h2 {

@@ -51,6 +51,7 @@ pub fn run() {
             if app.state::<SettingsStore>().get().hide_taskbar {
                 platform::windows::taskbar::set_taskbar_autohide(true);
             }
+            commands::apps::warm_app_cache();
             Ok(())
         })
         .invoke_handler(tauri::generate_handler![

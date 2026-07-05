@@ -7,10 +7,38 @@ use tauri::{AppHandle, Manager};
 use crate::core::{AeroError, AeroResult};
 use crate::platform::AppEntry;
 
-/// Enumerate installed apps from the Start Menu and Desktop.
+/// Cached app list: the scan (Start Menu + AppsFolder COM enumeration)
+/// costs ~2s, so search shouldn't pay it on every open.
+static APP_CACHE: parking_lot::Mutex<Option<(std::time::Instant, Vec<AppEntry>)>> =
+    parking_lot::Mutex::new(None);
+const APP_CACHE_TTL_SECS: u64 = 300;
+
+fn scan_apps_cached(force: bool) -> AeroResult<Vec<AppEntry>> {
+    if !force {
+        if let Some((at, apps)) = APP_CACHE.lock().as_ref() {
+            if at.elapsed().as_secs() < APP_CACHE_TTL_SECS {
+                return Ok(apps.clone());
+            }
+        }
+    }
+    let apps = crate::platform::windows::apps::enumerate_apps()?;
+    *APP_CACHE.lock() = Some((std::time::Instant::now(), apps.clone()));
+    Ok(apps)
+}
+
+/// Warm the cache off the critical path (called once at startup).
+pub fn warm_app_cache() {
+    tauri::async_runtime::spawn_blocking(|| {
+        if let Err(e) = scan_apps_cached(true) {
+            log::warn!("app cache warm failed: {e}");
+        }
+    });
+}
+
+/// Enumerate installed apps (Start Menu + Desktop + AppsFolder), cached.
 #[tauri::command]
 pub async fn list_apps() -> AeroResult<Vec<AppEntry>> {
-    tauri::async_runtime::spawn_blocking(crate::platform::windows::apps::enumerate_apps)
+    tauri::async_runtime::spawn_blocking(|| scan_apps_cached(false))
         .await
         .map_err(|e| AeroError::other(format!("app scan task failed: {e}")))?
 }
