@@ -17,6 +17,7 @@ import { WidgetCluster } from "../widgets/WidgetCluster";
 import { ContextMenu } from "./ContextMenu";
 import { DockIcon } from "./DockIcon";
 import { FolderFlyout } from "./FolderFlyout";
+import { WindowsFlyout } from "./WindowsFlyout";
 import { anchorFor, useMenu } from "./menuStore";
 import "./dock.css";
 
@@ -161,6 +162,11 @@ export function DockBar({ settings, items, onLaunch }: DockBarProps) {
         menu.open("folder", item, anchorFor(target));
         return;
       }
+      // several windows: show them instead of blind-cycling
+      if (item.windows.length > 1 && target) {
+        menu.open("windows", item, anchorFor(target));
+        return;
+      }
       onLaunch(item);
     },
     [onLaunch, menu],
@@ -241,9 +247,24 @@ export function DockBar({ settings, items, onLaunch }: DockBarProps) {
         ))}
         <span className="dock-divider" aria-hidden />
         <WidgetCluster />
+        <button
+          className="dock-search-btn"
+          title="Aero Dock settings"
+          onClick={() => ipc.openSettings().catch((e) => console.error("open settings", e))}
+        >
+          <svg viewBox="0 0 24 24" fill="none">
+            <path
+              d="M12 8.6 a3.4 3.4 0 1 0 0 6.8 a3.4 3.4 0 0 0 0-6.8 z M12 3.5 l1 2.4 a6.6 6.6 0 0 1 2.4 1 l2.5-.8 1.4 2.4 -1.7 1.9 a6.6 6.6 0 0 1 0 2.7 l1.7 1.9 -1.4 2.4 -2.5-.8 a6.6 6.6 0 0 1 -2.4 1 l-1 2.4 h-2.8 l-.9-2.4 a6.6 6.6 0 0 1 -2.4-1 l-2.5.8 -1.4-2.4 1.7-1.9 a6.6 6.6 0 0 1 0-2.7 L2.3 8.5 3.7 6.1 l2.5.8 a6.6 6.6 0 0 1 2.4-1 l.9-2.4 z"
+              stroke="#1c5f8f"
+              strokeWidth="1.7"
+              strokeLinejoin="round"
+            />
+          </svg>
+        </button>
       </motion.div>
       <ContextMenu settings={settings} edge={edge} />
       <FolderFlyout edge={edge} />
+      <WindowsFlyout edge={edge} />
       <SearchOverlay />
     </div>
   );

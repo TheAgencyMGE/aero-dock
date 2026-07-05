@@ -141,6 +141,8 @@ pub struct Settings {
     pub appearance: AppearanceSettings,
     pub pinned: Vec<PinnedItem>,
     pub launch_at_startup: bool,
+    /// Put the Windows taskbar into auto-hide so Aero Dock is the bar.
+    pub hide_taskbar: bool,
     pub onboarding_complete: bool,
 }
 
@@ -152,6 +154,7 @@ impl Default for Settings {
             appearance: AppearanceSettings::default(),
             pinned: Vec::new(),
             launch_at_startup: false,
+            hide_taskbar: false,
             onboarding_complete: false,
         }
     }

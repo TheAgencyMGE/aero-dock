@@ -124,16 +124,29 @@ export function WidgetCluster() {
       </div>
       <div className="widget-glyphs">
         {status?.battery.present && (
-          <span
-            className="widget-chip"
-            title={`Battery ${status.battery.percent}%${status.battery.charging ? " (charging)" : ""}`}
+          <button
+            className="widget-chip widget-chip-button"
+            title={`Battery ${status.battery.percent}%${status.battery.charging ? " (charging)" : ""} — click for power settings`}
+            onClick={() =>
+              ipc.launch("ms-settings:batterysaver").catch((e) =>
+                console.error("open power settings failed", e),
+              )
+            }
           >
             <BatteryGlyph percent={status.battery.percent} charging={status.battery.charging} />
-          </span>
+          </button>
         )}
-        <span className="widget-chip" title={status?.internet ? "Connected" : "No internet"}>
+        <button
+          className="widget-chip widget-chip-button"
+          title={`${status?.internet ? "Connected" : "No internet"} — click for network settings`}
+          onClick={() =>
+            ipc.launch("ms-settings:network").catch((e) =>
+              console.error("open network settings failed", e),
+            )
+          }
+        >
           <NetworkGlyph online={status?.internet ?? false} />
-        </span>
+        </button>
         {status?.volume.available && (
           <button
             className="widget-chip widget-chip-button"

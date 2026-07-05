@@ -46,6 +46,11 @@ pub fn run() {
             platform::windows::running::start(handle.clone());
             commands::system_cmd::start_poller(handle.clone());
             setup_tray(app)?;
+
+            // honor the taskbar preference from the last session
+            if app.state::<SettingsStore>().get().hide_taskbar {
+                platform::windows::taskbar::set_taskbar_autohide(true);
+            }
             Ok(())
         })
         .invoke_handler(tauri::generate_handler![
@@ -70,6 +75,7 @@ pub fn run() {
             commands::dock::resize_dock,
             commands::dock::list_monitors,
             commands::dock::set_dock_focusable,
+            commands::dock::set_taskbar_hidden,
             commands::windows_cmd::get_running,
             commands::windows_cmd::activate_window,
             commands::windows_cmd::minimize_window,
@@ -80,8 +86,16 @@ pub fn run() {
             commands::system_cmd::empty_recycle_bin,
             commands::system_cmd::get_wallpaper_accent,
         ])
-        .run(tauri::generate_context!())
-        .expect("error while running Aero Dock");
+        .build(tauri::generate_context!())
+        .expect("error while building Aero Dock")
+        .run(|app, event| {
+            // leaving? give the user their taskbar back
+            if let tauri::RunEvent::ExitRequested { .. } = event {
+                if app.state::<SettingsStore>().get().hide_taskbar {
+                    platform::windows::taskbar::set_taskbar_autohide(false);
+                }
+            }
+        });
 }
 
 /// Tray icon: the dock's home base. Left-click toggles dock visibility;

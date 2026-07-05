@@ -44,6 +44,8 @@ export const ipc = {
     invoke<RecentFile[]>("list_recent_files", { limit: limit ?? null }),
   setDockFocusable: (focusable: boolean) =>
     invoke<void>("set_dock_focusable", { focusable }),
+  setTaskbarHidden: (hidden: boolean) =>
+    invoke<void>("set_taskbar_hidden", { hidden }),
   listFolder: (path: string, limit?: number) =>
     invoke<{ name: string; path: string; isDir: boolean }[]>("list_folder", {
       path,

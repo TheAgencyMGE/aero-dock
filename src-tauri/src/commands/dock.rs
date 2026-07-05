@@ -84,6 +84,24 @@ pub fn list_monitors() -> AeroResult<Vec<MonitorInfoEx>> {
     enumerate_monitors()
 }
 
+/// Auto-hide the Windows taskbar (Aero Dock becomes the bar) or restore
+/// it. Repositions the dock afterwards because the work area changes.
+#[tauri::command]
+pub async fn set_taskbar_hidden(app: AppHandle, hidden: bool) -> AeroResult<()> {
+    crate::platform::windows::taskbar::set_taskbar_autohide(hidden);
+    // the shell animates the taskbar away; re-measure once it settles
+    tokio_sleep(600).await;
+    position_dock(&app)
+}
+
+async fn tokio_sleep(ms: u64) {
+    tauri::async_runtime::spawn_blocking(move || {
+        std::thread::sleep(std::time::Duration::from_millis(ms))
+    })
+    .await
+    .ok();
+}
+
 /// Let the dock take keyboard focus (search overlay) or give its
 /// focus-immunity back when the overlay closes.
 #[tauri::command]

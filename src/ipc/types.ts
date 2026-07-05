@@ -46,6 +46,7 @@ export interface Settings {
   appearance: AppearanceSettings;
   pinned: PinnedItem[];
   launchAtStartup: boolean;
+  hideTaskbar: boolean;
   onboardingComplete: boolean;
 }
 
@@ -55,7 +56,7 @@ export interface AppEntry {
   targetPath: string;
   args: string;
   icon: string | null;
-  source: "start-menu" | "desktop" | "folder";
+  source: "start-menu" | "desktop" | "folder" | "apps-folder";
 }
 
 export interface Rect {

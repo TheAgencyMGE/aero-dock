@@ -60,8 +60,10 @@ fn shell_execute(verb: &str, target: &str, args: Option<&str>) -> AeroResult<()>
     let target_w = to_wide(target);
     let args_w = args.map(to_wide);
     let verb_w = to_wide(verb);
+    // real files get their folder as workdir; URIs (ms-settings:) get none
     let workdir = std::path::Path::new(target)
         .parent()
+        .filter(|p| !p.as_os_str().is_empty() && p.exists())
         .map(|p| to_wide(&p.to_string_lossy()));
 
     let hinst = unsafe {
@@ -85,7 +87,29 @@ fn shell_execute(verb: &str, target: &str, args: Option<&str>) -> AeroResult<()>
 }
 
 fn launch_blocking(target: &str, args: Option<&str>) -> AeroResult<()> {
+    // packaged apps (Settings, Store apps…) activate by AUMID through
+    // the activation manager — ShellExecuteW silently no-ops on these
+    if let Some(aumid) = target.strip_prefix("shell:AppsFolder\\") {
+        return activate_aumid(aumid);
+    }
     shell_execute("open", target, args)
+}
+
+fn activate_aumid(aumid: &str) -> AeroResult<()> {
+    use windows::core::PCWSTR;
+    use windows::Win32::System::Com::{CoCreateInstance, CLSCTX_LOCAL_SERVER};
+    use windows::Win32::UI::Shell::{
+        ApplicationActivationManager, IApplicationActivationManager, AO_NONE,
+    };
+
+    use crate::platform::windows::util::to_wide;
+
+    let _com = crate::platform::ComApartment::new();
+    let manager: IApplicationActivationManager =
+        unsafe { CoCreateInstance(&ApplicationActivationManager, None, CLSCTX_LOCAL_SERVER)? };
+    let wide = to_wide(aumid);
+    unsafe { manager.ActivateApplication(PCWSTR(wide.as_ptr()), PCWSTR::null(), AO_NONE)? };
+    Ok(())
 }
 
 /// Launch elevated (UAC prompt) — the "Run as administrator" menu action.

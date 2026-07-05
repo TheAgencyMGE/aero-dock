@@ -1,0 +1,83 @@
+/* Window-list flyout: pick a window by title. */
+
+.windows-flyout {
+  padding: 8px;
+  --glass-tint-top: rgba(120, 185, 235, 0.6);
+  --glass-tint-mid: rgba(35, 95, 155, 0.55);
+  --glass-tint-bottom: rgba(18, 60, 110, 0.66);
+  --glass-radius: 14px;
+  transform-origin: bottom center;
+}
+
+.windows-flyout-title {
+  padding: 2px 8px 7px;
+  font-size: 12px;
+  font-weight: 700;
+  color: rgba(240, 250, 255, 0.85);
+  text-shadow: 0 1px 3px rgba(8, 40, 70, 0.7);
+  position: relative;
+  z-index: 3;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.25);
+  margin-bottom: 5px;
+}
+
+.windows-flyout-row {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  position: relative;
+  z-index: 3;
+  border-radius: 9px;
+}
+
+.windows-flyout-row[data-focused="true"] .windows-flyout-activate {
+  border-color: rgba(150, 240, 190, 0.5);
+  box-shadow: inset 0 0 8px rgba(122, 208, 58, 0.25);
+}
+
+.windows-flyout-activate {
+  flex: 1;
+  min-width: 0;
+  padding: 8px 10px;
+  border: 1px solid transparent;
+  border-radius: 9px;
+  background: none;
+  text-align: left;
+  font-family: inherit;
+  font-size: 12.5px;
+  font-weight: 500;
+  color: #f2faff;
+  text-shadow: 0 1px 3px rgba(8, 40, 70, 0.7);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  cursor: pointer;
+}
+
+.windows-flyout-activate:hover {
+  background: linear-gradient(
+    180deg,
+    rgba(255, 255, 255, 0.36),
+    rgba(160, 220, 255, 0.16) 55%,
+    rgba(120, 195, 245, 0.28)
+  );
+  border-color: rgba(255, 255, 255, 0.45);
+}
+
+.windows-flyout-close {
+  flex: none;
+  width: 24px;
+  height: 24px;
+  border: 1px solid transparent;
+  border-radius: 7px;
+  background: none;
+  color: rgba(240, 250, 255, 0.7);
+  font-size: 11px;
+  cursor: pointer;
+}
+
+.windows-flyout-close:hover {
+  background: linear-gradient(180deg, rgba(255, 170, 160, 0.5), rgba(200, 70, 60, 0.4));
+  border-color: rgba(255, 200, 190, 0.55);
+  color: #fff;
+}

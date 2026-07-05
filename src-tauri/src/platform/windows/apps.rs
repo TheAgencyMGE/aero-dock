@@ -56,13 +56,17 @@ fn scan_roots() -> Vec<ScanRoot> {
     roots
 }
 
-/// Enumerate installed apps. Call from `spawn_blocking`.
+/// Enumerate installed apps: Start Menu / Desktop shortcuts first
+/// (exe targets — they match running windows for indicators), then
+/// everything else from `shell:AppsFolder` (UWP/Store/system apps like
+/// Settings that have no filesystem shortcut). Call from `spawn_blocking`.
 pub fn enumerate_apps() -> AeroResult<Vec<AppEntry>> {
     let _com = ComApartment::new();
     let link: IShellLinkW = unsafe { CoCreateInstance(&ShellLink, None, CLSCTX_INPROC_SERVER)? };
     let persist: IPersistFile = windows::core::Interface::cast(&link)?;
 
     let mut seen: HashSet<String> = HashSet::new();
+    let mut names_seen: HashSet<String> = HashSet::new();
     let mut apps: Vec<AppEntry> = Vec::new();
 
     for root in scan_roots() {
@@ -72,14 +76,86 @@ pub fn enumerate_apps() -> AeroResult<Vec<AppEntry>> {
             if let Some(entry) = resolve_shortcut(&link, &persist, &lnk, root.source) {
                 let dedupe = format!("{}|{}", entry.target_path.to_lowercase(), entry.args.to_lowercase());
                 if seen.insert(dedupe) {
+                    names_seen.insert(entry.name.to_lowercase());
                     apps.push(entry);
                 }
             }
         }
     }
 
+    match enumerate_apps_folder() {
+        Ok(store_apps) => {
+            for entry in store_apps {
+                if names_seen.insert(entry.name.to_lowercase()) {
+                    apps.push(entry);
+                }
+            }
+        }
+        Err(e) => log::warn!("AppsFolder enumeration failed: {e}"),
+    }
+
     apps.sort_by(|a, b| a.name.to_lowercase().cmp(&b.name.to_lowercase()));
     Ok(apps)
+}
+
+/// Everything Start-menu search would show: enumerate the virtual
+/// `shell:AppsFolder`. Packaged apps get `shell:AppsFolder\<AUMID>`
+/// launch targets, which both ShellExecuteW and the icon extractor
+/// understand as parsing names.
+fn enumerate_apps_folder() -> AeroResult<Vec<AppEntry>> {
+    use windows::Win32::UI::Shell::{
+        IEnumShellItems, IShellItem, SHGetKnownFolderItem, BHID_EnumItems, FOLDERID_AppsFolder,
+        KF_FLAG_DEFAULT, SIGDN_NORMALDISPLAY, SIGDN_PARENTRELATIVEPARSING,
+    };
+
+    let folder: IShellItem =
+        unsafe { SHGetKnownFolderItem(&FOLDERID_AppsFolder, KF_FLAG_DEFAULT, None)? };
+    let items: IEnumShellItems = unsafe { folder.BindToHandler(None, &BHID_EnumItems)? };
+
+    let mut out = Vec::new();
+    loop {
+        let mut batch = [const { None }; 8];
+        let mut fetched = 0u32;
+        let hr = unsafe { items.Next(&mut batch, Some(&mut fetched)) };
+        if hr.is_err() || fetched == 0 {
+            break;
+        }
+        for item in batch.iter().take(fetched as usize).flatten() {
+            let name = match unsafe { item.GetDisplayName(SIGDN_NORMALDISPLAY) } {
+                Ok(p) => unsafe { pwstr_to_string(p) },
+                Err(_) => continue,
+            };
+            let parsing = match unsafe { item.GetDisplayName(SIGDN_PARENTRELATIVEPARSING) } {
+                Ok(p) => unsafe { pwstr_to_string(p) },
+                Err(_) => continue,
+            };
+            if name.is_empty() || parsing.is_empty() {
+                continue;
+            }
+            // exe-backed entries already come from the shortcut scan with
+            // richer data; AppsFolder is here for the packaged/virtual ones
+            let target = format!("shell:AppsFolder\\{parsing}");
+            out.push(AppEntry {
+                icon: Some(path_key(&target)),
+                name,
+                shortcut_path: None,
+                target_path: target,
+                args: String::new(),
+                source: "apps-folder".to_string(),
+            });
+        }
+    }
+    Ok(out)
+}
+
+/// Take ownership of a shell-allocated PWSTR and free it.
+unsafe fn pwstr_to_string(p: windows::core::PWSTR) -> String {
+    if p.is_null() {
+        return String::new();
+    }
+    let s = unsafe { p.to_string() }.unwrap_or_default();
+    unsafe { windows::Win32::System::Com::CoTaskMemFree(Some(p.as_ptr() as *const _)) };
+    s
 }
 
 /// Resolve one dropped/browsed path into a pinnable entry. `.lnk` files

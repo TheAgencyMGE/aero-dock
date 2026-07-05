@@ -62,9 +62,18 @@ export function SettingsApp() {
 
   return (
     <div className="settings-root">
+      {/* ambient scenery: slow bubbles rising through the light */}
+      <div className="settings-bubbles" aria-hidden>
+        {[0, 1, 2, 3, 4].map((i) => (
+          <span key={i} className="settings-bubble" style={{ ["--i" as string]: i }} />
+        ))}
+      </div>
       <header className="settings-header">
-        <h1>Aero Dock</h1>
-        <p>Bring beauty back to the desktop.</p>
+        <span className="settings-orb" aria-hidden />
+        <div>
+          <h1>Aero Dock</h1>
+          <p>Bring beauty back to the desktop.</p>
+        </div>
       </header>
 
       <main className="settings-scroll">
@@ -212,6 +221,15 @@ export function SettingsApp() {
             label="Start Aero Dock when I sign in"
             checked={settings.launchAtStartup}
             onChange={toggleStartup}
+          />
+          <AeroToggle
+            label="Hide the Windows taskbar"
+            checked={settings.hideTaskbar}
+            hint="Puts the Windows taskbar into auto-hide so Aero Dock is your bar; restored when you quit"
+            onChange={(v) => {
+              ipc.setTaskbarHidden(v).catch((e) => console.error("taskbar toggle failed", e));
+              set((d) => void (d.hideTaskbar = v));
+            }}
           />
           <div className="ctl-row">
             <span className="ctl-label">Settings file</span>

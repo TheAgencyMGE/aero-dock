@@ -13,21 +13,97 @@
     linear-gradient(180deg, #8fd3f2 0%, #5cb0e6 45%, #3f8fd0 78%, #67b96a 100%);
 }
 
+/* ---- rising bubbles: the water is alive ---- */
+
+.settings-bubbles {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.settings-bubble {
+  position: absolute;
+  bottom: -90px;
+  left: calc(8% + var(--i) * 19%);
+  width: calc(34px + var(--i) * 14px);
+  height: calc(34px + var(--i) * 14px);
+  border-radius: 50%;
+  background:
+    radial-gradient(circle at 32% 28%, rgba(255, 255, 255, 0.85), rgba(255, 255, 255, 0.12) 42%, rgba(255, 255, 255, 0.02) 70%);
+  border: 1px solid rgba(255, 255, 255, 0.4);
+  animation: bubble-rise calc(22s + var(--i) * 7s) linear infinite;
+  animation-delay: calc(var(--i) * -6s);
+  opacity: 0;
+}
+
+@keyframes bubble-rise {
+  0% {
+    transform: translateY(0) translateX(0);
+    opacity: 0;
+  }
+  8% {
+    opacity: 0.75;
+  }
+  50% {
+    transform: translateY(-55vh) translateX(18px);
+  }
+  92% {
+    opacity: 0.6;
+  }
+  100% {
+    transform: translateY(-112vh) translateX(-10px);
+    opacity: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .settings-bubble {
+    animation: none;
+  }
+}
+
+/* ---- header with the Aero orb ---- */
+
 .settings-header {
-  padding: 22px 30px 10px;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 22px 30px 12px;
   color: #0d3a5c;
+  position: relative;
+}
+
+.settings-orb {
+  width: 54px;
+  height: 54px;
+  border-radius: 50%;
+  flex: none;
+  background:
+    radial-gradient(circle at 62% 22%, rgba(255, 255, 255, 0.95) 0%, rgba(255, 255, 255, 0) 22%),
+    radial-gradient(ellipse 60% 38% at 50% 82%, rgba(140, 225, 110, 0.65), rgba(140, 225, 110, 0) 70%),
+    radial-gradient(circle at 42% 30%, #cdeeff 0%, #5ab2e8 45%, #1264aa 100%);
+  border: 1px solid rgba(255, 255, 255, 0.7);
+  box-shadow:
+    0 6px 18px rgba(10, 45, 80, 0.35),
+    inset 0 2px 6px rgba(255, 255, 255, 0.7);
 }
 
 .settings-header h1 {
-  font-size: 26px;
+  font-size: 27px;
   font-weight: 700;
   letter-spacing: -0.01em;
-  text-shadow: 0 1px 0 rgba(255, 255, 255, 0.6);
+  background: linear-gradient(180deg, #124a78, #2f9de3);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  filter: drop-shadow(0 1px 0 rgba(255, 255, 255, 0.65));
 }
 
 .settings-header p {
   font-size: 13px;
-  color: rgba(13, 58, 92, 0.75);
+  color: rgba(13, 58, 92, 0.78);
+  text-shadow: 0 1px 0 rgba(255, 255, 255, 0.45);
 }
 
 .settings-scroll {
@@ -57,10 +133,28 @@
   font-size: 15px;
   font-weight: 700;
   color: #0d3a5c;
-  margin-bottom: 10px;
+  margin-bottom: 12px;
+  padding-bottom: 7px;
   position: relative;
   z-index: 3;
   text-shadow: 0 1px 0 rgba(255, 255, 255, 0.55);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.5);
+}
+
+.settings-card h2::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  bottom: -1px;
+  width: 64px;
+  height: 2px;
+  border-radius: 1px;
+  background: linear-gradient(90deg, var(--aero-accent), var(--aero-life));
+}
+
+.theme-swatch[data-active="true"] .theme-swatch-preview {
+  outline: 2px solid #fff;
+  outline-offset: 1px;
 }
 
 .settings-footer {
