@@ -28,14 +28,30 @@ interface MenuState {
   anchor: MenuAnchor | null;
   open: (kind: FlyoutKind, item: DockItemView, anchor: MenuAnchor) => void;
   close: () => void;
+  /** Close soon unless something (re-entering the flyout) cancels it. */
+  scheduleClose: (delayMs: number) => void;
+  cancelScheduledClose: () => void;
 }
+
+let closeTimer: ReturnType<typeof setTimeout> | undefined;
 
 export const useMenu = create<MenuState>((set) => ({
   kind: "menu",
   item: null,
   anchor: null,
-  open: (kind, item, anchor) => set({ kind, item, anchor }),
-  close: () => set({ item: null, anchor: null }),
+  open: (kind, item, anchor) => {
+    clearTimeout(closeTimer);
+    set({ kind, item, anchor });
+  },
+  close: () => {
+    clearTimeout(closeTimer);
+    set({ item: null, anchor: null });
+  },
+  scheduleClose: (delayMs) => {
+    clearTimeout(closeTimer);
+    closeTimer = setTimeout(() => set({ item: null, anchor: null }), delayMs);
+  },
+  cancelScheduledClose: () => clearTimeout(closeTimer),
 }));
 
 /** Capture an icon's anchor box for flyout positioning. */

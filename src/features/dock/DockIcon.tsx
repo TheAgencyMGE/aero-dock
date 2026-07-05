@@ -15,6 +15,7 @@ import { useCallback, useRef, useState } from "react";
 import { springs } from "../../engine/animation/springs";
 import { effectsBus } from "../../engine/effects/effectsBus";
 import type { DockItemView } from "../../state/dockStore";
+import { useMenu } from "./menuStore";
 
 interface DockIconProps {
   item: DockItemView;
@@ -105,7 +106,11 @@ export function DockIcon({
       }}
       onMouseEnter={(e) => {
         setHovered(true);
-        if (item.windows.length > 0) {
+        const m = useMenu.getState();
+        if (m.kind === "windows" && m.item?.id === item.id) {
+          // back onto the icon that owns the open preview: keep it
+          m.cancelScheduledClose();
+        } else if (item.windows.length > 0) {
           const el = e.currentTarget;
           dwellTimer.current = setTimeout(() => onHoverPreview(item, el), PREVIEW_DWELL_MS);
         }
@@ -113,6 +118,12 @@ export function DockIcon({
       onMouseLeave={() => {
         setHovered(false);
         clearTimeout(dwellTimer.current);
+        // leaving the icon that owns the open preview: dismiss it soon
+        // unless the cursor lands on the flyout itself
+        const m = useMenu.getState();
+        if (m.kind === "windows" && m.item?.id === item.id) {
+          m.scheduleClose(450);
+        }
       }}
       aria-label={item.name}
     >

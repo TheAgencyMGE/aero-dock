@@ -63,11 +63,18 @@ export function WindowsFlyout({ edge }: WindowsFlyoutProps) {
     }
   }, [windows]);
 
-  // tear down live previews whenever the flyout goes away
+  // tear down live previews whenever the flyout goes away; the second,
+  // delayed hide catches anything a straggling animation callback
+  // re-registered after the first (DWM draws over our DOM, so a leaked
+  // thumbnail floats with no glass behind it)
   useEffect(() => {
     if (!active) return;
     return () => {
+      slotRefs.current.clear();
       ipc.hideWindowPreviews().catch(() => undefined);
+      setTimeout(() => {
+        ipc.hideWindowPreviews().catch(() => undefined);
+      }, 300);
     };
   }, [active]);
 
@@ -145,7 +152,15 @@ export function WindowsFlyout({ edge }: WindowsFlyoutProps) {
           animate={{ opacity: 1, scale: 1, y: 0 }}
           exit={{ opacity: 0, scale: 0.93, transition: { duration: 0.15 } }}
           transition={springs.bloom}
-          onAnimationComplete={placeThumbnails}
+          onAnimationComplete={(definition) => {
+            // fires for BOTH enter and exit — only place thumbnails when
+            // the ENTRANCE (opacity -> 1) has finished, never on exit
+            if ((definition as { opacity?: number })?.opacity === 1) {
+              placeThumbnails();
+            }
+          }}
+          onMouseEnter={() => useMenu.getState().cancelScheduledClose()}
+          onMouseLeave={() => useMenu.getState().scheduleClose(350)}
         >
           <div className="windows-flyout-title">{item.name}</div>
           <div
