@@ -72,14 +72,30 @@
       ALL ambient motion sleeps after 45s idle (animation-play-state
       paused + ticker stop), waking instantly on hover. Verified live.
 
+- [x] UWP/system apps searchable: shell:AppsFolder enumeration merged
+      into list_apps (SIGDN_PARENTRELATIVEPARSING for the AUMID); launch
+      via IApplicationActivationManager (ShellExecuteW no-ops on AUMIDs).
+- [x] Window-list flyout when an app has 2+ windows (click icon → glass
+      list, live titles, per-row close). UWP windows appear under
+      ApplicationFrameHost.exe — known limitation for indicator matching.
+- [x] Battery/network chips clickable → ms-settings pages; launch()
+      workdir guard skips URI targets.
+- [x] Settings window beautified: orb branding, gradient title, rising
+      bubbles, accent card headers; gear button on the dock opens it.
+- [x] Taskbar auto-hide setting (Behavior card): SHAppBarMessage
+      ABM_SETSTATE; restored on quit. Default OFF — user prefers the
+      Windows taskbar visible (they can't drop it until UWP window
+      grouping etc. feels complete).
+
 ### Backlog (remaining)
 1. Window previews on hover (DWM thumbnails — hard; needs native region)
 2. Onboarding welcome surface (basic auto-import works already)
 3. Multi-monitor picker UI in settings (backend list_monitors exists)
-4. Stacks (grouping pinned items into a dock folder) — deferred
-5. Live effects modes (rain/snow/ocean/aurora scenes) — deferred
-6. Music visualization + cursor light — deferred
-7. Release-build smoke test (install the NSIS setup, check autostart)
+4. Warm the app-list cache (first search open waits ~2s for the scan)
+5. Running-indicator matching for UWP apps (ApplicationFrameHost hosts)
+6. Stacks (grouping pinned items into a dock folder) — deferred
+7. Live effects modes (rain/snow/ocean/aurora scenes) — deferred
+8. Release-build smoke test (install the NSIS setup, check autostart)
 
 ### Dev/debug infrastructure
 - WebView console/DOM access: launch dev with
