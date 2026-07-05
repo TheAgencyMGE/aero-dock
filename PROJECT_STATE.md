@@ -87,15 +87,22 @@
       Windows taskbar visible (they can't drop it until UWP window
       grouping etc. feels complete).
 
+- [x] Opposite-edge switching fixed (set_settings always repositions;
+      same-size transitions previously never moved the window)
+- [x] Clock wrapping at small icon sizes fixed (cluster flex:none,
+      nowrap, widget width budget includes search/gear buttons)
+- [x] Settings cards no longer clip controls at short window sizes
+      (cards flex:none inside the scroll column; .glass clips overflow)
+- [x] App list cached (5 min TTL) + warmed at startup: search instant
+
 ### Backlog (remaining)
 1. Window previews on hover (DWM thumbnails — hard; needs native region)
 2. Onboarding welcome surface (basic auto-import works already)
 3. Multi-monitor picker UI in settings (backend list_monitors exists)
-4. Warm the app-list cache (first search open waits ~2s for the scan)
-5. Running-indicator matching for UWP apps (ApplicationFrameHost hosts)
-6. Stacks (grouping pinned items into a dock folder) — deferred
-7. Live effects modes (rain/snow/ocean/aurora scenes) — deferred
-8. Release-build smoke test (install the NSIS setup, check autostart)
+4. Running-indicator matching for UWP apps (ApplicationFrameHost hosts)
+5. Stacks (grouping pinned items into a dock folder) — deferred
+6. Live effects modes (rain/snow/ocean/aurora scenes) — deferred
+7. Release-build smoke test (install the NSIS setup, check autostart)
 
 ### Dev/debug infrastructure
 - WebView console/DOM access: launch dev with
