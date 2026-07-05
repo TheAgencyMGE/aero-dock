@@ -27,7 +27,11 @@ interface DockIconProps {
   index: number;
   onLaunch: (item: DockItemView, target?: HTMLElement) => void;
   onContext: (item: DockItemView, target: HTMLElement) => void;
+  /** Fired after dwelling on an icon that has open windows. */
+  onHoverPreview: (item: DockItemView, target: HTMLElement) => void;
 }
+
+const PREVIEW_DWELL_MS = 550;
 
 export function DockIcon({
   item,
@@ -39,9 +43,11 @@ export function DockIcon({
   index,
   onLaunch,
   onContext,
+  onHoverPreview,
 }: DockIconProps) {
   const ref = useRef<HTMLButtonElement>(null);
   const [hovered, setHovered] = useState(false);
+  const dwellTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
 
   // distance from cursor to this icon's center along the dock axis
   const distance = useTransform(mouseAxis, (cursor) => {
@@ -97,8 +103,17 @@ export function DockIcon({
         e.preventDefault();
         onContext(item, e.currentTarget);
       }}
-      onMouseEnter={() => setHovered(true)}
-      onMouseLeave={() => setHovered(false)}
+      onMouseEnter={(e) => {
+        setHovered(true);
+        if (item.windows.length > 0) {
+          const el = e.currentTarget;
+          dwellTimer.current = setTimeout(() => onHoverPreview(item, el), PREVIEW_DWELL_MS);
+        }
+      }}
+      onMouseLeave={() => {
+        setHovered(false);
+        clearTimeout(dwellTimer.current);
+      }}
       aria-label={item.name}
     >
       {hovered && !vertical && (
@@ -115,7 +130,17 @@ export function DockIcon({
         className="dock-icon-float"
         style={{ animationDelay: `${(index * -0.9).toFixed(2)}s` }}
       >
-        {item.iconSrc ? (
+        {item.kind === "stack" ? (
+          <span className="dock-stack">
+            {item.children.slice(0, 4).map((child, i) =>
+              item.childIcons[i] ? (
+                <img key={child.id} src={item.childIcons[i]!} alt="" draggable={false} />
+              ) : (
+                <span key={child.id} className="dock-stack-slot" />
+              ),
+            )}
+          </span>
+        ) : item.iconSrc ? (
           <img src={item.iconSrc} alt="" draggable={false} />
         ) : (
           <span className="dock-icon-glyph">{initial}</span>

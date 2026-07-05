@@ -31,11 +31,27 @@ export const useRunning = create<RunningState>((set, get) => ({
   },
 }));
 
-/** Group windows by owning executable (lowercased path). */
+const APPS_FOLDER_PREFIX = "shell:appsfolder\\";
+
+/** Identity key for a window: AUMID for packaged apps (their exe is
+ * always ApplicationFrameHost), exe path otherwise. */
+export function windowKey(w: WindowInfo): string {
+  return w.aumid ? `aumid:${w.aumid.toLowerCase()}` : w.exe.toLowerCase();
+}
+
+/** Identity key for a launch target (pinned item / app entry). */
+export function targetKey(path: string): string {
+  const lower = path.toLowerCase();
+  return lower.startsWith(APPS_FOLDER_PREFIX)
+    ? `aumid:${lower.slice(APPS_FOLDER_PREFIX.length)}`
+    : lower;
+}
+
+/** Group windows by app identity (AUMID or exe). */
 export function windowsByExe(windows: WindowInfo[]): Map<string, WindowInfo[]> {
   const map = new Map<string, WindowInfo[]>();
   for (const w of windows) {
-    const key = w.exe.toLowerCase();
+    const key = windowKey(w);
     const list = map.get(key);
     if (list) list.push(w);
     else map.set(key, [w]);

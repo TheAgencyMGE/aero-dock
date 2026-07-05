@@ -20,7 +20,7 @@ export interface MenuAnchor {
   winH: number;
 }
 
-export type FlyoutKind = "menu" | "folder" | "windows";
+export type FlyoutKind = "menu" | "folder" | "windows" | "stack";
 
 interface MenuState {
   kind: FlyoutKind;

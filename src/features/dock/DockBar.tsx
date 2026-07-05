@@ -5,18 +5,20 @@
  * headroom + tooltip space + flyout space when a menu is open).
  */
 
-import { motion, Reorder, useMotionValue } from "motion/react";
+import { AnimatePresence, motion, Reorder, useMotionValue } from "motion/react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { springs } from "../../engine/animation/springs";
 import { ipc } from "../../ipc/commands";
 import type { Settings } from "../../ipc/types";
 import type { DockItemView } from "../../state/dockStore";
 import { useAmbient } from "../../state/ambientStore";
+import { Welcome } from "../onboarding/Welcome";
 import { SearchOverlay, useSearch } from "../search/SearchOverlay";
 import { WidgetCluster } from "../widgets/WidgetCluster";
 import { ContextMenu } from "./ContextMenu";
 import { DockIcon } from "./DockIcon";
 import { FolderFlyout } from "./FolderFlyout";
+import { StackFlyout } from "./StackFlyout";
 import { WindowsFlyout } from "./WindowsFlyout";
 import { anchorFor, useMenu } from "./menuStore";
 import "./dock.css";
@@ -67,7 +69,8 @@ export function DockBar({ settings, items, onLaunch }: DockBarProps) {
   const peak = magnification ? magnificationScale : 1;
   const searchOpen = useSearch((s) => s.open);
   const setSearchOpen = useSearch((s) => s.setOpen);
-  const menuOpen = menu.item !== null || searchOpen;
+  const welcomeOpen = !settings.onboardingComplete && pinnedItems.length === 0;
+  const menuOpen = menu.item !== null || searchOpen || welcomeOpen;
 
   // ---- auto-hide state machine ----
   // hidden=false + hover/menu keeps it visible; idle slides it out,
@@ -162,6 +165,10 @@ export function DockBar({ settings, items, onLaunch }: DockBarProps) {
         menu.open("folder", item, anchorFor(target));
         return;
       }
+      if (item.kind === "stack" && target) {
+        menu.open("stack", item, anchorFor(target));
+        return;
+      }
       // several windows: show them instead of blind-cycling
       if (item.windows.length > 1 && target) {
         menu.open("windows", item, anchorFor(target));
@@ -172,6 +179,13 @@ export function DockBar({ settings, items, onLaunch }: DockBarProps) {
     [onLaunch, menu],
   );
 
+  const openPreview = useCallback(
+    (item: DockItemView, target: HTMLElement) => {
+      if (!draggingRef.current) menu.open("windows", item, anchorFor(target));
+    },
+    [menu],
+  );
+
   const iconProps = {
     mouseAxis,
     iconSize,
@@ -180,6 +194,7 @@ export function DockBar({ settings, items, onLaunch }: DockBarProps) {
     vertical,
     onLaunch: launchGuarded,
     onContext: openMenu,
+    onHoverPreview: openPreview,
   };
 
   const slideOut = vertical
@@ -264,8 +279,10 @@ export function DockBar({ settings, items, onLaunch }: DockBarProps) {
       </motion.div>
       <ContextMenu settings={settings} edge={edge} />
       <FolderFlyout edge={edge} />
+      <StackFlyout edge={edge} />
       <WindowsFlyout edge={edge} />
       <SearchOverlay />
+      <AnimatePresence>{welcomeOpen && <Welcome />}</AnimatePresence>
     </div>
   );
 }

@@ -81,6 +81,8 @@ pub fn run() {
             commands::windows_cmd::activate_window,
             commands::windows_cmd::minimize_window,
             commands::windows_cmd::close_window,
+            commands::windows_cmd::show_window_previews,
+            commands::windows_cmd::hide_window_previews,
             commands::system_cmd::get_system_status,
             commands::system_cmd::set_volume,
             commands::system_cmd::open_recycle_bin,

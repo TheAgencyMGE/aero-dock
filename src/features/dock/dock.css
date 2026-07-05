@@ -171,6 +171,38 @@
     );
 }
 
+/* stack: a glass tile holding a 2x2 mosaic of its members */
+.dock-stack {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 6%;
+  width: 100%;
+  height: 100%;
+  padding: 9%;
+  box-sizing: border-box;
+  border-radius: 22%;
+  background: linear-gradient(
+    160deg,
+    rgba(255, 255, 255, 0.55),
+    rgba(180, 225, 250, 0.25) 55%,
+    rgba(120, 190, 235, 0.35)
+  );
+  border: 1px solid rgba(255, 255, 255, 0.65);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.8), 0 2px 5px rgba(10, 45, 80, 0.35);
+}
+
+.dock-stack img {
+  width: 100% !important;
+  height: 100% !important;
+  object-fit: contain;
+  -webkit-box-reflect: none !important;
+}
+
+.dock-stack-slot {
+  border-radius: 20%;
+  background: rgba(255, 255, 255, 0.25);
+}
+
 /* fallback glyph when an icon can't be extracted */
 .dock-icon-glyph {
   display: flex;

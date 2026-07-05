@@ -43,6 +43,10 @@ pub struct WindowInfo {
     /// Full path of the owning process executable.
     pub exe: String,
     pub pid: u32,
+    /// AppUserModelID for packaged (UWP/Store) windows, which are all
+    /// hosted by ApplicationFrameHost.exe — the exe alone can't
+    /// identify them, but the frame window carries the app's AUMID.
+    pub aumid: Option<String>,
 }
 
 #[derive(Debug, Clone, Serialize)]
@@ -290,13 +294,48 @@ unsafe fn probe_window(hwnd: HWND) -> Option<WindowInfo> {
             return None;
         }
         let exe = process_path(pid)?;
+        let aumid = if exe.to_lowercase().ends_with("applicationframehost.exe") {
+            window_aumid(hwnd)
+        } else {
+            None
+        };
 
         Some(WindowInfo {
             hwnd: hwnd.0 as isize,
             title,
             exe,
             pid,
+            aumid,
         })
+    }
+}
+
+/// Read PKEY_AppUserModel_ID from a window's property store.
+fn window_aumid(hwnd: HWND) -> Option<String> {
+    use windows::core::GUID;
+    use windows::Win32::Foundation::PROPERTYKEY;
+    use windows::Win32::System::Com::StructuredStorage::PropVariantToStringAlloc;
+    use windows::Win32::UI::Shell::PropertiesSystem::{IPropertyStore, SHGetPropertyStoreForWindow};
+
+    const PKEY_APPUSERMODEL_ID: PROPERTYKEY = PROPERTYKEY {
+        fmtid: GUID::from_u128(0x9F4C2855_9F79_4B39_A8D0_E1D42DE1D5F3),
+        pid: 5,
+    };
+
+    unsafe {
+        let store: IPropertyStore = SHGetPropertyStoreForWindow(hwnd).ok()?;
+        let value = store.GetValue(&PKEY_APPUSERMODEL_ID).ok()?;
+        let pw = PropVariantToStringAlloc(&value).ok()?;
+        if pw.is_null() {
+            return None;
+        }
+        let s = pw.to_string().ok()?;
+        windows::Win32::System::Com::CoTaskMemFree(Some(pw.as_ptr() as *const _));
+        if s.is_empty() {
+            None
+        } else {
+            Some(s)
+        }
     }
 }
 

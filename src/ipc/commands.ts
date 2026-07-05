@@ -66,6 +66,12 @@ export const ipc = {
   emptyRecycleBin: () => invoke<void>("empty_recycle_bin"),
   getWallpaperAccent: () => invoke<string>("get_wallpaper_accent"),
 
+  // window previews (DWM thumbnails, physical px in dock client area)
+  showWindowPreviews: (
+    slots: { hwnd: number; x: number; y: number; w: number; h: number }[],
+  ) => invoke<void>("show_window_previews", { slots }),
+  hideWindowPreviews: () => invoke<void>("hide_window_previews"),
+
   // dock window
   resizeDock: (width: number, height: number) =>
     invoke<void>("resize_dock", { width, height }),

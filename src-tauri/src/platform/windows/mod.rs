@@ -6,5 +6,6 @@ pub mod recent;
 pub mod running;
 pub mod system;
 pub mod taskbar;
+pub mod thumbnails;
 pub mod wallpaper;
 pub mod util;

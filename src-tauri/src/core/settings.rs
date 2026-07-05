@@ -84,6 +84,8 @@ pub struct AppearanceSettings {
     pub reflection_strength: f32,
     /// Ambient particle density, 0.0..=1.0 (0 disables particles).
     pub particle_density: f32,
+    /// Ambient scene: none | dust | rain | snow | bubbles | aurora.
+    pub scene: String,
     /// Global animation speed multiplier, 0.5..=2.0.
     pub animation_speed: f32,
     /// Tint the theme from the wallpaper's dominant color.
@@ -99,6 +101,7 @@ impl Default for AppearanceSettings {
             bloom_amount: 0.7,
             reflection_strength: 0.6,
             particle_density: 0.35,
+            scene: "dust".into(),
             animation_speed: 1.0,
             wallpaper_sync: false,
         }

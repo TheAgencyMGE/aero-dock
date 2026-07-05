@@ -25,6 +25,7 @@ export interface AppearanceSettings {
   bloomAmount: number;
   reflectionStrength: number;
   particleDensity: number;
+  scene: string;
   animationSpeed: number;
   wallpaperSync: boolean;
 }
@@ -79,6 +80,8 @@ export interface WindowInfo {
   title: string;
   exe: string;
   pid: number;
+  /** AppUserModelID for UWP windows (hosted by ApplicationFrameHost). */
+  aumid: string | null;
 }
 
 export interface RunningSnapshot {

@@ -9,7 +9,7 @@ import { convertFileSrc } from "@tauri-apps/api/core";
 import { create } from "zustand";
 import { ipc } from "../ipc/commands";
 import type { PinnedItem, WindowInfo } from "../ipc/types";
-import { exeDisplayName, windowsByExe } from "./runningStore";
+import { exeDisplayName, targetKey, windowsByExe } from "./runningStore";
 
 export interface DockItemView {
   id: string;
@@ -19,6 +19,8 @@ export interface DockItemView {
   kind: PinnedItem["kind"];
   iconSrc: string | null;
   children: PinnedItem[];
+  /** Resolved icon URLs for stack children (parallel to children). */
+  childIcons: (string | null)[];
   pinned: boolean;
   /** Open windows belonging to this app (empty = not running). */
   windows: WindowInfo[];
@@ -73,10 +75,12 @@ export function buildDockItems(
   showRunningApps: boolean,
 ): DockItemView[] {
   const byExe = windowsByExe(runningWindows);
-  const pinnedTargets = new Set(pinned.map((p) => p.path.toLowerCase()).filter(Boolean));
+  const pinnedTargets = new Set(
+    pinned.filter((p) => p.path).map((p) => targetKey(p.path)),
+  );
 
   const items: DockItemView[] = pinned.map((p) => {
-    const windows = byExe.get(p.path.toLowerCase()) ?? [];
+    const windows = p.path ? (byExe.get(targetKey(p.path)) ?? []) : [];
     return {
       id: p.id,
       name: p.name,
@@ -84,6 +88,7 @@ export function buildDockItems(
       kind: p.kind,
       iconSrc: p.path ? (iconUrls[p.path] ?? null) : null,
       children: p.children,
+      childIcons: p.children.map((c) => (c.path ? (iconUrls[c.path] ?? null) : null)),
       pinned: true,
       windows,
       focused: windows.some((w) => w.hwnd === focused),
@@ -91,16 +96,19 @@ export function buildDockItems(
   });
 
   if (showRunningApps) {
-    for (const [exe, windows] of byExe) {
-      if (pinnedTargets.has(exe)) continue;
-      const original = windows[0].exe; // preserve original casing for icon lookup
+    for (const [key, windows] of byExe) {
+      if (pinnedTargets.has(key)) continue;
+      const first = windows[0];
+      // UWP windows launch (and icon-resolve) through their AUMID
+      const target = first.aumid ? `shell:AppsFolder\\${first.aumid}` : first.exe;
       items.push({
-        id: `run-${exe}`,
-        name: windows.length === 1 ? windows[0].title : exeDisplayName(original),
-        target: original,
+        id: `run-${key}`,
+        name: windows.length === 1 ? first.title : exeDisplayName(first.exe),
+        target,
         kind: "app",
-        iconSrc: iconUrls[original] ?? null,
+        iconSrc: iconUrls[target] ?? null,
         children: [],
+        childIcons: [],
         pinned: false,
         windows,
         focused: windows.some((w) => w.hwnd === focused),

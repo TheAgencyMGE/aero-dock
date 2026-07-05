@@ -10,61 +10,10 @@ import { DockBar } from "../features/dock/DockBar";
 import { EffectsLayer } from "../engine/effects/EffectsLayer";
 import { applyAppearance } from "../engine/themes/applyTheme";
 import { ipc } from "../ipc/commands";
-import type { PinnedItem } from "../ipc/types";
 import { buildDockItems, useDockIcons, type DockItemView } from "../state/dockStore";
 import { useRunning } from "../state/runningStore";
 import { useSettings } from "../state/settingsStore";
 import { useState } from "react";
-
-/** Apps most people actually keep on a dock, matched by shortcut name. */
-const STARTER_APP_HINTS = [
-  "microsoft edge",
-  "google chrome",
-  "firefox",
-  "brave",
-  "file explorer",
-  "outlook",
-  "word",
-  "excel",
-  "powerpoint",
-  "notepad",
-  "visual studio code",
-  "spotify",
-  "steam",
-  "discord",
-  "vlc",
-  "calculator",
-  "terminal",
-];
-
-const MAX_STARTER_APPS = 10;
-
-async function firstRunImport(): Promise<void> {
-  const apps = await ipc.listApps();
-  const picked = new Map<string, (typeof apps)[number]>();
-  for (const hint of STARTER_APP_HINTS) {
-    if (picked.size >= MAX_STARTER_APPS) break;
-    const match = apps.find((a) => a.name.toLowerCase().includes(hint));
-    if (match && !picked.has(match.targetPath)) picked.set(match.targetPath, match);
-  }
-  // fill remaining slots with start-menu apps so the dock never starts empty
-  for (const app of apps) {
-    if (picked.size >= Math.min(MAX_STARTER_APPS, 6)) break;
-    if (app.source === "start-menu" && !picked.has(app.targetPath)) {
-      picked.set(app.targetPath, app);
-    }
-  }
-  const items: PinnedItem[] = [...picked.values()].map((app) => ({
-    id: `pin-${crypto.randomUUID()}`,
-    kind: "app",
-    path: app.targetPath,
-    name: app.name,
-    icon: app.icon,
-    children: [],
-  }));
-  // single atomic transaction on the Rust side; re-entry is a no-op
-  await ipc.firstRunImport(items);
-}
 
 export function DockApp() {
   const { settings, hydrate } = useSettings();
@@ -124,12 +73,7 @@ export function DockApp() {
     if (settings) applyAppearance(settings, accent);
   }, [settings, accent]);
 
-  // first run: import a starter set so launch #1 already looks alive
-  useEffect(() => {
-    if (settings && !settings.onboardingComplete && settings.pinned.length === 0) {
-      firstRunImport().catch((e) => console.error("first-run import failed", e));
-    }
-  }, [settings]);
+  // first-run onboarding lives in DockBar (Welcome card)
 
   const items = useMemo(
     () =>
@@ -145,9 +89,14 @@ export function DockApp() {
     [settings, windows, focused, iconUrls],
   );
 
-  // resolve icons for everything visible (pinned + running)
+  // resolve icons for everything visible (pinned + running + stack children)
   useEffect(() => {
     const targets = items.filter((i) => !i.iconSrc && i.target).map((i) => i.target);
+    for (const item of items) {
+      item.children.forEach((c, idx) => {
+        if (c.path && !item.childIcons[idx]) targets.push(c.path);
+      });
+    }
     if (targets.length) resolveIcons(targets);
   }, [items, resolveIcons]);
 

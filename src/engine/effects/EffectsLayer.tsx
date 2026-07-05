@@ -14,6 +14,9 @@ import type { DockEdge, Settings } from "../../ipc/types";
 import { useAmbient } from "../../state/ambientStore";
 import { ClickRipple, DustField, getGlowTexture, LaunchBurst, type Effect } from "./effects";
 import { effectsBus } from "./effectsBus";
+import { AuroraScene, BubblesScene, RainScene, SnowScene } from "./scenes";
+
+type AmbientScene = Effect & { enabled: boolean };
 
 /** Where the dock is glued; effect coordinates anchor there so they
  * survive the window growing/shrinking for flyouts. */
@@ -49,13 +52,13 @@ export function EffectsLayer({ settings }: EffectsLayerProps) {
   const stateRef = useRef<{
     app: Application | null;
     effects: Effect[];
-    dust: DustField | null;
+    scene: AmbientScene | null;
     root: Container | null;
     bloomRef?: number;
     speedRef?: number;
     edgeRef?: DockEdge;
     cleanup?: () => void;
-  }>({ app: null, effects: [], dust: null, root: null });
+  }>({ app: null, effects: [], scene: null, root: null });
 
   const density = settings.appearance.particleDensity;
   const bloom = settings.appearance.bloomAmount;
@@ -111,9 +114,9 @@ export function EffectsLayer({ settings }: EffectsLayerProps) {
 
       app.ticker.add((ticker: Ticker) => {
         const dt = (ticker.deltaMS / 1000) * (stateRef.current.speedRef ?? 1);
-        // ambient dust alone doesn't justify full-rate rendering
-        const onlyDust = st.effects.length > 0 && st.effects.every((fx) => fx === st.dust);
-        app.ticker.maxFPS = onlyDust ? 30 : 0;
+        // an ambient scene alone doesn't justify full-rate rendering
+        const onlyScene = st.effects.length > 0 && st.effects.every((fx) => fx === st.scene);
+        app.ticker.maxFPS = onlyScene ? 30 : 0;
         const a = anchorPoint(
           stateRef.current.edgeRef ?? "bottom",
           app.screen.width,
@@ -125,7 +128,7 @@ export function EffectsLayer({ settings }: EffectsLayerProps) {
           fx.update(dt);
           if (fx.done()) {
             fx.view.destroy({ children: true });
-            if (fx === st.dust) st.dust = null;
+            if (fx === st.scene) st.scene = null;
           } else {
             alive.push(fx);
           }
@@ -173,7 +176,7 @@ export function EffectsLayer({ settings }: EffectsLayerProps) {
       disposed = true;
       st.cleanup?.();
       st.effects = [];
-      st.dust = null;
+      st.scene = null;
       if (st.app) {
         st.app.destroy(true);
         st.app = null;
@@ -182,32 +185,40 @@ export function EffectsLayer({ settings }: EffectsLayerProps) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // dust field tracks density setting
+  // ambient scene tracks the scene + density settings
+  const sceneKind = settings.appearance.scene;
   useEffect(() => {
     const st = stateRef.current;
     const app = st.app;
     if (!app) return;
-    // density changed: fade the old field out and (below) grow a new one
-    if (st.dust && density > 0) {
-      st.dust.enabled = false;
-      st.dust = null;
+    // fade out whatever is playing; a replacement (if any) grows below
+    if (st.scene) {
+      st.scene.enabled = false;
+      st.scene = null;
     }
-    if (density > 0 && !st.dust) {
-      const dust = new DustField(
-        getGlowTexture(app.renderer),
-        cssAccentAsTint(),
-        density,
-        window.innerWidth,
-        window.innerHeight,
-      );
-      st.dust = dust;
-      st.effects.push(dust);
-      app.stage.addChild(dust.view);
-      if (!app.ticker.started && document.visibilityState === "visible") app.ticker.start();
-    } else if (density === 0 && st.dust) {
-      st.dust.enabled = false; // fades out, then ticker sleeps
-    }
-  }, [density, settings.appearance.theme]);
+    if (density <= 0 || sceneKind === "none") return;
+    const w = window.innerWidth;
+    const h = window.innerHeight;
+    const tex = getGlowTexture(app.renderer);
+    const tint = cssAccentAsTint();
+    const scene: AmbientScene | null =
+      sceneKind === "dust"
+        ? new DustField(tex, tint, density, w, h)
+        : sceneKind === "rain"
+          ? new RainScene(tint, density, w, h)
+          : sceneKind === "snow"
+            ? new SnowScene(tex, density, w, h)
+            : sceneKind === "bubbles"
+              ? new BubblesScene(tint, density, w, h)
+              : sceneKind === "aurora"
+                ? new AuroraScene(tex, density, w, h)
+                : null;
+    if (!scene) return;
+    st.scene = scene;
+    st.effects.push(scene);
+    app.stage.addChild(scene.view);
+    if (!app.ticker.started && document.visibilityState === "visible") app.ticker.start();
+  }, [density, sceneKind, settings.appearance.theme]);
 
   // live tuning refs (avoid re-init on slider moves)
   stateRef.current.bloomRef = bloom;

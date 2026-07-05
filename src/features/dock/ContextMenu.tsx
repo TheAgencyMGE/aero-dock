@@ -26,8 +26,60 @@ interface Action {
   run: () => void | Promise<unknown>;
 }
 
+/** Merge a pinned item into (or onto) its left neighbor as a stack. */
+async function stackWithPrevious(settings: Settings, itemId: string): Promise<unknown> {
+  const pinned = structuredClone(settings.pinned);
+  const idx = pinned.findIndex((p) => p.id === itemId);
+  if (idx < 1) return;
+  const current = pinned[idx];
+  const prev = pinned[idx - 1];
+  if (prev.kind === "stack") {
+    prev.children.push(current);
+  } else {
+    pinned[idx - 1] = {
+      id: `pin-${crypto.randomUUID()}`,
+      kind: "stack",
+      path: "",
+      name: `${prev.name} & more`,
+      icon: null,
+      children: [prev, current],
+    };
+  }
+  pinned.splice(idx, 1);
+  const next = structuredClone(settings);
+  next.pinned = pinned;
+  return ipc.setSettings(next);
+}
+
+/** Explode a stack back into its pinned children. */
+async function unstack(settings: Settings, stackId: string): Promise<unknown> {
+  const pinned = structuredClone(settings.pinned);
+  const idx = pinned.findIndex((p) => p.id === stackId);
+  if (idx === -1) return;
+  const stack = pinned[idx];
+  pinned.splice(idx, 1, ...stack.children);
+  const next = structuredClone(settings);
+  next.pinned = pinned;
+  return ipc.setSettings(next);
+}
+
 function buildActions(item: DockItemView, settings: Settings): Action[] {
   const actions: Action[] = [];
+
+  // stacks have their own compact menu
+  if (item.kind === "stack") {
+    actions.push({ label: "Unstack", run: () => unstack(settings, item.id) });
+    actions.push({
+      label: "Unpin from Dock",
+      run: () => ipc.unpinItem(item.id),
+    });
+    actions.push({
+      label: "Dock settings…",
+      separatorAbove: true,
+      run: () => ipc.openSettings(),
+    });
+    return actions;
+  }
 
   actions.push({
     label: item.windows.length > 0 ? "New window" : "Open",
@@ -48,6 +100,16 @@ function buildActions(item: DockItemView, settings: Settings): Action[] {
       separatorAbove: true,
       run: () => ipc.unpinItem(item.id),
     });
+    const idx = settings.pinned.findIndex((p) => p.id === item.id);
+    if (idx > 0) {
+      actions.push({
+        label:
+          settings.pinned[idx - 1].kind === "stack"
+            ? "Add to stack on the left"
+            : "Stack with previous item",
+        run: () => stackWithPrevious(settings, item.id),
+      });
+    }
   } else {
     actions.push({
       label: "Pin to Dock",

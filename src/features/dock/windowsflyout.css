@@ -1,7 +1,7 @@
-/* Window-list flyout: pick a window by title. */
+/* Window previews: glass frames around live DWM thumbnails. */
 
 .windows-flyout {
-  padding: 8px;
+  padding: 8px 9px 9px;
   --glass-tint-top: rgba(120, 185, 235, 0.6);
   --glass-tint-mid: rgba(35, 95, 155, 0.55);
   --glass-tint-bottom: rgba(18, 60, 110, 0.66);
@@ -10,69 +10,80 @@
 }
 
 .windows-flyout-title {
-  padding: 2px 8px 7px;
+  padding: 2px 6px 7px;
   font-size: 12px;
   font-weight: 700;
-  color: rgba(240, 250, 255, 0.85);
+  color: rgba(240, 250, 255, 0.9);
   text-shadow: 0 1px 3px rgba(8, 40, 70, 0.7);
   position: relative;
   z-index: 3;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.25);
-  margin-bottom: 5px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
-.windows-flyout-row {
+.windows-flyout-grid {
+  display: grid;
+  gap: 8px;
+  position: relative;
+  z-index: 3;
+}
+
+.windows-preview {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+/* the DWM thumbnail is composited INTO this rect by the OS; we draw
+   the frame and leave a dark stage for the live picture */
+.windows-preview-frame {
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.4);
+  background: rgba(8, 25, 45, 0.55);
+  box-shadow: inset 0 0 10px rgba(0, 0, 0, 0.35);
+  cursor: pointer;
+}
+
+.windows-preview[data-focused="true"] .windows-preview-frame {
+  border-color: rgba(150, 240, 190, 0.65);
+  box-shadow: 0 0 10px rgba(122, 208, 58, 0.35), inset 0 0 10px rgba(0, 0, 0, 0.3);
+}
+
+.windows-preview-frame:hover {
+  border-color: rgba(255, 255, 255, 0.85);
+  box-shadow: 0 0 12px rgba(140, 210, 255, 0.5);
+}
+
+.windows-preview-caption {
   display: flex;
   align-items: center;
   gap: 4px;
-  position: relative;
-  z-index: 3;
-  border-radius: 9px;
+  min-width: 0;
 }
 
-.windows-flyout-row[data-focused="true"] .windows-flyout-activate {
-  border-color: rgba(150, 240, 190, 0.5);
-  box-shadow: inset 0 0 8px rgba(122, 208, 58, 0.25);
-}
-
-.windows-flyout-activate {
+.windows-preview-title {
   flex: 1;
   min-width: 0;
-  padding: 8px 10px;
-  border: 1px solid transparent;
-  border-radius: 9px;
-  background: none;
-  text-align: left;
-  font-family: inherit;
-  font-size: 12.5px;
+  font-size: 11px;
   font-weight: 500;
   color: #f2faff;
   text-shadow: 0 1px 3px rgba(8, 40, 70, 0.7);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  cursor: pointer;
-}
-
-.windows-flyout-activate:hover {
-  background: linear-gradient(
-    180deg,
-    rgba(255, 255, 255, 0.36),
-    rgba(160, 220, 255, 0.16) 55%,
-    rgba(120, 195, 245, 0.28)
-  );
-  border-color: rgba(255, 255, 255, 0.45);
+  padding-left: 2px;
 }
 
 .windows-flyout-close {
   flex: none;
-  width: 24px;
-  height: 24px;
+  width: 20px;
+  height: 20px;
   border: 1px solid transparent;
-  border-radius: 7px;
+  border-radius: 6px;
   background: none;
   color: rgba(240, 250, 255, 0.7);
-  font-size: 11px;
+  font-size: 10px;
   cursor: pointer;
 }
 

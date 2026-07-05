@@ -9,7 +9,7 @@ import { useEffect, useRef, useState } from "react";
 import { applyAppearance } from "../../engine/themes/applyTheme";
 import { THEMES } from "../../engine/themes/themes";
 import { ipc } from "../../ipc/commands";
-import type { DockEdge, Settings } from "../../ipc/types";
+import type { DockEdge, MonitorInfoEx, Settings } from "../../ipc/types";
 import { useSettings } from "../../state/settingsStore";
 import { AeroSegmented, AeroSlider, AeroToggle } from "./controls";
 import "./settings.css";
@@ -19,10 +19,15 @@ const pctFmt = (v: number) => `${Math.round(v * 100)}%`;
 export function SettingsApp() {
   const { settings, hydrate, apply } = useSettings();
   const [exportedTo, setExportedTo] = useState<string | null>(null);
+  const [monitors, setMonitors] = useState<MonitorInfoEx[]>([]);
   const importRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     hydrate();
+    ipc
+      .listMonitors()
+      .then(setMonitors)
+      .catch((e) => console.warn("monitor list unavailable", e));
   }, [hydrate]);
 
   // settings window uses the same token system for its own glass
@@ -112,6 +117,17 @@ export function SettingsApp() {
             ]}
             onChange={(edge) => set((d) => void (d.dock.edge = edge))}
           />
+          {monitors.length > 1 && (
+            <AeroSegmented<string>
+              label="Monitor"
+              value={dock.monitor ?? ""}
+              options={monitors.map((m) => ({
+                value: m.isPrimary ? "" : m.name,
+                label: `${m.name.replace(/^\\\\\.\\/, "")}${m.isPrimary ? " (primary)" : ""}`,
+              }))}
+              onChange={(name) => set((d) => void (d.dock.monitor = name || null))}
+            />
+          )}
           <AeroSlider
             label="Icon size"
             value={dock.iconSize}
@@ -189,6 +205,19 @@ export function SettingsApp() {
             max={1}
             format={pctFmt}
             onChange={(v) => set((d) => void (d.appearance.reflectionStrength = v))}
+          />
+          <AeroSegmented<string>
+            label="Ambient scene"
+            value={appearance.scene}
+            options={[
+              { value: "none", label: "None" },
+              { value: "dust", label: "Dust" },
+              { value: "rain", label: "Rain" },
+              { value: "snow", label: "Snow" },
+              { value: "bubbles", label: "Ocean" },
+              { value: "aurora", label: "Aurora" },
+            ]}
+            onChange={(v) => set((d) => void (d.appearance.scene = v))}
           />
           <AeroSlider
             label="Particles"

@@ -1,0 +1,103 @@
+/* First-launch welcome card. */
+
+.welcome-card {
+  left: 50%;
+  bottom: calc(var(--icon-size) * 1.2 + 52px);
+  transform: translateX(-50%);
+  width: 380px;
+  padding: 22px 26px 18px;
+  text-align: center;
+  --glass-tint-top: rgba(140, 200, 240, 0.62);
+  --glass-tint-mid: rgba(45, 105, 165, 0.55);
+  --glass-tint-bottom: rgba(20, 65, 115, 0.68);
+  --glass-radius: 20px;
+  transform-origin: bottom center;
+}
+
+.welcome-orb {
+  display: block;
+  width: 58px;
+  height: 58px;
+  margin: 0 auto 10px;
+  border-radius: 50%;
+  background:
+    radial-gradient(circle at 62% 22%, rgba(255, 255, 255, 0.95) 0%, rgba(255, 255, 255, 0) 22%),
+    radial-gradient(ellipse 60% 38% at 50% 82%, rgba(140, 225, 110, 0.65), rgba(140, 225, 110, 0) 70%),
+    radial-gradient(circle at 42% 30%, #cdeeff 0%, #5ab2e8 45%, #1264aa 100%);
+  border: 1px solid rgba(255, 255, 255, 0.7);
+  box-shadow: 0 6px 18px rgba(10, 45, 80, 0.4), inset 0 2px 6px rgba(255, 255, 255, 0.7);
+  position: relative;
+  z-index: 3;
+}
+
+.welcome-card h1 {
+  font-size: 19px;
+  font-weight: 700;
+  color: #f4fbff;
+  text-shadow: 0 1px 4px rgba(8, 40, 70, 0.75);
+  position: relative;
+  z-index: 3;
+}
+
+.welcome-card p {
+  margin-top: 6px;
+  font-size: 12.5px;
+  color: rgba(235, 248, 255, 0.9);
+  text-shadow: 0 1px 3px rgba(8, 40, 70, 0.6);
+  position: relative;
+  z-index: 3;
+}
+
+.welcome-actions {
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+  margin-top: 14px;
+  position: relative;
+  z-index: 3;
+}
+
+.welcome-primary,
+.welcome-secondary {
+  padding: 8px 20px;
+  border-radius: 11px;
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.welcome-primary {
+  border: 1px solid rgba(255, 255, 255, 0.8);
+  background: linear-gradient(180deg, #eafff0, var(--aero-life) 55%, #4d9e2a);
+  color: #0d3a20;
+  text-shadow: 0 1px 0 rgba(255, 255, 255, 0.5);
+  box-shadow: 0 3px 10px rgba(60, 140, 40, 0.45), inset 0 1px 0 rgba(255, 255, 255, 0.85);
+}
+
+.welcome-primary:hover {
+  box-shadow: 0 0 16px rgba(150, 240, 120, 0.7), inset 0 1px 0 #fff;
+}
+
+.welcome-secondary {
+  border: 1px solid rgba(255, 255, 255, 0.5);
+  background: rgba(255, 255, 255, 0.16);
+  color: #f0f9ff;
+  text-shadow: 0 1px 2px rgba(8, 40, 70, 0.6);
+}
+
+.welcome-secondary:hover {
+  background: rgba(255, 255, 255, 0.28);
+}
+
+.welcome-primary:disabled,
+.welcome-secondary:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
+.welcome-hint {
+  font-size: 10.5px !important;
+  color: rgba(225, 242, 255, 0.65) !important;
+  margin-top: 12px !important;
+}
