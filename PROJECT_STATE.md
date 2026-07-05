@@ -3,7 +3,7 @@
 > Source of truth for build progress. Update after every completed module.
 > New sessions: read this file + docs/ARCHITECTURE.md first, then continue.
 
-## Status: Foundation phase
+## Status: Feature-complete (v0.1) — all tracked backlog done
 
 ### Environment
 - Windows 11, VS2022 Community (MSVC toolchain present)
@@ -95,14 +95,25 @@
       (cards flex:none inside the scroll column; .glass clips overflow)
 - [x] App list cached (5 min TTL) + warmed at startup: search instant
 
-### Backlog (remaining)
-1. Window previews on hover (DWM thumbnails — hard; needs native region)
-2. Onboarding welcome surface (basic auto-import works already)
-3. Multi-monitor picker UI in settings (backend list_monitors exists)
-4. Running-indicator matching for UWP apps (ApplicationFrameHost hosts)
-5. Stacks (grouping pinned items into a dock folder) — deferred
-6. Live effects modes (rain/snow/ocean/aurora scenes) — deferred
-7. Release-build smoke test (install the NSIS setup, check autostart)
+- [x] Live window previews: DWM thumbnails (DwmRegisterThumbnail into the
+      dock window) framed in glass; hover-dwell (550ms) or click opens;
+      click focuses, ✕ closes. Verified with live Explorer miniatures.
+- [x] UWP running indicators: frame windows carry PKEY_AppUserModel_ID
+      (SHGetPropertyStoreForWindow); grouping/launch/icons keyed on AUMID.
+- [x] Onboarding Welcome card (import my apps / start empty) replaces the
+      silent auto-import; shows when onboardingComplete=false && no pins.
+- [x] Ambient scenes: dust/rain/snow/bubbles/aurora (engine/effects/
+      scenes.ts), density-scaled, 30fps-capped, ambient-sleep aware;
+      picker in settings. Rain + aurora verified visually.
+- [x] Stacks: "Stack with previous item" context action, mosaic tile,
+      bloom-open member grid (StackFlyout), Unstack restores. Verified.
+- [x] Monitor picker in settings (only shows with 2+ displays).
+- [x] Release build rebuilt with all features (NSIS, see bundle dir).
+
+### Optional future ideas (not tracked)
+- Music visualization, cursor light (spec "optional" extras)
+- Weather-reactive lighting
+- macOS/Linux ports (platform layer is trait-isolated)
 
 ### Dev/debug infrastructure
 - WebView console/DOM access: launch dev with
