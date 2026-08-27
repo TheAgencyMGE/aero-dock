@@ -361,3 +361,128 @@
   background: linear-gradient(180deg, #ffffff, rgba(190, 230, 252, 0.9));
   box-shadow: 0 2px 10px rgba(120, 200, 255, 0.5), inset 0 1px 0 #fff;
 }
+
+/* ---- loading / failure splash (before settings arrive from Rust) ---- */
+
+.settings-root-centered {
+  align-items: center;
+  justify-content: center;
+}
+
+.settings-splash {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  text-align: center;
+  color: #0d3a5c;
+  text-shadow: 0 1px 0 rgba(255, 255, 255, 0.5);
+  font-size: 13.5px;
+  font-weight: 600;
+}
+
+.settings-splash-hint {
+  font-size: 12px;
+  font-weight: 500;
+  color: rgba(13, 58, 92, 0.75);
+  max-width: 320px;
+}
+
+.settings-orb-pulse {
+  animation: orb-breathe calc(2.4s / var(--anim-speed)) ease-in-out infinite;
+}
+
+@keyframes orb-breathe {
+  0%,
+  100% {
+    transform: scale(1);
+    filter: brightness(1);
+  }
+  50% {
+    transform: scale(1.07);
+    filter: brightness(1.15);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .settings-orb-pulse {
+    animation: none;
+  }
+}
+
+/* ---- status line tones ---- */
+
+.settings-note[data-tone="error"] {
+  color: #8c2f22;
+  font-weight: 600;
+}
+
+.settings-note[data-tone="ok"] {
+  color: #1c5c2a;
+  font-weight: 600;
+}
+
+.settings-about-value {
+  font-size: 13px;
+  font-weight: 600;
+  color: rgba(13, 58, 92, 0.85);
+}
+
+/* ---- interaction states: hover, active, and a real focus ring ---- */
+
+.theme-swatch {
+  transition:
+    transform calc(0.18s / var(--anim-speed)) ease,
+    box-shadow calc(0.22s / var(--anim-speed)) ease,
+    background calc(0.22s / var(--anim-speed)) ease;
+}
+
+.theme-swatch:hover {
+  background: rgba(255, 255, 255, 0.32);
+  transform: translateY(-1px);
+}
+
+.theme-swatch:active,
+.aero-button:active,
+.ctl-segmented button:active {
+  transform: translateY(1px);
+}
+
+.aero-button {
+  transition:
+    transform calc(0.14s / var(--anim-speed)) ease,
+    box-shadow calc(0.22s / var(--anim-speed)) ease,
+    background calc(0.22s / var(--anim-speed)) ease;
+}
+
+.ctl-segmented button {
+  transition:
+    background calc(0.18s / var(--anim-speed)) ease,
+    color calc(0.18s / var(--anim-speed)) ease;
+}
+
+.ctl-segmented button:hover:not([data-active="true"]) {
+  background: rgba(255, 255, 255, 0.32);
+  color: #0d3a5c;
+}
+
+.ctl-slider::-webkit-slider-thumb:hover {
+  box-shadow: 0 2px 8px rgba(10, 45, 80, 0.45), 0 0 10px rgba(150, 220, 255, 0.7),
+    inset 0 1px 0 rgba(255, 255, 255, 0.9);
+}
+
+.ctl-toggle:hover {
+  box-shadow: inset 0 1px 3px rgba(10, 45, 80, 0.3), 0 0 10px rgba(150, 220, 255, 0.45);
+}
+
+/* Keyboard users get an unmistakable ring; mouse users never see it. */
+.settings-root :focus-visible {
+  outline: 2px solid #ffffff;
+  outline-offset: 2px;
+  border-radius: 10px;
+  box-shadow: 0 0 0 4px rgba(47, 157, 227, 0.55);
+}
+
+.ctl-slider:focus-visible {
+  outline-offset: 4px;
+}

@@ -1,16 +1,50 @@
 {
   "name": "aero-dock",
+  "version": "1.0.0",
   "private": true,
-  "pnpm": {
-    "onlyBuiltDependencies": ["esbuild"]
+  "description": "A Frutiger Aero glass dock and app launcher for Windows 11 - live window previews, cursor magnification, running-app indicators, themes, and ambient effects.",
+  "license": "MIT",
+  "author": "Ryan Panda",
+  "homepage": "https://github.com/TheAgencyMGE/aero-dock",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/TheAgencyMGE/aero-dock.git"
   },
-  "version": "0.1.0",
+  "bugs": {
+    "url": "https://github.com/TheAgencyMGE/aero-dock/issues"
+  },
+  "keywords": [
+    "windows",
+    "dock",
+    "taskbar",
+    "app-launcher",
+    "frutiger-aero",
+    "aero-glass",
+    "tauri",
+    "rust",
+    "react",
+    "desktop-customization",
+    "windows-11",
+    "glassmorphism"
+  ],
   "type": "module",
   "scripts": {
     "dev": "vite",
     "build": "tsc && vite build",
     "preview": "vite preview",
-    "tauri": "tauri"
+    "typecheck": "tsc --noEmit",
+    "lint": "tsc --noEmit",
+    "tauri": "tauri",
+    "tauri:dev": "tauri dev",
+    "tauri:build": "tauri build",
+    "rust:test": "cargo test --manifest-path src-tauri/Cargo.toml",
+    "rust:lint": "cargo clippy --manifest-path src-tauri/Cargo.toml --all-targets -- -D warnings",
+    "check": "pnpm typecheck && pnpm rust:lint && pnpm rust:test && pnpm build"
+  },
+  "pnpm": {
+    "onlyBuiltDependencies": [
+      "esbuild"
+    ]
   },
   "dependencies": {
     "@tauri-apps/api": "^2",

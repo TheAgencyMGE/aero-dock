@@ -6,9 +6,10 @@ import { AnimatePresence, motion } from "motion/react";
 import { useEffect } from "react";
 import { springs } from "../../engine/animation/springs";
 import { ipc } from "../../ipc/commands";
+import { notify } from "../feedback/toastStore";
 import type { Settings } from "../../ipc/types";
 import { useDockIcons } from "../../state/dockStore";
-import { useMenu } from "./menuStore";
+import { bloomOffset, flyoutStyle, useMenu } from "./menuStore";
 import "./folderflyout.css";
 
 const FLYOUT_WIDTH = 300;
@@ -55,31 +56,8 @@ export function StackFlyout({ edge }: StackFlyoutProps) {
     };
   }, [active, close]);
 
-  const style: React.CSSProperties = { position: "absolute", width: FLYOUT_WIDTH, zIndex: 100 };
-  if (anchor) {
-    const clamped = Math.min(
-      Math.max(anchor.cx - FLYOUT_WIDTH / 2, 8),
-      anchor.winW - FLYOUT_WIDTH - 8,
-    );
-    switch (edge) {
-      case "bottom":
-        style.left = clamped;
-        style.bottom = anchor.winH - anchor.top + 14;
-        break;
-      case "top":
-        style.left = clamped;
-        style.top = anchor.bottom + 14;
-        break;
-      case "left":
-        style.left = anchor.right + 14;
-        style.top = 8;
-        break;
-      case "right":
-        style.right = anchor.winW - anchor.left + 14;
-        style.top = 8;
-        break;
-    }
-  }
+  const style = anchor ? flyoutStyle(edge, anchor, FLYOUT_WIDTH, 14, 320) : {};
+  const from = bloomOffset(edge);
 
   return (
     <AnimatePresence>
@@ -87,8 +65,8 @@ export function StackFlyout({ edge }: StackFlyoutProps) {
         <motion.div
           className="folder-flyout glass"
           style={style}
-          initial={{ opacity: 0, scale: 0.8, y: edge === "top" ? -14 : 14 }}
-          animate={{ opacity: 1, scale: 1, y: 0 }}
+          initial={{ opacity: 0, scale: 0.8, ...from }}
+          animate={{ opacity: 1, scale: 1, x: 0, y: 0 }}
           exit={{ opacity: 0, scale: 0.92, filter: "blur(6px)", transition: { duration: 0.16 } }}
           transition={springs.bloom}
         >
@@ -107,7 +85,7 @@ export function StackFlyout({ edge }: StackFlyoutProps) {
                 animate={{ opacity: 1, y: 0, scale: 1 }}
                 transition={{ ...springs.bloom, delay: Math.min(i * 0.025, 0.3) }}
                 onClick={() => {
-                  ipc.launch(child.path).catch((e) => console.error("stack launch failed", e));
+                  ipc.launch(child.path).catch(notify.on(`Could not open ${child.name}`));
                   close();
                 }}
                 title={child.name}

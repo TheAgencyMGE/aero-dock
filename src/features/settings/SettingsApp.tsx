@@ -14,16 +14,29 @@ import { useSettings } from "../../state/settingsStore";
 import { AeroSegmented, AeroSlider, AeroToggle } from "./controls";
 import "./settings.css";
 
+const REPO_URL = "https://github.com/TheAgencyMGE/aero-dock";
+
 const pctFmt = (v: number) => `${Math.round(v * 100)}%`;
+
+/** One inline status line under the settings-file controls. The window
+ * has room to say what happened, so nothing here needs a modal. */
+interface Status {
+  tone: "ok" | "error";
+  text: string;
+}
 
 export function SettingsApp() {
   const { settings, hydrate, apply } = useSettings();
-  const [exportedTo, setExportedTo] = useState<string | null>(null);
+  const [status, setStatus] = useState<Status | null>(null);
   const [monitors, setMonitors] = useState<MonitorInfoEx[]>([]);
   const importRef = useRef<HTMLInputElement>(null);
 
+  const [hydrateFailed, setHydrateFailed] = useState(false);
   useEffect(() => {
-    hydrate();
+    hydrate().catch((e) => {
+      console.error("settings hydrate failed", e);
+      setHydrateFailed(true);
+    });
     ipc
       .listMonitors()
       .then(setMonitors)
@@ -35,11 +48,35 @@ export function SettingsApp() {
     if (settings) applyAppearance(settings);
   }, [settings]);
 
-  if (!settings) return null;
+  // The window paints its sky immediately; this is what fills it until
+  // settings arrive from Rust (or says so if they never do).
+  if (!settings) {
+    return (
+      <div className="settings-root settings-root-centered">
+        {hydrateFailed ? (
+          <div className="settings-splash">
+            <span className="settings-orb" aria-hidden />
+            <p>Aero Dock could not read its settings.</p>
+            <p className="settings-splash-hint">
+              Close this window and restart Aero Dock from the tray icon.
+            </p>
+          </div>
+        ) : (
+          <div className="settings-splash">
+            <span className="settings-orb settings-orb-pulse" aria-hidden />
+            <p>Loading your dock…</p>
+          </div>
+        )}
+      </div>
+    );
+  }
   const { dock, appearance } = settings;
 
   const set = (fn: (draft: Settings) => void) => {
-    apply(fn).catch((e) => console.error("settings update failed", e));
+    apply(fn).catch((e) => {
+      console.error("settings update failed", e);
+      setStatus({ tone: "error", text: `Could not save that change: ${e}` });
+    });
   };
 
   const toggleStartup = async (on: boolean) => {
@@ -52,6 +89,7 @@ export function SettingsApp() {
       });
     } catch (e) {
       console.error("autostart toggle failed", e);
+      setStatus({ tone: "error", text: `Could not change the startup setting: ${e}` });
     }
   };
 
@@ -59,9 +97,10 @@ export function SettingsApp() {
     try {
       const json = await file.text();
       await ipc.importSettings(json);
+      setStatus({ tone: "ok", text: `Imported settings from ${file.name}.` });
     } catch (e) {
       console.error("import failed", e);
-      alert(`Could not import settings: ${e}`);
+      setStatus({ tone: "error", text: `Could not import that file: ${e}` });
     }
   };
 
@@ -256,7 +295,10 @@ export function SettingsApp() {
             checked={settings.hideTaskbar}
             hint="Puts the Windows taskbar into auto-hide so Aero Dock is your bar; restored when you quit"
             onChange={(v) => {
-              ipc.setTaskbarHidden(v).catch((e) => console.error("taskbar toggle failed", e));
+              ipc.setTaskbarHidden(v).catch((e) => {
+                console.error("taskbar toggle failed", e);
+                setStatus({ tone: "error", text: `Could not change the taskbar: ${e}` });
+              });
               set((d) => void (d.hideTaskbar = v));
             }}
           />
@@ -268,8 +310,11 @@ export function SettingsApp() {
                 onClick={() =>
                   ipc
                     .exportSettingsFile()
-                    .then(setExportedTo)
-                    .catch((e) => console.error("export failed", e))
+                    .then((path) => setStatus({ tone: "ok", text: `Saved to ${path}` }))
+                    .catch((e) => {
+                      console.error("export failed", e);
+                      setStatus({ tone: "error", text: `Could not export settings: ${e}` });
+                    })
                 }
               >
                 Export…
@@ -290,10 +335,40 @@ export function SettingsApp() {
               />
             </div>
           </div>
-          {exportedTo && <p className="settings-note">Saved to {exportedTo}</p>}
+          {status && (
+            <p className="settings-note" data-tone={status.tone} role="status">
+              {status.text}
+            </p>
+          )}
         </section>
 
-        <footer className="settings-footer">Aero Dock 0.1.0 — made with light, water, and glass.</footer>
+        {/* ---- about ---- */}
+        <section className="settings-card glass">
+          <h2>About</h2>
+          <div className="ctl-row">
+            <span className="ctl-label">Version</span>
+            <span className="settings-about-value">Aero Dock {__APP_VERSION__}</span>
+          </div>
+          <div className="ctl-row">
+            <span className="ctl-label">Project</span>
+            <div className="ctl-actions">
+              <button
+                className="aero-button"
+                onClick={() =>
+                  ipc
+                    .launch(REPO_URL)
+                    .catch((e) => setStatus({ tone: "error", text: `Could not open the browser: ${e}` }))
+                }
+              >
+                View on GitHub
+              </button>
+            </div>
+          </div>
+        </section>
+
+        <footer className="settings-footer">
+          Aero Dock {__APP_VERSION__} — made with light, water, and glass.
+        </footer>
       </main>
     </div>
   );

@@ -7,7 +7,6 @@
   --glass-tint-mid: rgba(35, 95, 155, 0.58);
   --glass-tint-bottom: rgba(18, 60, 110, 0.7);
   --glass-radius: 16px;
-  transform-origin: bottom center;
 }
 
 .search-input {
@@ -87,7 +86,7 @@
   font-size: 18px;
   line-height: 26px;
   text-align: center;
-  color: #d9f4ff;
+  color: var(--aero-glyph);
 }
 
 .search-row-text {
@@ -139,13 +138,27 @@
   justify-content: center;
   position: relative;
   z-index: 3;
+  color: var(--aero-control-ink);
+  transition:
+    box-shadow calc(0.25s / var(--anim-speed)) ease,
+    transform calc(0.18s / var(--anim-speed)) ease;
 }
 
 .dock-search-btn:hover {
   box-shadow: 0 0 12px rgba(150, 220, 255, 0.7), inset 0 1px 0 rgba(255, 255, 255, 0.9);
+  transform: scale(1.08);
+}
+
+.dock-search-btn:active {
+  transform: scale(0.94);
 }
 
 .dock-search-btn svg {
   width: 15px;
   height: 15px;
+}
+
+.search-empty[data-tone="error"] {
+  color: var(--aero-glyph-alert);
+  font-weight: 600;
 }

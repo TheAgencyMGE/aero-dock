@@ -1,0 +1,40 @@
+/* Toast pills: the deep glass family, sized to a single sentence. */
+
+.toast-stack {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  pointer-events: none;
+}
+
+.toast {
+  pointer-events: auto;
+  max-width: 460px;
+  padding: 8px 15px;
+  border-radius: 12px;
+  font-family: inherit;
+  font-size: 12.5px;
+  font-weight: 600;
+  line-height: 1.35;
+  text-align: left;
+  color: #f6fcff;
+  text-shadow: 0 1px 3px rgba(8, 40, 70, 0.75);
+  cursor: pointer;
+  --glass-tint-top: rgba(120, 185, 235, 0.62);
+  --glass-tint-mid: rgba(35, 95, 155, 0.58);
+  --glass-tint-bottom: rgba(18, 60, 110, 0.7);
+  --glass-radius: 12px;
+  /* the pill is one line of text: let it size to content, not the stack */
+  overflow-wrap: anywhere;
+}
+
+.toast[data-tone="error"] {
+  --glass-tint-top: rgba(255, 186, 170, 0.6);
+  --glass-tint-mid: rgba(190, 70, 60, 0.55);
+  --glass-tint-bottom: rgba(140, 40, 35, 0.7);
+}
+
+.toast:hover {
+  filter: brightness(1.1);
+}

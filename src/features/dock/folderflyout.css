@@ -114,3 +114,8 @@
   font-size: 12px;
   color: rgba(240, 250, 255, 0.75);
 }
+
+.folder-flyout-empty[data-tone="error"] {
+  color: var(--aero-glyph-alert);
+  font-weight: 600;
+}

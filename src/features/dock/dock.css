@@ -16,7 +16,8 @@
 
 /* idle sleep: ambient motion pauses so the GPU can rest */
 .dock-viewport[data-asleep="true"] .dock-icon-float,
-.dock-viewport[data-asleep="true"] .glass::after {
+.dock-viewport[data-asleep="true"] .glass::after,
+.dock-viewport[data-asleep="true"] .glass-sweep::after {
   animation-play-state: paused;
 }
 .dock-viewport[data-edge="left"] {
@@ -235,10 +236,16 @@
 
 /* ---- tooltip label: tiny glass pill ---- */
 
+/* Centering rides on `translate`, never `transform` — motion writes an
+   inline transform for the entrance and would drop a CSS one. */
 .dock-label {
   position: absolute;
   bottom: calc(100% + 14px);
   left: 50%;
+  translate: -50% 0;
+  max-width: 220px;
+  overflow: hidden;
+  text-overflow: ellipsis;
   padding: 4px 12px;
   border-radius: 10px;
   white-space: nowrap;
@@ -256,4 +263,27 @@
   backdrop-filter: blur(8px);
   pointer-events: none;
   z-index: 10;
+}
+
+.dock-label[data-edge="top"] {
+  bottom: auto;
+  top: calc(100% + 14px);
+}
+
+/* vertical docks put the pill beside the icon instead of above it */
+.dock-label[data-edge="left"],
+.dock-label[data-edge="right"] {
+  bottom: auto;
+  left: auto;
+  top: 50%;
+  translate: 0 -50%;
+  max-width: 132px;
+}
+
+.dock-label[data-edge="left"] {
+  left: calc(100% + 14px);
+}
+
+.dock-label[data-edge="right"] {
+  right: calc(100% + 14px);
 }

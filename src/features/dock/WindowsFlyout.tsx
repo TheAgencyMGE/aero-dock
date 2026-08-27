@@ -9,9 +9,10 @@ import { AnimatePresence, motion } from "motion/react";
 import { useCallback, useEffect, useMemo, useRef } from "react";
 import { springs } from "../../engine/animation/springs";
 import { ipc } from "../../ipc/commands";
+import { notify } from "../feedback/toastStore";
 import type { Settings } from "../../ipc/types";
 import { targetKey, useRunning, windowKey } from "../../state/runningStore";
-import { useMenu } from "./menuStore";
+import { bloomOffset, flyoutStyle, useMenu } from "./menuStore";
 import "./windowsflyout.css";
 
 const SLOT_W = 200;
@@ -115,32 +116,12 @@ export function WindowsFlyout({ edge }: WindowsFlyoutProps) {
   const cols = Math.min(windows.length, COLS_MAX);
   const flyoutWidth = cols * (SLOT_W + 10) + 18;
 
-  // same edge-relative anchoring contract as the other flyouts
-  const style: React.CSSProperties = { position: "absolute", width: flyoutWidth, zIndex: 100 };
-  if (anchor) {
-    const clamped = Math.min(
-      Math.max(anchor.cx - flyoutWidth / 2, 8),
-      anchor.winW - flyoutWidth - 8,
-    );
-    switch (edge) {
-      case "bottom":
-        style.left = clamped;
-        style.bottom = anchor.winH - anchor.top + 14;
-        break;
-      case "top":
-        style.left = clamped;
-        style.top = anchor.bottom + 14;
-        break;
-      case "left":
-        style.left = anchor.right + 14;
-        style.top = 8;
-        break;
-      case "right":
-        style.right = anchor.winW - anchor.left + 14;
-        style.top = 8;
-        break;
-    }
-  }
+  // rows of previews, capped by COLS_MAX -> approximate height for clamping
+  const rows = Math.ceil(windows.length / COLS_MAX);
+  const style = anchor
+    ? flyoutStyle(edge, anchor, flyoutWidth, 14, rows * (SLOT_H + 26) + 30)
+    : {};
+  const from = bloomOffset(edge);
 
   return (
     <AnimatePresence>
@@ -148,8 +129,8 @@ export function WindowsFlyout({ edge }: WindowsFlyoutProps) {
         <motion.div
           className="windows-flyout glass"
           style={style}
-          initial={{ opacity: 0, scale: 0.84, y: edge === "top" ? -12 : 12 }}
-          animate={{ opacity: 1, scale: 1, y: 0 }}
+          initial={{ opacity: 0, scale: 0.84, ...from }}
+          animate={{ opacity: 1, scale: 1, x: 0, y: 0 }}
           exit={{ opacity: 0, scale: 0.93, transition: { duration: 0.15 } }}
           transition={springs.bloom}
           onAnimationComplete={(definition) => {
@@ -177,7 +158,7 @@ export function WindowsFlyout({ edge }: WindowsFlyoutProps) {
                     else slotRefs.current.delete(w.hwnd);
                   }}
                   onClick={() => {
-                    ipc.activateWindow(w.hwnd);
+                    ipc.activateWindow(w.hwnd).catch(notify.on("Could not focus that window"));
                     close();
                   }}
                   title={w.title}
@@ -187,7 +168,7 @@ export function WindowsFlyout({ edge }: WindowsFlyoutProps) {
                   <button
                     className="windows-flyout-close"
                     title="Close window"
-                    onClick={() => ipc.closeWindow(w.hwnd)}
+                    onClick={() => ipc.closeWindow(w.hwnd).catch(notify.on("Could not close that window"))}
                   >
                     ✕
                   </button>

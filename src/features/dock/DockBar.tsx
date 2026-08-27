@@ -9,6 +9,8 @@ import { AnimatePresence, motion, Reorder, useMotionValue } from "motion/react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { springs } from "../../engine/animation/springs";
 import { ipc } from "../../ipc/commands";
+import { Toasts } from "../feedback/Toasts";
+import { notify, useToasts } from "../feedback/toastStore";
 import type { Settings } from "../../ipc/types";
 import type { DockItemView } from "../../state/dockStore";
 import { useAmbient } from "../../state/ambientStore";
@@ -26,9 +28,11 @@ import "./dock.css";
 const GAP = 6;
 const PAD_MAIN = 18; // dock padding along the axis
 const PAD_CROSS = 10; // dock padding across the axis
-const LABEL_SPACE = 44; // tooltip pill above icons
+const LABEL_SPACE = 44; // tooltip pill above icons (horizontal dock)
+const LABEL_SPACE_SIDE = 150; // tooltip pill beside icons (vertical dock)
 const EDGE_SLACK = 24; // window slack so magnified end-icons never clip
 const MENU_SPACE = 360; // extra cross-axis room while a context menu is open
+const TOAST_SPACE = 210; // extra cross-axis room while toasts are on screen
 const WIDGET_SPACE = 190; // clock + status glyphs + search & gear buttons
 const REVEAL_STRIP = 8; // window height while auto-hidden (mouse sensor)
 const HIDE_DELAY_MS = 1400;
@@ -71,6 +75,9 @@ export function DockBar({ settings, items, onLaunch }: DockBarProps) {
   const setSearchOpen = useSearch((s) => s.setOpen);
   const welcomeOpen = !settings.onboardingComplete && pinnedItems.length === 0;
   const menuOpen = menu.item !== null || searchOpen || welcomeOpen;
+  // toasts sit in the band above the dock, which is only tall enough for a
+  // tooltip — without extra room the window would clip them
+  const toastCount = useToasts((s) => s.items.length);
 
   // ---- auto-hide state machine ----
   // hidden=false + hover/menu keeps it visible; idle slides it out,
@@ -129,14 +136,18 @@ export function DockBar({ settings, items, onLaunch }: DockBarProps) {
     // neighbors near the cursor grow too; ~2.5 icons' worth covers the worst case
     const mainGrowth = iconSize * (peak - 1) * 2.5;
     const main = mainBase + mainGrowth + EDGE_SLACK + WIDGET_SPACE;
-    const crossFull = iconSize * peak + PAD_CROSS * 2 + LABEL_SPACE + (menuOpen ? MENU_SPACE : 0);
+    const label = vertical ? LABEL_SPACE_SIDE : LABEL_SPACE;
+    const extraCross = Math.max(menuOpen ? MENU_SPACE : 0, toastCount > 0 ? TOAST_SPACE : 0);
+    const crossFull = iconSize * peak + PAD_CROSS * 2 + label + extraCross;
     const cross = windowShrunk ? REVEAL_STRIP : crossFull;
     return vertical ? { width: cross, height: main } : { width: main, height: cross };
-  }, [items.length, runningItems.length, iconSize, peak, vertical, menuOpen, windowShrunk]);
+  }, [items.length, runningItems.length, iconSize, peak, vertical, menuOpen, toastCount, windowShrunk]);
 
   useEffect(() => {
     ipc.resizeDock(windowSize.width, windowSize.height).catch((e) => {
-      console.error("resize_dock failed", e);
+      // geometry is re-sent on every layout change; a single miss is
+      // self-healing, so log it rather than interrupting the user
+      console.warn("resize_dock failed", e);
     });
   }, [windowSize.width, windowSize.height]);
 
@@ -192,6 +203,7 @@ export function DockBar({ settings, items, onLaunch }: DockBarProps) {
     magnify: magnification,
     magScale: magnificationScale,
     vertical,
+    edge,
     onLaunch: launchGuarded,
     onContext: openMenu,
     onHoverPreview: openPreview,
@@ -210,21 +222,24 @@ export function DockBar({ settings, items, onLaunch }: DockBarProps) {
       onMouseLeave={() => setPointerInside(false)}
     >
       <motion.div
-        className="dock-bar glass"
+        className="dock-bar glass glass-open"
         data-vertical={vertical}
         animate={hidden ? { ...slideOut, opacity: 0.6 } : { x: 0, y: 0, opacity: 1 }}
         transition={springs.slide}
         onMouseMove={handleMove}
         onMouseLeave={handleLeave}
       >
+        {/* the bar can't clip itself (tooltips float above it), so the
+            ambient sweep gets its own clipping layer */}
+        <span className="glass-sweep" aria-hidden />
         <button
           className="dock-search-btn"
           title="Search apps and files"
           onClick={() => setSearchOpen(!searchOpen)}
         >
           <svg viewBox="0 0 24 24" fill="none">
-            <circle cx="10.5" cy="10.5" r="6" stroke="#1c5f8f" strokeWidth="2.4" />
-            <line x1="15" y1="15" x2="20.5" y2="20.5" stroke="#1c5f8f" strokeWidth="2.6" strokeLinecap="round" />
+            <circle cx="10.5" cy="10.5" r="6" stroke="currentColor" strokeWidth="2.4" />
+            <line x1="15" y1="15" x2="20.5" y2="20.5" stroke="currentColor" strokeWidth="2.6" strokeLinecap="round" />
           </svg>
         </button>
         <Reorder.Group
@@ -245,7 +260,7 @@ export function DockBar({ settings, items, onLaunch }: DockBarProps) {
                 mouseAxis.set(Infinity);
               }}
               onDragEnd={() => {
-                ipc.reorderPinned(order).catch((e) => console.error("reorder failed", e));
+                ipc.reorderPinned(order).catch(notify.on("Could not save the new order"));
                 // let the trailing click event pass before re-enabling launch
                 setTimeout(() => {
                   draggingRef.current = false;
@@ -265,12 +280,12 @@ export function DockBar({ settings, items, onLaunch }: DockBarProps) {
         <button
           className="dock-search-btn"
           title="Aero Dock settings"
-          onClick={() => ipc.openSettings().catch((e) => console.error("open settings", e))}
+          onClick={() => ipc.openSettings().catch(notify.on("Could not open settings"))}
         >
           <svg viewBox="0 0 24 24" fill="none">
             <path
               d="M12 8.6 a3.4 3.4 0 1 0 0 6.8 a3.4 3.4 0 0 0 0-6.8 z M12 3.5 l1 2.4 a6.6 6.6 0 0 1 2.4 1 l2.5-.8 1.4 2.4 -1.7 1.9 a6.6 6.6 0 0 1 0 2.7 l1.7 1.9 -1.4 2.4 -2.5-.8 a6.6 6.6 0 0 1 -2.4 1 l-1 2.4 h-2.8 l-.9-2.4 a6.6 6.6 0 0 1 -2.4-1 l-2.5.8 -1.4-2.4 1.7-1.9 a6.6 6.6 0 0 1 0-2.7 L2.3 8.5 3.7 6.1 l2.5.8 a6.6 6.6 0 0 1 2.4-1 l.9-2.4 z"
-              stroke="#1c5f8f"
+              stroke="currentColor"
               strokeWidth="1.7"
               strokeLinejoin="round"
             />
@@ -281,8 +296,9 @@ export function DockBar({ settings, items, onLaunch }: DockBarProps) {
       <FolderFlyout edge={edge} />
       <StackFlyout edge={edge} />
       <WindowsFlyout edge={edge} />
-      <SearchOverlay />
-      <AnimatePresence>{welcomeOpen && <Welcome />}</AnimatePresence>
+      <SearchOverlay edge={edge} />
+      <Toasts edge={edge} />
+      <AnimatePresence>{welcomeOpen && <Welcome edge={edge} />}</AnimatePresence>
     </div>
   );
 }

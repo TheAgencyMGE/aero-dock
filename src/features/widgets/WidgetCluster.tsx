@@ -9,6 +9,7 @@
 import { useEffect, useState } from "react";
 import { ipc } from "../../ipc/commands";
 import { useSystem } from "../../state/systemStore";
+import { notify } from "../feedback/toastStore";
 import "./widgets.css";
 
 function useClock(): Date {
@@ -28,9 +29,13 @@ function useClock(): Date {
   return now;
 }
 
+/** Glyph colors come from theme tokens so every theme stays legible. */
+const GLYPH = "var(--aero-glyph)";
+const ALERT = "var(--aero-glyph-alert)";
+
 function BatteryGlyph({ percent, charging }: { percent: number; charging: boolean }) {
   const fill = Math.max(0.06, percent / 100);
-  const color = percent <= 20 && !charging ? "#ff9d8a" : "#d9f4ff";
+  const color = percent <= 20 && !charging ? ALERT : GLYPH;
   return (
     <svg viewBox="0 0 24 24" className="widget-glyph">
       <rect x="2" y="7" width="18" height="10" rx="2.5" fill="none" stroke={color} strokeWidth="1.6" />
@@ -44,7 +49,7 @@ function BatteryGlyph({ percent, charging }: { percent: number; charging: boolea
 }
 
 function NetworkGlyph({ online }: { online: boolean }) {
-  const color = online ? "#d9f4ff" : "rgba(217,244,255,0.35)";
+  const color = online ? GLYPH : "color-mix(in srgb, var(--aero-glyph) 35%, transparent)";
   return (
     <svg viewBox="0 0 24 24" className="widget-glyph">
       {[0, 1, 2].map((i) => (
@@ -58,14 +63,14 @@ function NetworkGlyph({ online }: { online: boolean }) {
           opacity={online ? 1 - i * 0.18 : 0.6}
         />
       ))}
-      <circle cx="12" cy="17.5" r="1.9" fill={online ? "#d9f4ff" : color} />
-      {!online && <line x1="4" y1="21" x2="20" y2="4" stroke="#ff9d8a" strokeWidth="1.8" strokeLinecap="round" />}
+      <circle cx="12" cy="17.5" r="1.9" fill={online ? GLYPH : color} />
+      {!online && <line x1="4" y1="21" x2="20" y2="4" stroke={ALERT} strokeWidth="1.8" strokeLinecap="round" />}
     </svg>
   );
 }
 
 function VolumeGlyph({ level, muted }: { level: number; muted: boolean }) {
-  const color = muted ? "rgba(217,244,255,0.4)" : "#d9f4ff";
+  const color = muted ? "color-mix(in srgb, var(--aero-glyph) 40%, transparent)" : GLYPH;
   return (
     <svg viewBox="0 0 24 24" className="widget-glyph">
       <path d="M4 9 h4 l5 -4.5 v15 L8 15 H4 z" fill={color} />
@@ -75,8 +80,8 @@ function VolumeGlyph({ level, muted }: { level: number; muted: boolean }) {
       {!muted && level > 55 && (
         <path d="M18 6.5 a8.5 8.5 0 0 1 0 11" fill="none" stroke={color} strokeWidth="1.7" strokeLinecap="round" opacity="0.85" />
       )}
-      {muted && <line x1="15" y1="9" x2="21" y2="15" stroke="#ff9d8a" strokeWidth="1.8" strokeLinecap="round" />}
-      {muted && <line x1="21" y1="9" x2="15" y2="15" stroke="#ff9d8a" strokeWidth="1.8" strokeLinecap="round" />}
+      {muted && <line x1="15" y1="9" x2="21" y2="15" stroke={ALERT} strokeWidth="1.8" strokeLinecap="round" />}
+      {muted && <line x1="21" y1="9" x2="15" y2="15" stroke={ALERT} strokeWidth="1.8" strokeLinecap="round" />}
     </svg>
   );
 }
@@ -86,9 +91,9 @@ function BinGlyph({ full }: { full: boolean }) {
     <svg viewBox="0 0 24 24" className="widget-glyph widget-glyph-bin">
       <path d="M5.5 8 h13 l-1.2 12.2 a1.8 1.8 0 0 1 -1.8 1.6 H8.5 a1.8 1.8 0 0 1 -1.8 -1.6 z"
         fill={full ? "rgba(190,235,255,0.75)" : "rgba(190,235,255,0.32)"}
-        stroke="#d9f4ff" strokeWidth="1.3" />
-      <ellipse cx="12" cy="8" rx="6.8" ry="1.9" fill="rgba(230,248,255,0.85)" stroke="#d9f4ff" strokeWidth="1.1" />
-      {full && <path d="M9 6.8 l1.4 -2.6 M12.4 6.5 l.4 -3 M15 6.9 l-0.7 -2.4" stroke="#d9f4ff" strokeWidth="1.4" strokeLinecap="round" fill="none" />}
+        stroke={GLYPH} strokeWidth="1.3" />
+      <ellipse cx="12" cy="8" rx="6.8" ry="1.9" fill="rgba(230,248,255,0.85)" stroke={GLYPH} strokeWidth="1.1" />
+      {full && <path d="M9 6.8 l1.4 -2.6 M12.4 6.5 l.4 -3 M15 6.9 l-0.7 -2.4" stroke={GLYPH} strokeWidth="1.4" strokeLinecap="round" fill="none" />}
     </svg>
   );
 }
@@ -107,7 +112,7 @@ export function WidgetCluster() {
   const onVolumeWheel = (e: React.WheelEvent) => {
     if (!status?.volume.available) return;
     const next = Math.max(0, Math.min(100, status.volume.level + (e.deltaY < 0 ? 4 : -4)));
-    ipc.setVolume(next).catch((err) => console.error("set volume failed", err));
+    ipc.setVolume(next).catch(notify.on("Could not change the volume"));
   };
 
   const binTooltip = status
@@ -128,9 +133,9 @@ export function WidgetCluster() {
             className="widget-chip widget-chip-button"
             title={`Battery ${status.battery.percent}%${status.battery.charging ? " (charging)" : ""} — click for power settings`}
             onClick={() =>
-              ipc.launch("ms-settings:batterysaver").catch((e) =>
-                console.error("open power settings failed", e),
-              )
+              ipc
+                .launch("ms-settings:batterysaver")
+                .catch(notify.on("Could not open power settings"))
             }
           >
             <BatteryGlyph percent={status.battery.percent} charging={status.battery.charging} />
@@ -140,9 +145,7 @@ export function WidgetCluster() {
           className="widget-chip widget-chip-button"
           title={`${status?.internet ? "Connected" : "No internet"} — click for network settings`}
           onClick={() =>
-            ipc.launch("ms-settings:network").catch((e) =>
-              console.error("open network settings failed", e),
-            )
+            ipc.launch("ms-settings:network").catch(notify.on("Could not open network settings"))
           }
         >
           <NetworkGlyph online={status?.internet ?? false} />
@@ -153,9 +156,9 @@ export function WidgetCluster() {
             title={`Volume ${status.volume.level}%${status.volume.muted ? " (muted)" : ""} — scroll to adjust, click to mute`}
             onWheel={onVolumeWheel}
             onClick={() =>
-              ipc.setVolume(undefined, !status.volume.muted).catch((e) =>
-                console.error("mute failed", e),
-              )
+              ipc
+                .setVolume(undefined, !status.volume.muted)
+                .catch(notify.on("Could not change the volume"))
             }
           >
             <VolumeGlyph level={status.volume.level} muted={status.volume.muted} />
@@ -164,10 +167,10 @@ export function WidgetCluster() {
         <button
           className="widget-chip widget-chip-button"
           title={`${binTooltip} — click to open, right-click to empty`}
-          onClick={() => ipc.openRecycleBin().catch((e) => console.error("open bin failed", e))}
+          onClick={() => ipc.openRecycleBin().catch(notify.on("Could not open the Recycle Bin"))}
           onContextMenu={(e) => {
             e.preventDefault();
-            ipc.emptyRecycleBin().catch((err) => console.error("empty bin failed", err));
+            ipc.emptyRecycleBin().catch(notify.on("Could not empty the Recycle Bin"));
           }}
         >
           <BinGlyph full={(status?.recycleBin.items ?? 0) > 0} />

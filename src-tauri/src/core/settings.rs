@@ -15,19 +15,14 @@ use super::error::{AeroError, AeroResult};
 pub const SETTINGS_EVENT: &str = "settings://changed";
 pub const CURRENT_SCHEMA_VERSION: u32 = 1;
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, Default, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "lowercase")]
 pub enum DockEdge {
     Top,
+    #[default]
     Bottom,
     Left,
     Right,
-}
-
-impl Default for DockEdge {
-    fn default() -> Self {
-        Self::Bottom
-    }
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -250,9 +245,8 @@ impl SettingsStore {
         fs::write(&tmp, json)?;
         fs::rename(&tmp, &self.path).or_else(|_| {
             // rename over an open file can fail on Windows; fall back to copy
-            fs::copy(&tmp, &self.path).map(|_| ()).and_then(|_| {
+            fs::copy(&tmp, &self.path).map(|_| {
                 let _ = fs::remove_file(&tmp);
-                Ok(())
             })
         })?;
         Ok(())

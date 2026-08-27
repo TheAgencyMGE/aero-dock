@@ -1,8 +1,12 @@
 [package]
 name = "aero-dock"
-version = "0.1.0"
-description = "Aero Dock — bring beauty back to the desktop"
-authors = ["Aero Dock"]
+version = "1.0.0"
+description = "Aero Dock - a Frutiger Aero glass dock for Windows"
+authors = ["Ryan Panda"]
+license = "MIT"
+repository = "https://github.com/TheAgencyMGE/aero-dock"
+homepage = "https://github.com/TheAgencyMGE/aero-dock"
+readme = "../README.md"
 edition = "2021"
 
 [lib]

@@ -47,6 +47,13 @@ impl ComApartment {
 }
 
 #[cfg(windows)]
+impl Default for ComApartment {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
+#[cfg(windows)]
 impl Drop for ComApartment {
     fn drop(&mut self) {
         if self.initialized {

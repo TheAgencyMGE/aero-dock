@@ -110,13 +110,16 @@ fn hbitmap_to_rgba(hbitmap: HBITMAP) -> AeroResult<image::RgbaImage> {
     }
 
     // BGRA -> RGBA in place
-    for px in pixels.chunks_exact_mut(4) {
+    let (rgba, _) = pixels.as_chunks_mut::<4>();
+    for px in rgba {
         px.swap(0, 2);
     }
     // Bitmaps without an alpha channel come back with alpha 0 everywhere;
     // treat those as fully opaque instead of invisible.
-    if pixels.chunks_exact(4).all(|px| px[3] == 0) {
-        for px in pixels.chunks_exact_mut(4) {
+    let (rgba, _) = pixels.as_chunks::<4>();
+    if rgba.iter().all(|px| px[3] == 0) {
+        let (rgba, _) = pixels.as_chunks_mut::<4>();
+        for px in rgba {
             px[3] = 255;
         }
     }

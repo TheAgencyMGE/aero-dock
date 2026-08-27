@@ -48,7 +48,7 @@ pub fn list_recent(limit: usize) -> AeroResult<Vec<RecentFile>> {
             Some((e.path(), mtime))
         })
         .collect();
-    links.sort_by(|a, b| b.1.cmp(&a.1));
+    links.sort_by_key(|(_, mtime)| std::cmp::Reverse(*mtime));
 
     let _com = ComApartment::new();
     let link: IShellLinkW = unsafe { CoCreateInstance(&ShellLink, None, CLSCTX_INPROC_SERVER)? };

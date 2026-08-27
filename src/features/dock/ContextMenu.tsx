@@ -7,9 +7,10 @@ import { AnimatePresence, motion } from "motion/react";
 import { useEffect } from "react";
 import { springs } from "../../engine/animation/springs";
 import { ipc } from "../../ipc/commands";
+import { notify } from "../feedback/toastStore";
 import type { Settings } from "../../ipc/types";
 import type { DockItemView } from "../../state/dockStore";
-import { useMenu } from "./menuStore";
+import { bloomOffset, flyoutStyle, useMenu } from "./menuStore";
 import "./contextmenu.css";
 
 const MENU_WIDTH = 240;
@@ -191,39 +192,8 @@ export function ContextMenu({ settings, edge }: ContextMenuProps) {
     };
   }, [item, close]);
 
-  // Anchor offsets are measured from the dock's screen edge, which stays
-  // put when the window grows to make room — so these remain valid even
-  // though innerWidth/innerHeight change after opening.
-  // position/width inline: .glass sets position:relative and stylesheet
-  // order under HMR is not guaranteed, so don't fight it in CSS
-  let style: React.CSSProperties = { position: "absolute", width: MENU_WIDTH, zIndex: 100 };
-  let bloomFrom = { x: 0, y: 10 };
-  if (anchor) {
-    const clampMain = (v: number, max: number) =>
-      Math.min(Math.max(v, 8), max - MENU_WIDTH - 8);
-    switch (edge) {
-      case "bottom":
-        style.left = clampMain(anchor.cx - MENU_WIDTH / 2, anchor.winW);
-        style.bottom = anchor.winH - anchor.top + 12;
-        bloomFrom = { x: 0, y: 10 };
-        break;
-      case "top":
-        style.left = clampMain(anchor.cx - MENU_WIDTH / 2, anchor.winW);
-        style.top = anchor.bottom + 12;
-        bloomFrom = { x: 0, y: -10 };
-        break;
-      case "left":
-        style.left = anchor.right + 12;
-        style.top = Math.max(anchor.cy - 90, 8);
-        bloomFrom = { x: -10, y: 0 };
-        break;
-      case "right":
-        style.right = anchor.winW - anchor.left + 12;
-        style.top = Math.max(anchor.cy - 90, 8);
-        bloomFrom = { x: 10, y: 0 };
-        break;
-    }
-  }
+  const style = anchor ? flyoutStyle(edge, anchor, MENU_WIDTH, 12, 360) : {};
+  const bloomFrom = bloomOffset(edge);
 
   return (
     <AnimatePresence>
@@ -243,7 +213,7 @@ export function ContextMenu({ settings, edge }: ContextMenuProps) {
                   key={w.hwnd}
                   className="aero-menu-item aero-menu-window"
                   onClick={() => {
-                    ipc.activateWindow(w.hwnd);
+                    ipc.activateWindow(w.hwnd).catch(notify.on("Could not focus that window"));
                     close();
                   }}
                 >
@@ -260,8 +230,8 @@ export function ContextMenu({ settings, edge }: ContextMenuProps) {
                 className="aero-menu-item"
                 data-danger={action.danger}
                 onClick={() => {
-                  Promise.resolve(action.run()).catch((e) =>
-                    console.error(`menu action "${action.label}" failed`, e),
+                  Promise.resolve(action.run()).catch(
+                    notify.on(`"${action.label}" failed`),
                   );
                   close();
                 }}

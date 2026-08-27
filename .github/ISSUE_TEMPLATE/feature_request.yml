@@ -1,0 +1,27 @@
+name: Feature request
+description: Suggest something Aero Dock should be able to do
+labels: ["enhancement"]
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: What are you trying to do?
+      description: Describe the situation, not just the feature. It often leads somewhere better.
+    validations:
+      required: true
+
+  - type: textarea
+    id: idea
+    attributes:
+      label: What would you like Aero Dock to do?
+    validations:
+      required: true
+
+  - type: checkboxes
+    id: fits
+    attributes:
+      label: Does it fit the project?
+      description: Aero Dock is a local, offline, Frutiger Aero dock. See CONTRIBUTING.md.
+      options:
+        - label: This needs no network access, accounts, or telemetry
+          required: true

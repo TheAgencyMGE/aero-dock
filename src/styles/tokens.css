@@ -14,6 +14,12 @@
   --aero-life: #7ad03a; /* the Frutiger Aero grass-green spark */
   --aero-text: #0d3a5c;
   --aero-text-on-glass: #ffffff;
+  /* ink for the dock's own controls (search, settings) and the
+     system-corner glyphs — themes retune these so every built-in
+     theme keeps its controls legible */
+  --aero-control-ink: #1c5f8f;
+  --aero-glyph: #d9f4ff;
+  --aero-glyph-alert: #ff9d8a;
 
   /* ---- glass ---- */
   --glass-tint-top: rgba(255, 255, 255, 0.52);

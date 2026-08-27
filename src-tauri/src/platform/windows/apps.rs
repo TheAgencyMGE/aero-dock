@@ -94,7 +94,7 @@ pub fn enumerate_apps() -> AeroResult<Vec<AppEntry>> {
         Err(e) => log::warn!("AppsFolder enumeration failed: {e}"),
     }
 
-    apps.sort_by(|a, b| a.name.to_lowercase().cmp(&b.name.to_lowercase()));
+    apps.sort_by_key(|a| a.name.to_lowercase());
     Ok(apps)
 }
 

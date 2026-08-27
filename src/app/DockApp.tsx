@@ -9,6 +9,7 @@ import { useEffect, useMemo } from "react";
 import { DockBar } from "../features/dock/DockBar";
 import { EffectsLayer } from "../engine/effects/EffectsLayer";
 import { applyAppearance } from "../engine/themes/applyTheme";
+import { notify } from "../features/feedback/toastStore";
 import { ipc } from "../ipc/commands";
 import { buildDockItems, useDockIcons, type DockItemView } from "../state/dockStore";
 import { useRunning } from "../state/runningStore";
@@ -46,7 +47,7 @@ export function DockApp() {
             children: [],
           });
         } catch (e) {
-          console.error(`could not pin dropped file ${path}`, e);
+          notify.error(`Could not pin ${path.split("\\").pop()}`, e);
         }
       }
     });
@@ -97,25 +98,25 @@ export function DockApp() {
         if (c.path && !item.childIcons[idx]) targets.push(c.path);
       });
     }
-    if (targets.length) resolveIcons(targets);
+    if (targets.length) resolveIcons(targets).catch(() => undefined);
   }, [items, resolveIcons]);
 
   if (!settings) return null;
 
   const activate = (item: DockItemView) => {
     if (item.windows.length === 0) {
-      ipc.launch(item.target, item.args).catch((e) => console.error("launch failed", e));
+      ipc.launch(item.target, item.args).catch(notify.on(`Could not open ${item.name}`));
       return;
     }
     // running: focus it; if already focused, cycle windows (or minimize a single one)
     const focusedIdx = item.windows.findIndex((w) => w.hwnd === focused);
     if (focusedIdx === -1) {
-      ipc.activateWindow(item.windows[0].hwnd);
+      ipc.activateWindow(item.windows[0].hwnd).catch(notify.on("Could not focus that window"));
     } else if (item.windows.length === 1) {
-      ipc.minimizeWindow(item.windows[0].hwnd);
+      ipc.minimizeWindow(item.windows[0].hwnd).catch(notify.on("Could not minimize that window"));
     } else {
       const next = item.windows[(focusedIdx + 1) % item.windows.length];
-      ipc.activateWindow(next.hwnd);
+      ipc.activateWindow(next.hwnd).catch(notify.on("Could not focus that window"));
     }
   };
 

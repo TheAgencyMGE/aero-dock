@@ -1,17 +1,14 @@
 /* First-launch welcome card. */
 
+/* position/width/origin are set inline by the component: motion owns the
+   `transform` property, so centering must not live in a CSS transform */
 .welcome-card {
-  left: 50%;
-  bottom: calc(var(--icon-size) * 1.2 + 52px);
-  transform: translateX(-50%);
-  width: 380px;
   padding: 22px 26px 18px;
   text-align: center;
   --glass-tint-top: rgba(140, 200, 240, 0.62);
   --glass-tint-mid: rgba(45, 105, 165, 0.55);
   --glass-tint-bottom: rgba(20, 65, 115, 0.68);
   --glass-radius: 20px;
-  transform-origin: bottom center;
 }
 
 .welcome-orb {

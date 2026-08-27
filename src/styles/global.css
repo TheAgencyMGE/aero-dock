@@ -69,13 +69,20 @@ img {
   z-index: 2;
 }
 
-/* slow ambient light sweep across the glass — a translated gradient
-   layer, so the animation stays on the compositor (no repaints) */
-.glass {
+/* Slow ambient light sweep across the glass - a translated gradient
+   layer, so the animation stays on the compositor (no repaints).
+   The gradient travels well past the panel, so something has to clip it.
+
+   Most panels clip themselves. The dock bar can't: it hosts tooltips that
+   have to float above it, and `overflow: hidden` would swallow them. It
+   opts out with `.glass-open` and clips the sweep with a dedicated inner
+   layer instead. */
+.glass:not(.glass-open) {
   overflow: hidden;
 }
 
-.glass::after {
+.glass:not(.glass-open)::after,
+.glass-sweep::after {
   content: "";
   position: absolute;
   top: 0;
@@ -95,6 +102,16 @@ img {
   z-index: 1;
 }
 
+/* the clipping layer for panels that must not clip their own children */
+.glass-sweep {
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  overflow: hidden;
+  pointer-events: none;
+  z-index: 1;
+}
+
 @keyframes glass-sweep {
   0%,
   12% {
@@ -107,7 +124,59 @@ img {
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .glass::after {
+  .glass::after,
+  .glass-sweep::after {
     animation: none;
+  }
+}
+
+/* ------------------------------------------------------------------ */
+/* Keyboard focus. The dock is normally focus-immune, but the search   */
+/* overlay lifts that — so every focusable surface needs a visible     */
+/* ring, and only for keyboard users.                                  */
+/* ------------------------------------------------------------------ */
+
+:focus:not(:focus-visible) {
+  outline: none;
+}
+
+:focus-visible {
+  outline: 2px solid rgba(255, 255, 255, 0.95);
+  outline-offset: 2px;
+  box-shadow: 0 0 0 4px rgba(47, 157, 227, 0.5);
+}
+
+/* Buttons should feel pressable everywhere, not only on the dock. */
+button {
+  font-family: inherit;
+  color: inherit;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* Shared loading spinner for flyouts that read from disk. */
+.flyout-spinner {
+  display: inline-block;
+  width: 12px;
+  height: 12px;
+  margin-right: 7px;
+  vertical-align: -1px;
+  border-radius: 50%;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  border-top-color: rgba(255, 255, 255, 0.95);
+  animation: flyout-spin 0.7s linear infinite;
+}
+
+@keyframes flyout-spin {
+  to {
+    transform: rotate(360deg);
   }
 }

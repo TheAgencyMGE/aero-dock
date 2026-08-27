@@ -11,8 +11,10 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { create } from "zustand";
 import { springs } from "../../engine/animation/springs";
 import { ipc } from "../../ipc/commands";
-import type { AppEntry, RecentFile } from "../../ipc/types";
+import type { AppEntry, DockEdge, RecentFile } from "../../ipc/types";
+import { bloomOffset, edgePanelStyle } from "../dock/menuStore";
 import { useDockIcons } from "../../state/dockStore";
+import { notify } from "../feedback/toastStore";
 import "./search.css";
 
 interface SearchState {
@@ -60,13 +62,15 @@ function filterResults(query: string, apps: AppEntry[], recent: RecentFile[]): R
   return rows;
 }
 
-export function SearchOverlay() {
+export function SearchOverlay({ edge }: { edge: DockEdge }) {
   const { open, setOpen } = useSearch();
   const { iconUrls, resolveIcons } = useDockIcons();
   const [query, setQuery] = useState("");
   const [selected, setSelected] = useState(0);
   const [apps, setApps] = useState<AppEntry[]>([]);
   const [recent, setRecent] = useState<RecentFile[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [failed, setFailed] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
 
   // load sources + take keyboard focus while open
@@ -76,8 +80,17 @@ export function SearchOverlay() {
     setSelected(0);
     ipc.setDockFocusable(true).catch(() => undefined);
     const t = setTimeout(() => inputRef.current?.focus(), 60);
-    ipc.listApps().then(setApps).catch((e) => console.error("app list failed", e));
-    ipc.listRecentFiles(20).then(setRecent).catch((e) => console.error("recent failed", e));
+    setLoading(true);
+    setFailed(false);
+    Promise.allSettled([ipc.listApps(), ipc.listRecentFiles(20)])
+      .then(([appsResult, recentResult]) => {
+        if (appsResult.status === "fulfilled") setApps(appsResult.value);
+        else console.error("app list failed", appsResult.reason);
+        if (recentResult.status === "fulfilled") setRecent(recentResult.value);
+        else console.error("recent files failed", recentResult.reason);
+        setFailed(appsResult.status === "rejected");
+        setLoading(false);
+      });
     return () => {
       clearTimeout(t);
       ipc.setDockFocusable(false).catch(() => undefined);
@@ -93,12 +106,12 @@ export function SearchOverlay() {
   // resolve icons for visible rows
   useEffect(() => {
     if (!open || results.length === 0) return;
-    resolveIcons(results.map((r) => r.path));
+    resolveIcons(results.map((r) => r.path)).catch(() => undefined);
   }, [open, results, resolveIcons]);
 
   const launch = useCallback(
     (row: ResultRow) => {
-      ipc.launch(row.path, row.args).catch((e) => console.error("launch failed", e));
+      ipc.launch(row.path, row.args).catch(notify.on(`Could not open ${row.name}`));
       setOpen(false);
     },
     [setOpen],
@@ -145,18 +158,15 @@ export function SearchOverlay() {
         <motion.div
           className="search-overlay glass"
           style={{
-            position: "absolute",
-            left: "50%",
-            bottom: "calc(var(--icon-size) * 1.2 + 44px)",
+            ...edgePanelStyle(edge, "calc(var(--icon-size) * 1.2 + 44px)"),
             width: 440,
             zIndex: 110,
           }}
-          initial={{ opacity: 0, scale: 0.86, y: 16, x: "-50%" }}
-          animate={{ opacity: 1, scale: 1, y: 0, x: "-50%" }}
+          initial={{ opacity: 0, scale: 0.86, ...bloomOffset(edge) }}
+          animate={{ opacity: 1, scale: 1, x: 0, y: 0 }}
           exit={{
             opacity: 0,
             scale: 0.93,
-            x: "-50%",
             filter: "blur(6px)",
             transition: { duration: 0.16 },
           }}
@@ -173,7 +183,19 @@ export function SearchOverlay() {
           />
           <div className="search-results">
             {results.length === 0 && (
-              <div className="search-empty">{query ? "No matches" : "Nothing recent yet"}</div>
+              <div className="search-empty" data-tone={failed ? "error" : undefined}>
+                {loading ? (
+                  <>
+                    <span className="flyout-spinner" aria-hidden /> Looking through your apps…
+                  </>
+                ) : failed ? (
+                  "Could not read your installed apps"
+                ) : query ? (
+                  `No matches for "${query}"`
+                ) : (
+                  "Start typing to find an app"
+                )}
+              </div>
             )}
             {results.map((row, i) => (
               <button

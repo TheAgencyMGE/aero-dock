@@ -1,0 +1,54 @@
+name: Bug report
+description: Something in Aero Dock doesn't work the way it should
+labels: ["bug"]
+body:
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: What happened?
+      description: What did you expect, and what did you get instead?
+      placeholder: I clicked a pinned app with two windows open and...
+    validations:
+      required: true
+
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      placeholder: |
+        1. Set the dock to the left edge
+        2. Hover an app with open windows
+        3. ...
+    validations:
+      required: true
+
+  - type: input
+    id: version
+    attributes:
+      label: Aero Dock version
+      description: Settings → About, or the installer filename.
+      placeholder: 1.0.0
+    validations:
+      required: true
+
+  - type: input
+    id: windows
+    attributes:
+      label: Windows version
+      description: Press Win+R, run `winver`, and paste the version line.
+      placeholder: Windows 11 23H2 (build 22631.4317)
+    validations:
+      required: true
+
+  - type: input
+    id: display
+    attributes:
+      label: Display setup
+      description: Helpful for anything about positioning, size, or scaling.
+      placeholder: Single 2560x1440 at 125% scaling
+
+  - type: textarea
+    id: extra
+    attributes:
+      label: Screenshot or anything else
+      description: A screenshot is worth a lot for visual bugs. Drag it in here.

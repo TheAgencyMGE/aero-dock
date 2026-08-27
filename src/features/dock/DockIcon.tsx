@@ -14,6 +14,7 @@ import {
 import { useCallback, useRef, useState } from "react";
 import { springs } from "../../engine/animation/springs";
 import { effectsBus } from "../../engine/effects/effectsBus";
+import type { DockEdge } from "../../ipc/types";
 import type { DockItemView } from "../../state/dockStore";
 import { useMenu } from "./menuStore";
 
@@ -25,6 +26,7 @@ interface DockIconProps {
   magnify: boolean;
   magScale: number;
   vertical: boolean;
+  edge: DockEdge;
   index: number;
   onLaunch: (item: DockItemView, target?: HTMLElement) => void;
   onContext: (item: DockItemView, target: HTMLElement) => void;
@@ -34,6 +36,21 @@ interface DockIconProps {
 
 const PREVIEW_DWELL_MS = 550;
 
+/** Tooltip entrance offset: the pill drifts in from the dock's edge.
+ * Centering lives in CSS `translate` because motion owns `transform`. */
+function labelFrom(edge: DockEdge): { x: number; y: number } {
+  switch (edge) {
+    case "bottom":
+      return { x: 0, y: 6 };
+    case "top":
+      return { x: 0, y: -6 };
+    case "left":
+      return { x: -6, y: 0 };
+    case "right":
+      return { x: 6, y: 0 };
+  }
+}
+
 export function DockIcon({
   item,
   mouseAxis,
@@ -41,6 +58,7 @@ export function DockIcon({
   magnify,
   magScale,
   vertical,
+  edge,
   index,
   onLaunch,
   onContext,
@@ -48,6 +66,9 @@ export function DockIcon({
 }: DockIconProps) {
   const ref = useRef<HTMLButtonElement>(null);
   const [hovered, setHovered] = useState(false);
+  // a flyout already names what you're pointing at, and the pill would
+  // otherwise float over its bottom edge
+  const flyoutOpen = useMenu((m) => m.item !== null);
   const dwellTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
 
   // distance from cursor to this icon's center along the dock axis
@@ -127,11 +148,12 @@ export function DockIcon({
       }}
       aria-label={item.name}
     >
-      {hovered && !vertical && (
+      {hovered && !flyoutOpen && (
         <motion.span
           className="dock-label"
-          initial={{ opacity: 0, y: 6, x: "-50%", scale: 0.9 }}
-          animate={{ opacity: 1, y: 0, x: "-50%", scale: 1 }}
+          data-edge={edge}
+          initial={{ opacity: 0, scale: 0.9, ...labelFrom(edge) }}
+          animate={{ opacity: 1, scale: 1, x: 0, y: 0 }}
           transition={springs.bloom}
         >
           {item.name}

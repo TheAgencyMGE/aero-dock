@@ -7,9 +7,10 @@ import { AnimatePresence, motion } from "motion/react";
 import { useEffect, useState } from "react";
 import { springs } from "../../engine/animation/springs";
 import { ipc } from "../../ipc/commands";
+import { notify } from "../feedback/toastStore";
 import type { Settings } from "../../ipc/types";
 import { useDockIcons } from "../../state/dockStore";
-import { useMenu } from "./menuStore";
+import { bloomOffset, flyoutStyle, useMenu } from "./menuStore";
 import "./folderflyout.css";
 
 const FLYOUT_WIDTH = 340;
@@ -29,12 +30,14 @@ export function FolderFlyout({ edge }: FolderFlyoutProps) {
   const { kind, item, anchor, close } = useMenu();
   const { iconUrls, resolveIcons } = useDockIcons();
   const [entries, setEntries] = useState<FolderItem[] | null>(null);
+  const [failed, setFailed] = useState(false);
 
   const active = kind === "folder" && item !== null && anchor !== null;
 
   useEffect(() => {
     if (!active || !item) return;
     setEntries(null);
+    setFailed(false);
     let cancelled = false;
     ipc
       .listFolder(item.target, 24)
@@ -45,7 +48,9 @@ export function FolderFlyout({ edge }: FolderFlyoutProps) {
       })
       .catch((e) => {
         console.error("folder list failed", e);
-        if (!cancelled) setEntries([]);
+        if (cancelled) return;
+        setEntries([]);
+        setFailed(true);
       });
     return () => {
       cancelled = true;
@@ -78,32 +83,8 @@ export function FolderFlyout({ edge }: FolderFlyoutProps) {
     };
   }, [active, close]);
 
-  // Same edge-relative positioning contract as ContextMenu.
-  const style: React.CSSProperties = { position: "absolute", width: FLYOUT_WIDTH, zIndex: 100 };
-  if (anchor) {
-    const clamped = Math.min(
-      Math.max(anchor.cx - FLYOUT_WIDTH / 2, 8),
-      anchor.winW - FLYOUT_WIDTH - 8,
-    );
-    switch (edge) {
-      case "bottom":
-        style.left = clamped;
-        style.bottom = anchor.winH - anchor.top + 14;
-        break;
-      case "top":
-        style.left = clamped;
-        style.top = anchor.bottom + 14;
-        break;
-      case "left":
-        style.left = anchor.right + 14;
-        style.top = 8;
-        break;
-      case "right":
-        style.right = anchor.winW - anchor.left + 14;
-        style.top = 8;
-        break;
-    }
-  }
+  const style = anchor ? flyoutStyle(edge, anchor, FLYOUT_WIDTH, 14, 320) : {};
+  const from = bloomOffset(edge);
 
   return (
     <AnimatePresence>
@@ -111,8 +92,8 @@ export function FolderFlyout({ edge }: FolderFlyoutProps) {
         <motion.div
           className="folder-flyout glass"
           style={style}
-          initial={{ opacity: 0, scale: 0.8, y: edge === "top" ? -14 : 14 }}
-          animate={{ opacity: 1, scale: 1, y: 0 }}
+          initial={{ opacity: 0, scale: 0.8, ...from }}
+          animate={{ opacity: 1, scale: 1, x: 0, y: 0 }}
           exit={{ opacity: 0, scale: 0.92, filter: "blur(6px)", transition: { duration: 0.16 } }}
           transition={springs.bloom}
         >
@@ -121,7 +102,7 @@ export function FolderFlyout({ edge }: FolderFlyoutProps) {
             <button
               className="folder-flyout-open"
               onClick={() => {
-                ipc.launch(item.target).catch((e) => console.error("open folder failed", e));
+                ipc.launch(item.target).catch(notify.on(`Could not open ${item.name}`));
                 close();
               }}
             >
@@ -129,8 +110,17 @@ export function FolderFlyout({ edge }: FolderFlyoutProps) {
             </button>
           </div>
           <div className="folder-flyout-grid" style={{ gridTemplateColumns: `repeat(${COLUMNS}, 1fr)` }}>
-            {entries === null && <span className="folder-flyout-empty">Loading…</span>}
-            {entries?.length === 0 && <span className="folder-flyout-empty">Empty folder</span>}
+            {entries === null && (
+              <span className="folder-flyout-empty">
+                <span className="flyout-spinner" aria-hidden />
+                Reading folder…
+              </span>
+            )}
+            {entries?.length === 0 && (
+              <span className="folder-flyout-empty" data-tone={failed ? "error" : undefined}>
+                {failed ? "This folder could not be read" : "Nothing in this folder"}
+              </span>
+            )}
             {entries?.map((entry, i) => (
               <motion.button
                 key={entry.path}
@@ -139,7 +129,7 @@ export function FolderFlyout({ edge }: FolderFlyoutProps) {
                 animate={{ opacity: 1, y: 0, scale: 1 }}
                 transition={{ ...springs.bloom, delay: Math.min(i * 0.022, 0.35) }}
                 onClick={() => {
-                  ipc.launch(entry.path).catch((e) => console.error("open item failed", e));
+                  ipc.launch(entry.path).catch(notify.on(`Could not open ${entry.name}`));
                   close();
                 }}
                 title={entry.name}

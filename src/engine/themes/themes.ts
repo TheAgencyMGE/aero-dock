@@ -49,6 +49,8 @@ export const THEMES: Theme[] = [
       "--bloom-color": "rgba(190, 255, 140, 0.9)",
       "--bloom-soft": "rgba(190, 255, 140, 0.32)",
       "--ambient-glow": "rgba(100, 190, 90, 0.25)",
+      "--aero-control-ink": "#1f5c22",
+      "--aero-glyph": "#eaffdc",
     },
   },
   {
@@ -65,6 +67,8 @@ export const THEMES: Theme[] = [
       "--bloom-color": "rgba(150, 240, 210, 0.9)",
       "--bloom-soft": "rgba(160, 150, 250, 0.35)",
       "--ambient-glow": "rgba(120, 110, 230, 0.28)",
+      "--aero-control-ink": "#332a70",
+      "--aero-glyph": "#e9e6ff",
     },
   },
   {
@@ -81,6 +85,8 @@ export const THEMES: Theme[] = [
       "--bloom-color": "rgba(255, 200, 130, 0.9)",
       "--bloom-soft": "rgba(255, 160, 120, 0.35)",
       "--ambient-glow": "rgba(240, 140, 90, 0.28)",
+      "--aero-control-ink": "#8a3320",
+      "--aero-glyph": "#fff1e0",
     },
   },
   {
@@ -92,6 +98,8 @@ export const THEMES: Theme[] = [
       "--aero-accent-deep": "#26325e",
       "--aero-life": "#8fd0ff",
       "--aero-text-on-glass": "#e8eeff",
+      "--aero-control-ink": "#16324f",
+      "--aero-glyph": "#dbe7ff",
       "--glass-tint-top": "rgba(130, 150, 200, 0.34)",
       "--glass-tint-mid": "rgba(50, 65, 110, 0.3)",
       "--glass-tint-bottom": "rgba(15, 22, 45, 0.5)",

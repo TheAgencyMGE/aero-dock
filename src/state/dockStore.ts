@@ -53,6 +53,10 @@ export const useDockIcons = create<IconState>((set, get) => ({
         urls[target] = convertFileSrc(path);
       }
       set((s) => ({ iconUrls: { ...s.iconUrls, ...urls } }));
+    } catch (e) {
+      // a missing icon is cosmetic (the initial-letter glyph stands in);
+      // never let it reject into the caller's render effect
+      console.warn("icon resolution failed", e);
     } finally {
       set((s) => {
         const pending = new Set(s.pendingIcons);

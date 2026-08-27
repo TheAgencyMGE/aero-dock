@@ -5,17 +5,20 @@
 
 import { motion } from "motion/react";
 import { useState } from "react";
+import type { DockEdge } from "../../ipc/types";
+import { bloomOffset, edgePanelStyle } from "../dock/menuStore";
 import { springs } from "../../engine/animation/springs";
+import { notify } from "../feedback/toastStore";
 import { importStarterApps, startEmpty } from "./firstRun";
 import "./welcome.css";
 
-export function Welcome() {
+export function Welcome({ edge }: { edge: DockEdge }) {
   const [busy, setBusy] = useState(false);
 
   const run = (action: () => Promise<void>) => {
     setBusy(true);
     action().catch((e) => {
-      console.error("onboarding action failed", e);
+      notify.error("Setup failed — you can still drag apps onto the dock", e);
       setBusy(false);
     });
     // success needs no cleanup: the settings event flips
@@ -25,9 +28,13 @@ export function Welcome() {
   return (
     <motion.div
       className="welcome-card glass"
-      style={{ position: "absolute", zIndex: 90 }}
-      initial={{ opacity: 0, scale: 0.85, y: 24 }}
-      animate={{ opacity: 1, scale: 1, y: 0 }}
+      style={{
+        ...edgePanelStyle(edge, "calc(var(--icon-size) * 1.2 + 52px)"),
+        width: 380,
+        zIndex: 90,
+      }}
+      initial={{ opacity: 0, scale: 0.85, ...bloomOffset(edge) }}
+      animate={{ opacity: 1, scale: 1, x: 0, y: 0 }}
       exit={{ opacity: 0, scale: 0.94, filter: "blur(6px)", transition: { duration: 0.2 } }}
       transition={{ ...springs.bloom, delay: 0.25 }}
     >
