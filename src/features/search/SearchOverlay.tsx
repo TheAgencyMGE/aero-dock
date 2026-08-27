@@ -37,6 +37,20 @@ interface ResultRow {
 
 const MAX_RESULTS = 9;
 
+/**
+ * Panel geometry, kept in sync with search.css. The dock window has to
+ * reserve cross-axis room for the overlay or it clips the input off the
+ * top, so the numbers live here and DockBar sizes the window from them.
+ *
+ * height = panel padding (10 + 10) + input (41) + list gap (8) + list
+ * max-height (330).
+ */
+export const SEARCH_PANEL = {
+  height: 399,
+  /** Distance from the dock's edge; mirrors the inline `bottom` offset. */
+  offsetFor: (iconSize: number) => iconSize * 1.2 + 44,
+};
+
 function filterResults(query: string, apps: AppEntry[], recent: RecentFile[]): ResultRow[] {
   const q = query.trim().toLowerCase();
   const rows: ResultRow[] = [];

@@ -15,7 +15,7 @@ import type { Settings } from "../../ipc/types";
 import type { DockItemView } from "../../state/dockStore";
 import { useAmbient } from "../../state/ambientStore";
 import { Welcome } from "../onboarding/Welcome";
-import { SearchOverlay, useSearch } from "../search/SearchOverlay";
+import { SEARCH_PANEL, SearchOverlay, useSearch } from "../search/SearchOverlay";
 import { WidgetCluster } from "../widgets/WidgetCluster";
 import { ContextMenu } from "./ContextMenu";
 import { DockIcon } from "./DockIcon";
@@ -32,6 +32,7 @@ const LABEL_SPACE = 44; // tooltip pill above icons (horizontal dock)
 const LABEL_SPACE_SIDE = 150; // tooltip pill beside icons (vertical dock)
 const EDGE_SLACK = 24; // window slack so magnified end-icons never clip
 const MENU_SPACE = 360; // extra cross-axis room while a context menu is open
+const FLYOUT_GAP = 16; // breathing room between a flyout and the window edge
 const TOAST_SPACE = 210; // extra cross-axis room while toasts are on screen
 const WIDGET_SPACE = 190; // clock + status glyphs + search & gear buttons
 const REVEAL_STRIP = 8; // window height while auto-hidden (mouse sensor)
@@ -137,11 +138,34 @@ export function DockBar({ settings, items, onLaunch }: DockBarProps) {
     const mainGrowth = iconSize * (peak - 1) * 2.5;
     const main = mainBase + mainGrowth + EDGE_SLACK + WIDGET_SPACE;
     const label = vertical ? LABEL_SPACE_SIDE : LABEL_SPACE;
-    const extraCross = Math.max(menuOpen ? MENU_SPACE : 0, toastCount > 0 ? TOAST_SPACE : 0);
-    const crossFull = iconSize * peak + PAD_CROSS * 2 + label + extraCross;
+    // The dock band itself: icons at full magnification plus tooltip room.
+    const band = iconSize * peak + PAD_CROSS * 2 + label;
+    // Open surfaces are taller than the band. Each reports the total cross
+    // size it needs, and the window takes the largest. The search overlay
+    // is measured from its own geometry rather than a shared guess, because
+    // a guess that is too small silently clips its input off the top.
+    const crossFull = Math.max(
+      band,
+      menu.item !== null || welcomeOpen ? band + MENU_SPACE : 0,
+      searchOpen
+        ? SEARCH_PANEL.offsetFor(iconSize) + SEARCH_PANEL.height + FLYOUT_GAP
+        : 0,
+      toastCount > 0 ? band + TOAST_SPACE : 0,
+    );
     const cross = windowShrunk ? REVEAL_STRIP : crossFull;
     return vertical ? { width: cross, height: main } : { width: main, height: cross };
-  }, [items.length, runningItems.length, iconSize, peak, vertical, menuOpen, toastCount, windowShrunk]);
+  }, [
+    items.length,
+    runningItems.length,
+    iconSize,
+    peak,
+    vertical,
+    menu.item,
+    searchOpen,
+    welcomeOpen,
+    toastCount,
+    windowShrunk,
+  ]);
 
   useEffect(() => {
     ipc.resizeDock(windowSize.width, windowSize.height).catch((e) => {
