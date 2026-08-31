@@ -66,3 +66,6 @@ $RECYCLE.BIN/
 *.orig
 *.rej
 *.bak
+
+# ---- promo video project (local only, not part of the app) ----
+/video/

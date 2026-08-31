@@ -290,7 +290,12 @@ unsafe fn probe_window(hwnd: HWND) -> Option<WindowInfo> {
 
         let mut pid: u32 = 0;
         GetWindowThreadProcessId(hwnd, Some(&mut pid));
-        if pid == 0 || pid == std::process::id() {
+        // Our own windows are NOT excluded by pid. The dock itself is
+        // already filtered out above by WS_EX_TOOLWINDOW, and skipping the
+        // whole process would also hide the settings window, which is a
+        // normal window the user expects to see and switch back to from
+        // the dock like any other.
+        if pid == 0 {
             return None;
         }
         let exe = process_path(pid)?;

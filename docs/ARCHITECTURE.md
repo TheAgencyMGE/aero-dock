@@ -1,4 +1,4 @@
-# Aero Dock — Architecture
+# Aero Dock architecture
 
 > Bring beauty back to the desktop.
 
@@ -29,10 +29,10 @@ then read the module you're touching.
 
 ### Windows (the OS kind)
 
-- **`dock`** — the main window. Transparent, undecorated, always-on-top,
+- **`dock`**: the main window. Transparent, undecorated, always-on-top,
   skip-taskbar, sized to its monitor's edge. `WS_EX_TOOLWINDOW` keeps it out
   of Alt-Tab; `WS_EX_NOACTIVATE` keeps it from stealing focus.
-- **`settings`** — a normal decorated window, created on demand. Same bundle,
+- **`settings`**: a normal decorated window, created on demand. Same bundle,
   routed by `?window=settings` in `src/main.tsx`.
 - **Flyouts** (context menus, folders, stacks, window previews, search,
   toasts) are *not* separate OS windows. They render inside the dock window's
@@ -95,35 +95,35 @@ aero-dock/
 
 All Win32 and COM lives below `platform/windows` so a macOS or Linux backend
 can slot in later. **Nothing outside that directory touches the `windows`
-crate.** Every COM call happens on a thread that called `CoInitializeEx` —
+crate.** Every COM call happens on a thread that called `CoInitializeEx`.
 `ComApartment` in `platform/mod.rs` is the RAII guard for that, and blocking
 work is pushed off the async pool.
 
 Key APIs:
 
-- **App enumeration** — walk the machine and user Start Menus and the Desktop,
+- **App enumeration**: walk the machine and user Start Menus and the Desktop,
   resolving `.lnk` files via `IShellLink`/`IPersistFile`. Packaged (UWP) apps
   come from `shell:AppsFolder`, with `SIGDN_PARENTRELATIVEPARSING` giving the
   AUMID.
-- **Launching** — `ShellExecuteW` for normal targets. UWP apps need
+- **Launching**: `ShellExecuteW` for normal targets. UWP apps need
   `IApplicationActivationManager`; `ShellExecuteW` silently no-ops on an AUMID.
-- **Icons** — `IShellItemImageFactory::GetImage` at 256px → BGRA → a PNG file
+- **Icons**: `IShellItemImageFactory::GetImage` at 256px → BGRA → a PNG file
   cache, served to the WebView through the `asset` protocol. Icons never cross
   the IPC boundary as base64.
-- **Running apps** — a dedicated thread owns a `RegisterShellHookWindow`
+- **Running apps**: a dedicated thread owns a `RegisterShellHookWindow`
   message loop and pushes snapshots. UWP windows are hosted by
   `ApplicationFrameHost.exe`, so their identity comes from
   `PKEY_AppUserModel_ID` via `SHGetPropertyStoreForWindow`.
-- **Window previews** — `DwmRegisterThumbnail` composites live miniatures
+- **Window previews**: `DwmRegisterThumbnail` composites live miniatures
   directly into the dock window. The OS draws these *over* our DOM, so every
   teardown path must unregister them.
-- **System status** — `GetSystemPowerStatus`, `INetworkListManager`,
+- **System status**: `GetSystemPowerStatus`, `INetworkListManager`,
   `IAudioEndpointVolume`, `SHQueryRecycleBin`.
 
 ### 2. Settings engine (Rust, `core/settings.rs`)
 
 One typed `Settings` struct, versioned by `schema_version` and forward
-compatible via `#[serde(default)]` everywhere — an older build reading a newer
+compatible via `#[serde(default)]` everywhere, so an older build reading a newer
 file fills in defaults rather than failing. Persisted as JSON in the app config
 dir with an atomic write (temp file + rename). A corrupt file is backed up to
 `settings.json.bak` and replaced with defaults rather than blocking startup.
@@ -153,7 +153,7 @@ Events flow one way, Rust → frontend:
 
 A theme is a typed set of design-token overrides. The applier writes them to
 CSS custom properties on `:root`; **components read only tokens, never raw
-colors**, which is why switching themes restyles everything at once — including
+colors**, which is why switching themes restyles everything at once, including
 the PixiJS layer, which parses its tint out of `--bloom-color`.
 
 Built-in themes: Aero (default), Ocean, Forest, Aurora, Sunset, Night. The
@@ -172,12 +172,12 @@ Every spring constant lives in `springs.ts` so the app's feel is tuned in one
 place.
 
 Ambient motion (icon float, glass sweep) is **pure CSS animation on
-transforms** — no JavaScript runs per frame. `prefers-reduced-motion` disables
+transforms**, so no JavaScript runs per frame. `prefers-reduced-motion` disables
 decorative motion globally.
 
 > **Gotcha:** `motion` writes an inline `transform`, which beats any CSS
 > `transform` on the same element. Centering therefore rides on the CSS
-> `translate` property instead — see `.dock-label` and `edgePanelStyle`. Put
+> `translate` property instead. See `.dock-label` and `edgePanelStyle`. Put
 > centering in a CSS `transform` and it will silently vanish the moment an
 > animation runs.
 
@@ -200,7 +200,7 @@ otherwise. Magnification weights icon width by cursor distance along the dock
 axis.
 
 The window size is computed **deterministically** from icon count, size,
-magnification headroom, and whether a flyout is open — there is no
+magnification headroom, and whether a flyout is open. There is no
 `ResizeObserver` anywhere, because measuring a window that resizes in response
 to the measurement is a feedback loop.
 
@@ -210,8 +210,8 @@ to each of the four dock edges.
 
 ## Performance rules
 
-These are requirements, not aspirations. An always-on-top dock that costs CPU
-while you aren't using it is a dock people uninstall.
+Treat these as requirements. An always-on-top dock that burns CPU while you
+are not using it gets uninstalled.
 
 1. **No timers when idle.** The Pixi ticker stops when no effect is alive. All
    ambient motion pauses after 45s without interaction and wakes instantly on
@@ -219,7 +219,7 @@ while you aren't using it is a dock people uninstall.
 2. **Events over polling.** Running apps and focus changes are push-based via
    the shell hook. The only poll is a 20s battery/network/volume refresh.
 3. **Icons render once.** PNG cache on disk, plain `<img>` in the DOM,
-   GPU-composited transforms only — never layout properties.
+   GPU-composited transforms only, never layout properties.
 4. **Effects budget.** Particle counts scale with the density setting, and
    ambient-only frames are capped at 30fps. Everything must stay smooth on
    Intel integrated graphics.
@@ -247,7 +247,7 @@ Plus: no `unwrap()` outside tests, and every command returns
 Hard-won details that aren't obvious from the code:
 
 - **`open_settings` must be `async`.** Building a WebView2 inside a synchronous
-  Tauri command deadlocks — the command blocks the main thread that WebView2
+  Tauri command deadlocks, because the command blocks the main thread WebView2
   creation needs.
 - **React StrictMode double-fires effects.** Any first-run or one-shot IPC needs
   an idempotent, atomic transaction on the Rust side. `first_run_import` is the
@@ -264,7 +264,7 @@ Hard-won details that aren't obvious from the code:
   uses `image::load_from_memory` rather than extension sniffing.
 - **DWM thumbnails outlive the DOM.** They're composited by the OS over
   everything we draw, so a leaked one floats with no glass behind it. Teardown
-  hides them twice — once immediately, once after a delay — to catch anything a
+  hides them twice, once immediately and once after a delay, to catch anything a
   straggling animation callback re-registered.
 
 ## Known limitations

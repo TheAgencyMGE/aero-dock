@@ -33,7 +33,7 @@ you judge whether something is a real vulnerability:
 - **No accounts, no cloud, no credentials.** Aero Dock stores no secrets and
   asks for no sign-in.
 - **One data file.** All state lives in
-  `%APPDATA%\com.aerodock.desktop\settings.json` — your pinned items and
+  `%APPDATA%\com.aerodock.desktop\settings.json`, holding your pinned items and
   appearance preferences. Extracted app icons are cached as PNGs beside it.
 - **Windows APIs it uses.** Shell shortcut resolution, icon extraction, window
   enumeration and activation, DWM thumbnails, audio endpoint volume, battery

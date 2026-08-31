@@ -1,262 +1,198 @@
 <div align="center">
 
-<img src="src-tauri/icons/128x128.png" width="96" alt="Aero Dock" />
+<img src="src-tauri/icons/128x128.png" width="96" alt="Aero Dock icon" />
 
 # Aero Dock
 
-**A glass dock for Windows, in the Frutiger Aero design language.**
+**A Frutiger Aero glass dock for Windows 10 and 11.**
 
-Pin your apps to a floating pane of glass. Icons swell under the cursor, live
-window previews rise on hover, and light moves across everything — as if
-Vista's aesthetic had never stopped evolving.
+Pin your apps to a floating pane of glass. Icons grow under the cursor, live
+window previews rise on hover, and light drifts across the whole thing.
 
 [![Latest release](https://img.shields.io/github/v/release/TheAgencyMGE/aero-dock?label=download&color=2f9de3)](https://github.com/TheAgencyMGE/aero-dock/releases/latest)
 [![CI](https://github.com/TheAgencyMGE/aero-dock/actions/workflows/ci.yml/badge.svg)](https://github.com/TheAgencyMGE/aero-dock/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/license-MIT-7ad03a)](LICENSE)
 [![Platform: Windows](https://img.shields.io/badge/platform-Windows%2010%20%7C%2011-0d3a5c)](#requirements)
 
-<img src="docs/screenshots/dock.png" alt="The Aero Dock bar: glass shelf with magnified app icons, running indicators, and the system corner" width="880" />
+<img src="docs/screenshots/dock.png" alt="Aero Dock glass taskbar with magnified app icons and running indicators on Windows 11" width="880" />
 
 </div>
 
 ---
 
-## What it is
+## What it does
 
-Aero Dock is a desktop dock and app launcher for Windows 10 and 11. It sits on
-any screen edge and gives you one place to launch apps, switch windows, and
-glance at your system — the job the taskbar does, done in glass.
+Aero Dock is an app launcher and window switcher for Windows. It sits on any
+screen edge and covers what the taskbar covers, in glass.
 
-It is a native app, not a web wrapper pretending to be one: the entire Windows
-integration layer is Rust talking directly to Win32 and COM. Shortcut
-resolution, icon extraction, window tracking, and the live previews are all
-real Windows APIs. The interface on top is React, rendered in WebView2, which
-is what makes the glass look like glass.
+The Windows side is Rust calling Win32 and COM directly. Shortcut resolution,
+icon extraction, window tracking and the live previews all go through real
+Windows APIs. The interface on top is React in WebView2, which is how the blur
+and gloss work at all.
 
-## Why you might want it
-
-- **Because Windows docks mostly look like macOS docks.** This one doesn't.
-  Frutiger Aero — glass, water, light, and life — is a deliberate aesthetic
-  choice, not a theme bolted on afterward.
-- **Because it's genuinely idle.** The WebGL ticker stops when nothing is
-  animating, ambient motion pauses when you leave the dock alone, and all
-  motion runs on the compositor. A dock that costs CPU while you aren't using
-  it is a dock you uninstall.
-- **Because it stays out of your business.** No network requests. No telemetry,
-  no analytics, no crash reporting, no update check, no account. Your
-  configuration is one JSON file on your own disk.
-- **Because it's yours.** MIT licensed, and the whole thing is here to read.
+If you used RocketDock years ago and miss it, this is aimed squarely at you.
+Its last release was 2008.
 
 ## Features
 
-**The dock**
+**Dock**
 
-- Lives on any edge — bottom, top, left, or right — floating or flush against
-  it, correctly positioned per monitor at any DPI scaling
-- Cursor magnification with soft spring physics, idle float, launch bounce, and
-  glass tooltips
-- Auto-hide with an 8px reveal strip along the edge
-- A monitor picker when you have more than one display
+- Any edge: bottom, top, left or right, floating or flush
+- Per monitor DPI aware, with a monitor picker on multi display setups
+- Cursor magnification on springs, idle float, launch bounce, glass tooltips
+- Auto hide with an 8px reveal strip
 
 **Apps and windows**
 
-- Running-app indicators; click to focus, click again to cycle windows or
-  minimize
-- **Live window previews** — real DWM thumbnails, framed in glass, showing what
-  each window is actually doing right now
-- Drag to reorder pinned items; drop apps, files, or folders straight from
-  Explorer to pin them
-- Folder flyouts that bloom open into a grid, and **stacks** that group several
-  pinned items behind a single tile
-- Context menus with Open, Run as administrator, Open file location, pin/unpin,
-  and per-window actions
+- Running indicators. Click to focus, click again to cycle or minimize
+- Live window previews using real DWM thumbnails, framed in glass
+- Drag to reorder, or drop apps, files and folders in from Explorer
+- Folder flyouts, and stacks that group several pins behind one tile
+- Context menu: open, run as administrator, open file location, pin, unpin
 
 **Search**
 
-- Keyboard-first overlay covering installed apps — including packaged Microsoft
-  Store apps — and recent files
+- Keyboard overlay across installed apps, including Microsoft Store apps, plus
+  recent files
 
 **System corner**
 
-- Clock and date, battery, network status, volume (scroll to adjust, click to
-  mute), and the Recycle Bin (click to open, right-click to empty)
+- Clock, battery, network, volume (scroll to change, click to mute), Recycle
+  Bin
 
-**Looks**
+**Appearance**
 
-- Six themes: Aero, Ocean, Forest, Aurora, Sunset, and Night
-- Optional wallpaper color sync that tints any theme from your desktop
-  background
-- Ambient scenes drifting behind the dock: dust, rain, snow, bubbles, or aurora
-- Sliders for glass intensity, bloom, reflections, particle density, opacity,
-  and animation speed
-- Honors `prefers-reduced-motion` — decorative motion turns off
+- Six themes: Aero, Ocean, Forest, Aurora, Sunset, Night
+- Optional wallpaper colour sync
+- Ambient scenes behind the dock: dust, rain, snow, bubbles, aurora
+- Sliders for glass, bloom, reflections, particles, opacity, speed
+- Honours `prefers-reduced-motion`
 
 ## Screenshots
 
 <div align="center">
 
-<img src="docs/screenshots/previews.png" alt="Live window previews rising from the dock, each a real DWM thumbnail in a glass frame" width="820" />
+<img src="docs/screenshots/previews.png" alt="Live window previews in Aero Dock, showing real DWM thumbnails of open File Explorer windows" width="820" />
 
-*Live window previews — real DWM thumbnails, not screenshots*
+<em>Live window previews. Real DWM thumbnails, so you see what each window is doing.</em>
 
-<img src="docs/screenshots/settings.png" alt="The Aero Dock settings window: sky gradient, rising bubbles, and glass control cards" width="820" />
+<img src="docs/screenshots/settings.png" alt="Aero Dock settings window with theme picker and glass sliders" width="820" />
 
-*Settings, in the same design language as the dock itself*
+<em>Settings, in the same glass as the dock.</em>
 
 </div>
 
 ## Install
 
-Download the installer from the
+Grab the installer from the
 [latest release](https://github.com/TheAgencyMGE/aero-dock/releases/latest) and
-run it. It installs for the current user, so it needs no administrator rights.
+run it. It installs per user, so no admin rights.
 
-Aero Dock starts in your system tray. Left-click the tray icon to show or hide
-the dock; right-click it for settings and quit.
+Aero Dock lives in your system tray. Left click the tray icon to show or hide
+the dock, right click for settings and quit.
 
-> **A note on SmartScreen:** the installer isn't code-signed — certificates
-> cost money this project doesn't have. Windows will show a "Windows protected
-> your PC" prompt on first run. Click **More info → Run anyway**, or
-> [build it yourself](#building-from-source) if you'd rather not take that on
-> faith.
+> The installer is not code signed, because certificates cost money this
+> project does not have. Windows will show a "Windows protected your PC" box
+> the first time. Click **More info**, then **Run anyway**. If you would rather
+> not trust a binary, [build it yourself](#building-from-source).
 
 ### Requirements
 
 - Windows 10 version 1809 or later, or Windows 11
-- WebView2 runtime — already installed on Windows 11 and current Windows 10
 - x64
+- WebView2 runtime, already present on Windows 11 and current Windows 10
 
 ## Usage
 
 | Action | How |
 | ------ | --- |
 | Launch an app | Click its icon |
-| Focus a running app | Click it; click again to cycle its windows or minimize |
-| See live window previews | Hover an app that has windows open |
+| Focus a running app | Click it, then click again to cycle or minimize |
+| See window previews | Hover an app that has windows open |
 | Pin something | Drag it from Explorer onto the dock |
 | Reorder | Drag an icon along the dock |
-| Group into a stack | Right-click an icon → **Stack with previous item** |
-| Search | Click the magnifier on the dock |
-| Settings | Click the gear on the dock, or right-click the tray icon |
-| Show/hide the dock | Left-click the tray icon |
+| Group into a stack | Right click an icon, then **Stack with previous item** |
+| Search | Click the magnifier |
+| Settings | Click the gear, or right click the tray icon |
+| Show or hide the dock | Left click the tray icon |
 
-First launch offers to import a starter set of your installed apps, or to start
-with an empty dock and let you pin things yourself.
+First launch offers to import a starter set of your apps, or to start empty.
 
-## Configuration
+## Privacy
 
-Everything is in the settings window — there is no config file to hand-edit,
-though you can export and import one.
+Aero Dock makes no network requests. No telemetry, no analytics, no crash
+reporting, no update check, no account.
 
-Your settings live at:
+The one outbound action is opening a URL in your browser, and only when you
+click something that obviously does that, like the GitHub button in Settings.
+
+Your config is a single file:
 
 ```
 %APPDATA%\com.aerodock.desktop\settings.json
 ```
 
-Extracted app icons are cached as PNGs beside it. Deleting that folder resets
-Aero Dock to a clean first launch.
-
-## Privacy
-
-Aero Dock makes **no network requests**. There is no telemetry, no analytics,
-no crash reporting, no update check, and no account.
-
-The only outbound action is opening a URL in your default browser, and only
-when you click something that clearly does that — the GitHub button in
-Settings, or the battery and network chips, which open the corresponding
-Windows Settings page.
-
-Everything Aero Dock knows about you is in that one `settings.json`.
+Extracted icons are cached as PNGs next to it. Delete that folder to reset.
 
 ## Building from source
 
-You'll need Rust (stable, MSVC), Visual Studio Build Tools with the
-"Desktop development with C++" workload, Node.js 22+, and pnpm 10+.
+You need Rust (stable, MSVC), Visual Studio Build Tools with the "Desktop
+development with C++" workload, Node.js 22+, and pnpm 10+.
 
 ```sh
 git clone https://github.com/TheAgencyMGE/aero-dock.git
 cd aero-dock
 pnpm install
+pnpm tauri:dev      # run with hot reload
+pnpm tauri:build    # NSIS installer in src-tauri/target/release/bundle/nsis
+pnpm check          # typecheck, clippy, Rust tests, production build
 ```
-
-Run it with hot reload:
-
-```sh
-pnpm tauri:dev
-```
-
-Build the installer:
-
-```sh
-pnpm tauri:build
-```
-
-The NSIS installer lands in `src-tauri/target/release/bundle/nsis/`.
-
-Run the full quality gate — typecheck, clippy, Rust tests, production build:
-
-```sh
-pnpm check
-```
-
-## Contributing
-
-Contributions are welcome. [CONTRIBUTING.md](CONTRIBUTING.md) covers the setup,
-the house rules (style from tokens not hex, animate transforms only, idle must
-cost nothing, no telemetry), and how the code is laid out.
-
-[docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) is the real map of the codebase —
-worth reading before any non-trivial change.
-
-A macOS or Linux backend is a genuinely well-shaped project if you're looking
-for somewhere to start: the platform layer is already isolated behind
-`src-tauri/src/platform/`.
 
 ## Troubleshooting
 
-**The dock doesn't appear after install.**
-Check the system tray — Aero Dock starts there. Left-click the icon to show the
-dock.
+**Nothing appeared after install.** Check the system tray. Left click the icon.
 
-**Some icons are letters instead of app icons.**
-Windows couldn't extract an icon for that target, so the dock falls back to the
-app's initial. This usually means the shortcut points somewhere that no longer
-exists.
+**Some icons are letters.** Windows could not extract an icon for that target,
+so the dock falls back to the app's initial. Usually the shortcut points at
+something that no longer exists.
 
-**Window previews are blank.**
-DWM thumbnails need Desktop Window Manager composition, which is always on in
-Windows 10 and 11. Some apps that render with their own compositor won't
-produce a thumbnail.
+**Previews are blank.** Some apps render with their own compositor and produce
+no DWM thumbnail.
 
-**Windows from a Microsoft Store app group oddly.**
-Packaged apps are all hosted by `ApplicationFrameHost.exe`, so Aero Dock
-identifies them by AppUserModelID instead. This handles the common cases but
-isn't perfect — see [Known limitations](#known-limitations).
+**Store app windows group oddly.** Packaged apps all run under
+`ApplicationFrameHost.exe`, so Aero Dock identifies them by AppUserModelID.
+That covers most cases and misses a few.
 
-**The dock is on the wrong monitor.**
-Settings → Dock → Monitor. The picker appears when you have two or more
-displays.
+**Wrong monitor.** Settings, then Dock, then Monitor. The picker shows up with
+two or more displays.
 
-**Settings won't open.**
-Quit from the tray icon and start Aero Dock again. If it persists, please
-[open an issue](https://github.com/TheAgencyMGE/aero-dock/issues) with your
-Windows build.
+**Settings will not open.** Quit from the tray and start it again. If it keeps
+happening, [open an issue](https://github.com/TheAgencyMGE/aero-dock/issues)
+with your Windows build.
 
 ## Known limitations
 
-- **Windows only.** The platform layer is isolated so a port is realistic, but
-  no macOS or Linux backend exists yet.
-- **UWP window grouping is imperfect.** Packaged apps are identified by
-  AppUserModelID read from the frame window, which doesn't resolve for every
-  app.
-- **The installer is unsigned.** Expect a SmartScreen prompt on first run.
+- Windows only. The platform layer is isolated so a port is realistic, but no
+  macOS or Linux backend exists.
+- UWP window grouping does not resolve for every app.
+- The installer is unsigned, so expect SmartScreen on first run.
+- Memory sits around 250MB, which is heavy for a dock. That is the cost of the
+  WebView2 rendering stack.
+
+## Contributing
+
+Pull requests welcome. [CONTRIBUTING.md](CONTRIBUTING.md) has the setup and the
+house rules. [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) maps the codebase and
+is worth reading before anything non trivial.
+
+A macOS or Linux backend is a well shaped place to start. The platform layer is
+already isolated behind `src-tauri/src/platform/`.
 
 ## Built with
 
-[Tauri 2](https://tauri.app) · Rust with
-[windows-rs](https://github.com/microsoft/windows-rs) · React 19 · TypeScript ·
-Vite · [motion](https://motion.dev) · [PixiJS](https://pixijs.com) ·
+[Tauri 2](https://tauri.app), Rust with
+[windows-rs](https://github.com/microsoft/windows-rs), React 19, TypeScript,
+Vite, [motion](https://motion.dev), [PixiJS](https://pixijs.com),
 [zustand](https://github.com/pmndrs/zustand)
 
 ## License

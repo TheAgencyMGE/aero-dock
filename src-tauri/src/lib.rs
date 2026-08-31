@@ -47,9 +47,13 @@ pub fn run() {
             commands::system_cmd::start_poller(handle.clone());
             setup_tray(app)?;
 
-            // honor the taskbar preference from the last session
+            // honor the taskbar preference from the last session, and if it
+            // is off, force the taskbar back: a previous crash while hidden
+            // must not leave the user without one
             if app.state::<SettingsStore>().get().hide_taskbar {
                 platform::windows::taskbar::set_taskbar_autohide(true);
+            } else {
+                platform::windows::taskbar::restore_taskbar();
             }
             commands::apps::warm_app_cache();
             Ok(())
@@ -91,12 +95,12 @@ pub fn run() {
         ])
         .build(tauri::generate_context!())
         .expect("error while building Aero Dock")
-        .run(|app, event| {
+        .run(|_app, event| {
             // leaving? give the user their taskbar back
             if let tauri::RunEvent::ExitRequested { .. } = event {
-                if app.state::<SettingsStore>().get().hide_taskbar {
-                    platform::windows::taskbar::set_taskbar_autohide(false);
-                }
+                // always restore, not only when the pref is on: the user may
+                // have toggled it off mid-session without the bar coming back
+                platform::windows::taskbar::restore_taskbar();
             }
         });
 }
