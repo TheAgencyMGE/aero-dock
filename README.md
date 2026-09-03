@@ -4,10 +4,15 @@
 
 # Aero Dock
 
-**A Frutiger Aero glass dock for Windows 10 and 11.**
+**A modern free and open-source RocketDock and Nexus Dock alternative for
+Windows 10 and 11.**
 
-Pin your apps to a floating pane of glass. Icons grow under the cursor, live
-window previews rise on hover, and light drifts across the whole thing.
+Live window previews, Aero glass, cursor magnification, and full desktop
+customization.
+
+Built in the Frutiger Aero design language: pin your apps to a floating pane
+of glass, watch icons grow under the cursor, and let light drift across the
+whole thing.
 
 [![Latest release](https://img.shields.io/github/v/release/TheAgencyMGE/aero-dock?label=download&color=2f9de3)](https://github.com/TheAgencyMGE/aero-dock/releases/latest)
 [![CI](https://github.com/TheAgencyMGE/aero-dock/actions/workflows/ci.yml/badge.svg)](https://github.com/TheAgencyMGE/aero-dock/actions/workflows/ci.yml)
@@ -22,8 +27,9 @@ window previews rise on hover, and light drifts across the whole thing.
 
 ## What it does
 
-Aero Dock is an app launcher and window switcher for Windows. It sits on any
-screen edge and covers what the taskbar covers, in glass.
+Aero Dock is an app launcher and window switcher for Windows, in the same
+vein as RocketDock and Winstep Nexus Dock. It sits on any screen edge and
+covers what the taskbar covers, in glass.
 
 The Windows side is Rust calling Win32 and COM directly. Shortcut resolution,
 icon extraction, window tracking and the live previews all go through real

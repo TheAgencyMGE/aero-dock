@@ -2,7 +2,7 @@
   "name": "aero-dock",
   "version": "1.0.0",
   "private": true,
-  "description": "A Frutiger Aero glass dock and app launcher for Windows 11 - live window previews, cursor magnification, running-app indicators, themes, and ambient effects.",
+  "description": "A modern free and open-source RocketDock and Nexus Dock alternative for Windows 10 and 11. Live window previews, Aero glass, cursor magnification, and full desktop customization, in the Frutiger Aero design language.",
   "license": "MIT",
   "author": "Ryan Panda",
   "homepage": "https://github.com/TheAgencyMGE/aero-dock",
