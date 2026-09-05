@@ -163,6 +163,10 @@
 .dock-icon .dock-icon-glyph {
   width: 100%;
   height: 100%;
+  /* Icons are normalised to a square on extraction, but a non-square
+     source that slips through must letterbox rather than stretch when
+     the dock size changes. */
+  object-fit: contain;
   filter: var(--shadow-icon);
   -webkit-box-reflect: below 2px
     linear-gradient(

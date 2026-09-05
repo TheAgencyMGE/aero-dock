@@ -11,6 +11,10 @@ export const springs = {
   bounce: { type: "spring", stiffness: 320, damping: 13, mass: 0.6 } as const,
   /** Drag: icons feel like they're suspended in water. */
   drag: { stiffness: 260, damping: 22, mass: 0.5 },
+  /** Neighbours getting out of the way during a reorder. Stiffer than
+   * `drag` on purpose: the gap has to open before the cursor arrives,
+   * or the drag reads as laggy even though the tile is tracking 1:1. */
+  reorder: { type: "spring", stiffness: 520, damping: 38, mass: 0.4 } as const,
   /** Panels/menus blooming open. */
   bloom: { type: "spring", stiffness: 240, damping: 22, mass: 0.7 } as const,
   /** Dock slide for auto-hide. */

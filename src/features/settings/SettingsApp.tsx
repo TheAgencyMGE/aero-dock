@@ -208,6 +208,42 @@ export function SettingsApp() {
             hint="The dock slides away and returns when you move the mouse to the screen edge"
             onChange={(v) => set((d) => void (d.dock.autoHide = v))}
           />
+          {dock.autoHide && (
+            <AeroSlider
+              label="Hide after"
+              value={dock.autoHideDelayMs}
+              min={200}
+              max={5000}
+              step={100}
+              format={(v) => (v >= 1000 ? `${(v / 1000).toFixed(1)}s` : `${v}ms`)}
+              onChange={(v) => set((d) => void (d.dock.autoHideDelayMs = v))}
+            />
+          )}
+        </section>
+
+        {/* ---- what the dock shows ---- */}
+        <section className="settings-card glass">
+          <h2>Dock items</h2>
+          <AeroToggle
+            label="Search button"
+            checked={dock.showSearchButton}
+            onChange={(v) => set((d) => void (d.dock.showSearchButton = v))}
+          />
+          <AeroToggle
+            label="Settings button"
+            checked={dock.showSettingsButton}
+            onChange={(v) => set((d) => void (d.dock.showSettingsButton = v))}
+          />
+          <AeroToggle
+            label="Clock and date"
+            checked={dock.showClock}
+            onChange={(v) => set((d) => void (d.dock.showClock = v))}
+          />
+          <AeroToggle
+            label="Battery, network, volume, Recycle Bin"
+            checked={dock.showSystemStatus}
+            onChange={(v) => set((d) => void (d.dock.showSystemStatus = v))}
+          />
         </section>
 
         {/* ---- appearance ---- */}
@@ -335,6 +371,26 @@ export function SettingsApp() {
               />
             </div>
           </div>
+          <div className="ctl-row">
+            <span className="ctl-label">Quit Aero Dock</span>
+            <div className="ctl-actions">
+              <button
+                className="aero-button aero-button-danger"
+                onClick={() =>
+                  ipc
+                    .quitApp()
+                    .catch((e) =>
+                      setStatus({ tone: "error", text: `Could not quit: ${e}` }),
+                    )
+                }
+              >
+                Quit
+              </button>
+            </div>
+          </div>
+          <p className="settings-note">
+            Also available by right-clicking the Aero Dock tray icon.
+          </p>
           {status && (
             <p className="settings-note" data-tone={status.tone} role="status">
               {status.text}

@@ -14,10 +14,12 @@ import { notify, useToasts } from "../feedback/toastStore";
 import type { Settings } from "../../ipc/types";
 import type { DockItemView } from "../../state/dockStore";
 import { useAmbient } from "../../state/ambientStore";
+import { useFileDrag } from "../../state/dragStore";
 import { Welcome } from "../onboarding/Welcome";
 import { SEARCH_PANEL, SearchOverlay, useSearch } from "../search/SearchOverlay";
 import { WidgetCluster } from "../widgets/WidgetCluster";
 import { ContextMenu } from "./ContextMenu";
+import { SearchButton, SettingsButton } from "./DockControls";
 import { DockIcon } from "./DockIcon";
 import { FolderFlyout } from "./FolderFlyout";
 import { StackFlyout } from "./StackFlyout";
@@ -36,7 +38,7 @@ const FLYOUT_GAP = 16; // breathing room between a flyout and the window edge
 const TOAST_SPACE = 210; // extra cross-axis room while toasts are on screen
 const WIDGET_SPACE = 190; // clock + status glyphs + search & gear buttons
 const REVEAL_STRIP = 8; // window height while auto-hidden (mouse sensor)
-const HIDE_DELAY_MS = 1400;
+// fallback only; the real delay is settings.dock.autoHideDelayMs
 const HIDE_ANIM_MS = 380;
 // ambient animations (float, sweep) pause after this much no-interaction
 // so an idle dock costs ~zero GPU; they wake the moment the cursor returns
@@ -87,8 +89,12 @@ export function DockBar({ settings, items, onLaunch }: DockBarProps) {
   const [hidden, setHidden] = useState(false);
   const [windowShrunk, setWindowShrunk] = useState(false);
   const [pointerInside, setPointerInside] = useState(false);
+  const [dragging, setDragging] = useState(false);
   const hideTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
   const shrinkTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
+
+  // A file drag aimed at the dock must not make it slide away.
+  const fileDragOver = useFileDrag((s) => s.overDock);
 
   // ambient-motion sleep: cheap idle, alive on approach
   const asleep = useAmbient((s) => s.asleep);
@@ -96,15 +102,16 @@ export function DockBar({ settings, items, onLaunch }: DockBarProps) {
   const sleepTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
   useEffect(() => {
     clearTimeout(sleepTimer.current);
-    if (pointerInside || menuOpen) {
+    if (pointerInside || menuOpen || fileDragOver) {
       setAsleep(false);
       return;
     }
     sleepTimer.current = setTimeout(() => setAsleep(true), SLEEP_AFTER_MS);
     return () => clearTimeout(sleepTimer.current);
-  }, [pointerInside, menuOpen, setAsleep]);
+  }, [pointerInside, menuOpen, fileDragOver, setAsleep]);
 
   const autoHide = settings.dock.autoHide;
+  const autoHideDelay = settings.dock.autoHideDelayMs;
   useEffect(() => {
     clearTimeout(hideTimer.current);
     clearTimeout(shrinkTimer.current);
@@ -113,7 +120,7 @@ export function DockBar({ settings, items, onLaunch }: DockBarProps) {
       setWindowShrunk(false);
       return;
     }
-    if (pointerInside || menuOpen) {
+    if (pointerInside || menuOpen || fileDragOver) {
       setHidden(false);
       setWindowShrunk(false);
       return;
@@ -122,12 +129,12 @@ export function DockBar({ settings, items, onLaunch }: DockBarProps) {
       setHidden(true);
       // shrink the OS window only after the slide-out finishes
       shrinkTimer.current = setTimeout(() => setWindowShrunk(true), HIDE_ANIM_MS);
-    }, HIDE_DELAY_MS);
+    }, autoHideDelay);
     return () => {
       clearTimeout(hideTimer.current);
       clearTimeout(shrinkTimer.current);
     };
-  }, [autoHide, pointerInside, menuOpen]);
+  }, [autoHide, pointerInside, menuOpen, fileDragOver, autoHideDelay]);
 
   // Deterministic window size: no ResizeObserver, no feedback loops.
   const windowSize = useMemo(() => {
@@ -228,6 +235,7 @@ export function DockBar({ settings, items, onLaunch }: DockBarProps) {
     magScale: magnificationScale,
     vertical,
     edge,
+    dragging,
     onLaunch: launchGuarded,
     onContext: openMenu,
     onHoverPreview: openPreview,
@@ -256,16 +264,9 @@ export function DockBar({ settings, items, onLaunch }: DockBarProps) {
         {/* the bar can't clip itself (tooltips float above it), so the
             ambient sweep gets its own clipping layer */}
         <span className="glass-sweep" aria-hidden />
-        <button
-          className="dock-search-btn"
-          title="Search apps and files"
-          onClick={() => setSearchOpen(!searchOpen)}
-        >
-          <svg viewBox="0 0 24 24" fill="none">
-            <circle cx="10.5" cy="10.5" r="6" stroke="currentColor" strokeWidth="2.4" />
-            <line x1="15" y1="15" x2="20.5" y2="20.5" stroke="currentColor" strokeWidth="2.6" strokeLinecap="round" />
-          </svg>
-        </button>
+        {settings.dock.showSearchButton && (
+          <SearchButton onClick={() => setSearchOpen(!searchOpen)} />
+        )}
         <Reorder.Group
           as="div"
           className="dock-section"
@@ -278,13 +279,21 @@ export function DockBar({ settings, items, onLaunch }: DockBarProps) {
               as="div"
               key={item.id}
               value={item.id}
-              transition={springs.drag}
+              /* Only the siblings animate. Momentum and elasticity both
+                 make the dragged tile trail the cursor, which is what
+                 read as lag, so the tile itself tracks 1:1. */
+              transition={springs.reorder}
+              dragMomentum={false}
+              dragElastic={0.04}
+              whileDrag={{ zIndex: 30 }}
               onDragStart={() => {
                 draggingRef.current = true;
+                setDragging(true);
                 mouseAxis.set(Infinity);
               }}
               onDragEnd={() => {
                 ipc.reorderPinned(order).catch(notify.on("Could not save the new order"));
+                setDragging(false);
                 // let the trailing click event pass before re-enabling launch
                 setTimeout(() => {
                   draggingRef.current = false;
@@ -299,22 +308,18 @@ export function DockBar({ settings, items, onLaunch }: DockBarProps) {
         {runningItems.map((item, i) => (
           <DockIcon key={item.id} item={item} index={orderedPinned.length + i} {...iconProps} />
         ))}
-        <span className="dock-divider" aria-hidden />
-        <WidgetCluster />
-        <button
-          className="dock-search-btn"
-          title="Aero Dock settings"
-          onClick={() => ipc.openSettings().catch(notify.on("Could not open settings"))}
-        >
-          <svg viewBox="0 0 24 24" fill="none">
-            <path
-              d="M12 8.6 a3.4 3.4 0 1 0 0 6.8 a3.4 3.4 0 0 0 0-6.8 z M12 3.5 l1 2.4 a6.6 6.6 0 0 1 2.4 1 l2.5-.8 1.4 2.4 -1.7 1.9 a6.6 6.6 0 0 1 0 2.7 l1.7 1.9 -1.4 2.4 -2.5-.8 a6.6 6.6 0 0 1 -2.4 1 l-1 2.4 h-2.8 l-.9-2.4 a6.6 6.6 0 0 1 -2.4-1 l-2.5.8 -1.4-2.4 1.7-1.9 a6.6 6.6 0 0 1 0-2.7 L2.3 8.5 3.7 6.1 l2.5.8 a6.6 6.6 0 0 1 2.4-1 l.9-2.4 z"
-              stroke="currentColor"
-              strokeWidth="1.7"
-              strokeLinejoin="round"
-            />
-          </svg>
-        </button>
+        {(settings.dock.showClock || settings.dock.showSystemStatus) && (
+          <span className="dock-divider" aria-hidden />
+        )}
+        <WidgetCluster
+          showClock={settings.dock.showClock}
+          showStatus={settings.dock.showSystemStatus}
+        />
+        {settings.dock.showSettingsButton && (
+          <SettingsButton
+            onClick={() => ipc.openSettings().catch(notify.on("Could not open settings"))}
+          />
+        )}
       </motion.div>
       <ContextMenu settings={settings} edge={edge} />
       <FolderFlyout edge={edge} />

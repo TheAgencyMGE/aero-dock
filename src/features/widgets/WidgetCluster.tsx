@@ -98,7 +98,12 @@ function BinGlyph({ full }: { full: boolean }) {
   );
 }
 
-export function WidgetCluster() {
+interface WidgetClusterProps {
+  showClock?: boolean;
+  showStatus?: boolean;
+}
+
+export function WidgetCluster({ showClock = true, showStatus = true }: WidgetClusterProps) {
   const { status, hydrate } = useSystem();
   const now = useClock();
 
@@ -121,12 +126,17 @@ export function WidgetCluster() {
       : `Recycle Bin — ${status.recycleBin.items} item${status.recycleBin.items === 1 ? "" : "s"}`
     : "Recycle Bin";
 
+  if (!showClock && !showStatus) return null;
+
   return (
     <div className="widget-cluster">
+      {showClock && (
       <div className="widget-clock" title={date}>
         <span className="widget-time">{time}</span>
         <span className="widget-date">{date}</span>
       </div>
+      )}
+      {showStatus && (
       <div className="widget-glyphs">
         {status?.battery.present && (
           <button
@@ -176,6 +186,7 @@ export function WidgetCluster() {
           <BinGlyph full={(status?.recycleBin.items ?? 0) > 0} />
         </button>
       </div>
+      )}
     </div>
   );
 }

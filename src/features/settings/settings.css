@@ -486,3 +486,16 @@
 .ctl-slider:focus-visible {
   outline-offset: 4px;
 }
+
+/* Quit is the one destructive control in here, so it reads warm rather
+   than blending in with Export and Import. */
+.aero-button-danger {
+  background: linear-gradient(180deg, rgba(255, 236, 230, 0.95), rgba(250, 190, 175, 0.85));
+  border-color: rgba(255, 255, 255, 0.8);
+  color: #7c2d18;
+}
+
+.aero-button-danger:hover {
+  background: linear-gradient(180deg, #ffffff, rgba(255, 178, 160, 0.95));
+  box-shadow: 0 2px 10px rgba(255, 140, 115, 0.55), inset 0 1px 0 #fff;
+}

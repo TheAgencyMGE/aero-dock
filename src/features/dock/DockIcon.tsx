@@ -11,7 +11,7 @@ import {
   useTransform,
   type MotionValue,
 } from "motion/react";
-import { useCallback, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { springs } from "../../engine/animation/springs";
 import { effectsBus } from "../../engine/effects/effectsBus";
 import type { DockEdge } from "../../ipc/types";
@@ -27,6 +27,8 @@ interface DockIconProps {
   magScale: number;
   vertical: boolean;
   edge: DockEdge;
+  /** A reorder drag is in progress somewhere in the dock. */
+  dragging: boolean;
   index: number;
   onLaunch: (item: DockItemView, target?: HTMLElement) => void;
   onContext: (item: DockItemView, target: HTMLElement) => void;
@@ -59,6 +61,7 @@ export function DockIcon({
   magScale,
   vertical,
   edge,
+  dragging,
   index,
   onLaunch,
   onContext,
@@ -88,6 +91,13 @@ export function DockIcon({
     iconSize,
   ]);
   const width = useSpring(targetWidth, springs.magnify);
+
+  // When a drag starts, every icon springs back to its base size. Letting
+  // that animate resizes tiles under the cursor mid-drag, which is a big
+  // part of what felt like lag, so jump straight to the end value.
+  useEffect(() => {
+    if (dragging) width.jump(iconSize);
+  }, [dragging, iconSize, width]);
 
   // launch bounce (offset perpendicular to the dock edge); idle float
   // is pure CSS on the inner wrapper — zero JS per frame
@@ -148,7 +158,7 @@ export function DockIcon({
       }}
       aria-label={item.name}
     >
-      {hovered && !flyoutOpen && (
+      {hovered && !flyoutOpen && !dragging && (
         <motion.span
           className="dock-label"
           data-edge={edge}

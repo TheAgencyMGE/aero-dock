@@ -120,8 +120,8 @@
   color: rgba(235, 248, 255, 0.7);
 }
 
-/* the round search button on the dock */
-.dock-search-btn {
+/* the round glass buttons on the dock (search, settings) */
+.dock-control-btn {
   width: 30px;
   height: 30px;
   flex: none;
@@ -144,18 +144,19 @@
     transform calc(0.18s / var(--anim-speed)) ease;
 }
 
-.dock-search-btn:hover {
+.dock-control-btn:hover {
   box-shadow: 0 0 12px rgba(150, 220, 255, 0.7), inset 0 1px 0 rgba(255, 255, 255, 0.9);
   transform: scale(1.08);
 }
 
-.dock-search-btn:active {
+.dock-control-btn:active {
   transform: scale(0.94);
 }
 
-.dock-search-btn svg {
-  width: 15px;
-  height: 15px;
+.dock-control-btn svg {
+  width: 17px;
+  height: 17px;
+  overflow: visible;
 }
 
 .search-empty[data-tone="error"] {

@@ -12,6 +12,7 @@ import { applyAppearance } from "../engine/themes/applyTheme";
 import { notify } from "../features/feedback/toastStore";
 import { ipc } from "../ipc/commands";
 import { buildDockItems, useDockIcons, type DockItemView } from "../state/dockStore";
+import { useFileDrag } from "../state/dragStore";
 import { useRunning } from "../state/runningStore";
 import { useSettings } from "../state/settingsStore";
 import { useState } from "react";
@@ -28,8 +29,20 @@ export function DockApp() {
 
   // pin files/shortcuts dropped onto the dock from Explorer
   useEffect(() => {
+    const setOverDock = useFileDrag.getState().setOverDock;
     const unlisten = getCurrentWebview().onDragDropEvent(async (event) => {
+      // Hold the dock open while a drag is in flight. Sliding away from
+      // the thing someone is aiming at is the worst moment to auto-hide.
+      if (event.payload.type === "enter" || event.payload.type === "over") {
+        setOverDock(true);
+        return;
+      }
+      if (event.payload.type === "leave") {
+        setOverDock(false);
+        return;
+      }
       if (event.payload.type !== "drop") return;
+      setOverDock(false);
       for (const path of event.payload.paths) {
         try {
           const entry = await ipc.resolveDrop(path);

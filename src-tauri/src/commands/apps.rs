@@ -150,15 +150,53 @@ pub async fn launch_as_admin(target: String, args: Option<String>) -> AeroResult
     .map_err(|e| AeroError::other(format!("launch task failed: {e}")))?
 }
 
+/// Explorer's `/select,` switch is unusually fussy. The path has to be
+/// quoted inside the same argument, and the argument has to reach
+/// Explorer exactly as written. Rust's normal `arg()` escaping wraps the
+/// whole `/select,C:\Program Files\...` string in quotes, which Explorer
+/// fails to parse and silently answers by opening Documents. Building the
+/// command line by hand and passing it through `raw_arg` is what makes it
+/// select the real file.
+fn explorer_select_arg(path: &str) -> String {
+    format!("/select,\"{path}\"")
+}
+
+/// Packaged apps live in the shell's AppsFolder namespace and have no
+/// path on disk, so the best "location" to show is that folder.
+fn is_shell_namespace(target: &str) -> bool {
+    target.to_ascii_lowercase().starts_with("shell:")
+}
+
 /// Open Explorer with the target file selected.
 #[tauri::command]
 pub async fn open_file_location(target: String) -> AeroResult<()> {
     tauri::async_runtime::spawn_blocking(move || {
-        if !std::path::Path::new(&target).exists() {
+        use std::os::windows::process::CommandExt;
+
+        if is_shell_namespace(&target) {
+            std::process::Command::new("explorer.exe")
+                .arg("shell:AppsFolder")
+                .spawn()
+                .map_err(AeroError::Io)?;
+            return Ok(());
+        }
+
+        let path = std::path::Path::new(&target);
+        if !path.exists() {
+            // A pin can outlive the thing it points at. Fall back to the
+            // parent folder so the user still lands somewhere useful.
+            if let Some(parent) = path.parent().filter(|p| p.exists()) {
+                std::process::Command::new("explorer.exe")
+                    .arg(parent)
+                    .spawn()
+                    .map_err(AeroError::Io)?;
+                return Ok(());
+            }
             return Err(AeroError::other(format!("path not found: {target}")));
         }
+
         std::process::Command::new("explorer.exe")
-            .arg(format!("/select,{target}"))
+            .raw_arg(explorer_select_arg(&target))
             .spawn()
             .map_err(AeroError::Io)?;
         Ok(())
@@ -225,4 +263,32 @@ pub async fn list_folder(path: String, limit: Option<usize>) -> AeroResult<Vec<F
     })
     .await
     .map_err(|e| AeroError::other(format!("folder list task failed: {e}")))?
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn select_argument_quotes_the_path() {
+        assert_eq!(
+            explorer_select_arg(r"C:\Program Files\App\app.exe"),
+            "/select,\"C:\\Program Files\\App\\app.exe\""
+        );
+    }
+
+    #[test]
+    fn select_argument_handles_paths_without_spaces() {
+        assert_eq!(
+            explorer_select_arg(r"C:\tools\a.exe"),
+            "/select,\"C:\\tools\\a.exe\""
+        );
+    }
+
+    #[test]
+    fn shell_namespace_targets_are_recognised() {
+        assert!(is_shell_namespace(r"shell:AppsFolder\Microsoft.WindowsCalculator_8wekyb3d8bbwe!App"));
+        assert!(is_shell_namespace("SHELL:AppsFolder\\x"));
+        assert!(!is_shell_namespace(r"C:\Windows\notepad.exe"));
+    }
 }

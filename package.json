@@ -1,6 +1,6 @@
 {
   "name": "aero-dock",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "private": true,
   "description": "A modern free and open-source RocketDock and Nexus Dock alternative for Windows 10 and 11. Live window previews, Aero glass, cursor magnification, and full desktop customization, in the Frutiger Aero design language.",
   "license": "MIT",

@@ -102,6 +102,17 @@ async fn tokio_sleep(ms: u64) {
     .ok();
 }
 
+/// Shut Aero Dock down for real, from anywhere in the UI.
+///
+/// The taskbar is restored here as well as in the exit handler. Quitting
+/// is the one action where leaving the shell taskbar hidden would strand
+/// someone with no way back, so it is worth doing twice.
+#[tauri::command]
+pub fn quit_app(app: AppHandle) {
+    crate::platform::windows::taskbar::restore_taskbar();
+    app.exit(0);
+}
+
 /// Let the dock take keyboard focus (search overlay) or give its
 /// focus-immunity back when the overlay closes.
 #[tauri::command]

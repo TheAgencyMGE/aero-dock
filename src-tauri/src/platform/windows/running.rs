@@ -18,8 +18,8 @@ use windows::Win32::System::Threading::{
     PROCESS_QUERY_LIMITED_INFORMATION,
 };
 use windows::Win32::UI::WindowsAndMessaging::{
-    CreateWindowExW, DefWindowProcW, DispatchMessageW, EnumWindows, GetMessageW, GetWindow,
-    GetWindowLongPtrW, GetWindowTextLengthW, GetWindowTextW, GetWindowThreadProcessId,
+    CreateWindowExW, DefWindowProcW, DispatchMessageW, EnumWindows, GetClassNameW, GetMessageW,
+    GetWindow, GetWindowLongPtrW, GetWindowTextLengthW, GetWindowTextW, GetWindowThreadProcessId,
     IsWindow, IsWindowVisible, RegisterClassW, RegisterShellHookWindow, RegisterWindowMessageW,
     TranslateMessage, GWL_EXSTYLE, GW_OWNER, MSG, WINDOW_EX_STYLE, WINDOW_STYLE,
     WNDCLASSW, WS_EX_TOOLWINDOW,
@@ -250,9 +250,105 @@ fn enumerate_taskbar_windows() -> Vec<WindowInfo> {
     out
 }
 
+/// Processes that own visible, titled, top-level windows without being
+/// applications anyone wants in a dock. These are shell surfaces: the
+/// search flyout, the Start menu, the IME candidate window and friends.
+/// Windows Search is the one people actually notice, because it stays
+/// alive in the background and its window is neither owned nor cloaked
+/// often enough for the usual checks to catch it.
+const SHELL_HOST_EXES: &[&str] = &[
+    "searchhost.exe",
+    "searchapp.exe",
+    "searchui.exe",
+    "startmenuexperiencehost.exe",
+    "shellexperiencehost.exe",
+    "textinputhost.exe",
+    "peopleexperiencehost.exe",
+    "lockapp.exe",
+    "widgets.exe",
+    "widgetboard.exe",
+    "systemsettingsbroker.exe",
+    "runtimebroker.exe",
+    "dwm.exe",
+];
+
+/// Window classes belonging to the shell's own XAML and CoreWindow
+/// surfaces. Matching on class catches shell UI even when it is hosted
+/// by a process that also runs legitimate windows.
+const SHELL_CLASSES: &[&str] = &[
+    "windows.ui.core.corewindow",
+    "xaml_windowedpopupclass",
+    "multitaskingviewframe",
+    "foregroundstaging",
+    "windows.internal.shell.tabproxywindow",
+    "progman",
+    "workerw",
+    "shell_traywnd",
+    "shell_secondarytraywnd",
+    "notifyiconoverflowwindow",
+];
+
+/// Packaged shell components, matched on the AppUserModelID prefix.
+/// A real Store app never starts with one of these.
+const SHELL_AUMID_PREFIXES: &[&str] = &[
+    "microsoft.windows.search",
+    "microsoft.windows.startmenuexperiencehost",
+    "microsoft.windows.shellexperiencehost",
+    "microsoft.windows.widgets",
+    "microsoftwindows.client.cbs",
+    "microsoftwindows.client.core",
+    "windows.immersivecontrolpanel",
+];
+
+const APP_FRAME_HOST: &str = "applicationframehost.exe";
+
+/// File name of a full executable path, lowercased.
+fn exe_basename(path: &str) -> String {
+    path.rsplit(['\\', '/'])
+        .next()
+        .unwrap_or(path)
+        .to_ascii_lowercase()
+}
+
+/// True when a window belongs to the Windows shell rather than to an
+/// application. Pure so the rules can be tested without a desktop.
+fn is_shell_surface(exe_path: &str, class_name: &str) -> bool {
+    let exe = exe_basename(exe_path);
+    let class = class_name.to_ascii_lowercase();
+    SHELL_HOST_EXES.contains(&exe.as_str()) || SHELL_CLASSES.contains(&class.as_str())
+}
+
+/// True when a packaged window is a shell component rather than a Store
+/// app the user installed.
+fn is_shell_aumid(aumid: &str) -> bool {
+    let lower = aumid.to_ascii_lowercase();
+    SHELL_AUMID_PREFIXES
+        .iter()
+        .any(|prefix| lower.starts_with(prefix))
+}
+
+/// Packaged apps are all hosted by ApplicationFrameHost. Without an
+/// AUMID there is nothing to identify or launch, so such a window is a
+/// frame the shell is holding open rather than a running app.
+fn is_orphan_app_frame(exe_path: &str, aumid: Option<&str>) -> bool {
+    exe_basename(exe_path) == APP_FRAME_HOST && aumid.is_none()
+}
+
+/// Read a window's class name.
+unsafe fn window_class(hwnd: HWND) -> String {
+    unsafe {
+        let mut buf = [0u16; 256];
+        let n = GetClassNameW(hwnd, &mut buf);
+        if n <= 0 {
+            return String::new();
+        }
+        String::from_utf16_lossy(&buf[..n as usize])
+    }
+}
+
 /// Alt-tab eligibility + metadata. Returns None for windows a dock
 /// should not show (owned popups, tool windows, cloaked UWP shells,
-/// untitled windows, and Aero Dock itself).
+/// untitled windows, and shell surfaces such as Windows Search).
 unsafe fn probe_window(hwnd: HWND) -> Option<WindowInfo> {
     unsafe {
         if !IsWindow(Some(hwnd)).as_bool() || !IsWindowVisible(hwnd).as_bool() {
@@ -299,11 +395,24 @@ unsafe fn probe_window(hwnd: HWND) -> Option<WindowInfo> {
             return None;
         }
         let exe = process_path(pid)?;
-        let aumid = if exe.to_lowercase().ends_with("applicationframehost.exe") {
+
+        // Shell surfaces look like ordinary windows to every check above:
+        // visible, titled, unowned, not cloaked. They have to be named.
+        if is_shell_surface(&exe, &window_class(hwnd)) {
+            return None;
+        }
+
+        let aumid = if exe_basename(&exe) == APP_FRAME_HOST {
             window_aumid(hwnd)
         } else {
             None
         };
+        if is_orphan_app_frame(&exe, aumid.as_deref()) {
+            return None;
+        }
+        if aumid.as_deref().is_some_and(is_shell_aumid) {
+            return None;
+        }
 
         Some(WindowInfo {
             hwnd: hwnd.0 as isize,
@@ -403,5 +512,60 @@ pub fn close_window(hwnd: isize) {
         if IsWindow(Some(h)).as_bool() {
             let _ = PostMessageW(Some(h), WM_CLOSE, WPARAM(0), LPARAM(0));
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn basename_is_lowercased_and_stripped() {
+        assert_eq!(exe_basename(r"C:\Windows\Explorer.EXE"), "explorer.exe");
+        assert_eq!(exe_basename("notepad.exe"), "notepad.exe");
+    }
+
+    #[test]
+    fn windows_search_is_filtered_out() {
+        let search = r"C:\Windows\SystemApps\MicrosoftWindows.Client.CBS_cw5n1h2txyewy\SearchHost.exe";
+        assert!(is_shell_surface(search, "Windows.UI.Core.CoreWindow"));
+        // and even if the class changes, the executable still catches it
+        assert!(is_shell_surface(search, "SomethingElse"));
+    }
+
+    #[test]
+    fn start_menu_and_input_host_are_filtered_out() {
+        assert!(is_shell_surface(r"C:\W\StartMenuExperienceHost.exe", "X"));
+        assert!(is_shell_surface(r"C:\W\TextInputHost.exe", "X"));
+    }
+
+    #[test]
+    fn desktop_and_tray_classes_are_filtered_out() {
+        assert!(is_shell_surface(r"C:\Windows\explorer.exe", "Progman"));
+        assert!(is_shell_surface(r"C:\Windows\explorer.exe", "Shell_TrayWnd"));
+    }
+
+    #[test]
+    fn ordinary_apps_survive() {
+        assert!(!is_shell_surface(r"C:\Windows\explorer.exe", "CabinetWClass"));
+        assert!(!is_shell_surface(r"C:\Program Files\Notepad++\notepad++.exe", "Notepad++"));
+        assert!(!is_shell_surface(r"C:\Users\x\AppData\Local\Programs\Code\Code.exe", "Chrome_WidgetWin_1"));
+    }
+
+    #[test]
+    fn shell_packages_are_filtered_but_store_apps_are_not() {
+        assert!(is_shell_aumid("Microsoft.Windows.Search_cw5n1h2txyewy!App"));
+        assert!(is_shell_aumid("MicrosoftWindows.Client.CBS_cw5n1h2txyewy!InputApp"));
+        assert!(!is_shell_aumid("Microsoft.WindowsCalculator_8wekyb3d8bbwe!App"));
+        assert!(!is_shell_aumid("SpotifyAB.SpotifyMusic_zpdnekdrzrea0!Spotify"));
+    }
+
+    #[test]
+    fn app_frames_without_an_aumid_are_dropped() {
+        let host = r"C:\Windows\System32\ApplicationFrameHost.exe";
+        assert!(is_orphan_app_frame(host, None));
+        assert!(!is_orphan_app_frame(host, Some("Microsoft.WindowsCalculator_8wekyb3d8bbwe!App")));
+        // a normal app with no AUMID is not an orphan frame
+        assert!(!is_orphan_app_frame(r"C:\Windows\explorer.exe", None));
     }
 }

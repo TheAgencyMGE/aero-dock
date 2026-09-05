@@ -46,7 +46,8 @@ Its last release was 2008.
 - Any edge: bottom, top, left or right, floating or flush
 - Per monitor DPI aware, with a monitor picker on multi display setups
 - Cursor magnification on springs, idle float, launch bounce, glass tooltips
-- Auto hide with an 8px reveal strip
+- Auto hide with an 8px reveal strip, a configurable delay, and it stays
+  put while you drag files onto it
 
 **Apps and windows**
 
@@ -65,6 +66,8 @@ Its last release was 2008.
 
 - Clock, battery, network, volume (scroll to change, click to mute), Recycle
   Bin
+- Every built-in item can be turned off, including the search and settings
+  buttons
 
 **Appearance**
 
@@ -121,6 +124,7 @@ the dock, right click for settings and quit.
 | Search | Click the magnifier |
 | Settings | Click the gear, or right click the tray icon |
 | Show or hide the dock | Left click the tray icon |
+| Quit | Right click the tray icon, or Settings, then Quit |
 
 First launch offers to import a starter set of your apps, or to start empty.
 

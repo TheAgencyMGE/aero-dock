@@ -40,12 +40,21 @@ pub struct DockSettings {
     pub magnification_scale: f32,
     /// Slide off-screen when not in use.
     pub auto_hide: bool,
+    /// How long the pointer must be away before auto-hide slides the dock
+    /// out, in milliseconds.
+    pub auto_hide_delay_ms: u32,
     /// Floating mode: detached from the edge with a margin.
     pub floating: bool,
     /// Gap between dock and screen edge in floating mode (logical px).
     pub floating_margin: u32,
     /// Show currently running apps that aren't pinned.
     pub show_running_apps: bool,
+    /// Built-in dock controls, each independently hideable.
+    pub show_search_button: bool,
+    pub show_settings_button: bool,
+    pub show_clock: bool,
+    /// Battery, network, volume and Recycle Bin glyphs.
+    pub show_system_status: bool,
 }
 
 impl Default for DockSettings {
@@ -57,9 +66,14 @@ impl Default for DockSettings {
             magnification: true,
             magnification_scale: 1.45,
             auto_hide: false,
+            auto_hide_delay_ms: 1400,
             floating: true,
             floating_margin: 8,
             show_running_apps: true,
+            show_search_button: true,
+            show_settings_button: true,
+            show_clock: true,
+            show_system_status: true,
         }
     }
 }
@@ -173,6 +187,8 @@ impl Settings {
         d.icon_size = d.icon_size.clamp(24, 96);
         d.magnification_scale = d.magnification_scale.clamp(1.0, 2.0);
         d.floating_margin = d.floating_margin.min(64);
+        // below ~200ms the dock hides while you are still reaching for it
+        d.auto_hide_delay_ms = d.auto_hide_delay_ms.clamp(200, 10_000);
         self.schema_version = CURRENT_SCHEMA_VERSION;
     }
 }
@@ -283,11 +299,49 @@ mod tests {
         s.appearance.animation_speed = 10.0;
         s.dock.icon_size = 500;
         s.dock.magnification_scale = 9.0;
+        s.dock.auto_hide_delay_ms = 50;
         s.sanitize();
         assert_eq!(s.appearance.transparency, 0.3);
         assert_eq!(s.appearance.animation_speed, 2.0);
         assert_eq!(s.dock.icon_size, 96);
         assert_eq!(s.dock.magnification_scale, 2.0);
+        assert_eq!(s.dock.auto_hide_delay_ms, 200);
+    }
+
+    #[test]
+    fn auto_hide_delay_upper_bound_is_clamped() {
+        let mut s = Settings::default();
+        s.dock.auto_hide_delay_ms = 99_000;
+        s.sanitize();
+        assert_eq!(s.dock.auto_hide_delay_ms, 10_000);
+    }
+
+    #[test]
+    fn built_in_dock_items_default_to_visible() {
+        let d = DockSettings::default();
+        assert!(d.show_search_button);
+        assert!(d.show_settings_button);
+        assert!(d.show_clock);
+        assert!(d.show_system_status);
+        assert_eq!(d.auto_hide_delay_ms, 1400);
+    }
+
+    #[test]
+    fn settings_from_v1_0_gain_the_new_fields() {
+        // a file written by 1.0.0 has none of the v1.1 keys
+        let json = r#"{
+            "schemaVersion": 1,
+            "dock": { "edge": "bottom", "iconSize": 48, "autoHide": true },
+            "appearance": { "theme": "ocean" }
+        }"#;
+        let s: Settings = serde_json::from_str(json).expect("v1.0 settings should still load");
+        assert_eq!(s.dock.icon_size, 48);
+        assert!(s.dock.auto_hide);
+        assert_eq!(s.appearance.theme, "ocean");
+        // new fields fall back to their defaults rather than failing
+        assert_eq!(s.dock.auto_hide_delay_ms, 1400);
+        assert!(s.dock.show_search_button);
+        assert!(s.dock.show_system_status);
     }
 
     #[test]

@@ -13,9 +13,17 @@ export interface DockSettings {
   magnification: boolean;
   magnificationScale: number;
   autoHide: boolean;
+  /** Pointer-away delay before the dock slides out, in milliseconds. */
+  autoHideDelayMs: number;
   floating: boolean;
   floatingMargin: number;
   showRunningApps: boolean;
+  /** Built-in dock controls, each independently hideable. */
+  showSearchButton: boolean;
+  showSettingsButton: boolean;
+  showClock: boolean;
+  /** Battery, network, volume and Recycle Bin glyphs. */
+  showSystemStatus: boolean;
 }
 
 export interface AppearanceSettings {

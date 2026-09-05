@@ -81,6 +81,7 @@ pub fn run() {
             commands::dock::list_monitors,
             commands::dock::set_dock_focusable,
             commands::dock::set_taskbar_hidden,
+            commands::dock::quit_app,
             commands::windows_cmd::get_running,
             commands::windows_cmd::activate_window,
             commands::windows_cmd::minimize_window,
@@ -108,13 +109,14 @@ pub fn run() {
 /// Tray icon: the dock's home base. Left-click toggles dock visibility;
 /// the menu covers show/hide, settings, and quit.
 fn setup_tray(app: &tauri::App) -> tauri::Result<()> {
-    use tauri::menu::{Menu, MenuItem};
+    use tauri::menu::{Menu, MenuItem, PredefinedMenuItem};
     use tauri::tray::{MouseButton, MouseButtonState, TrayIconBuilder, TrayIconEvent};
 
     let toggle = MenuItem::with_id(app, "toggle", "Show/hide dock", true, None::<&str>)?;
     let settings = MenuItem::with_id(app, "settings", "Settings…", true, None::<&str>)?;
     let quit = MenuItem::with_id(app, "quit", "Quit Aero Dock", true, None::<&str>)?;
-    let menu = Menu::with_items(app, &[&toggle, &settings, &quit])?;
+    let separator = PredefinedMenuItem::separator(app)?;
+    let menu = Menu::with_items(app, &[&toggle, &settings, &separator, &quit])?;
 
     fn toggle_dock(app: &tauri::AppHandle) {
         if let Some(w) = app.get_webview_window("dock") {
@@ -135,7 +137,7 @@ fn setup_tray(app: &tauri::App) -> tauri::Result<()> {
                 .expect("bundle has a default icon")
                 .clone(),
         )
-        .tooltip("Aero Dock")
+        .tooltip("Aero Dock (right-click for menu)")
         .menu(&menu)
         .show_menu_on_left_click(false)
         .on_menu_event(|app, event| match event.id.as_ref() {
@@ -148,7 +150,7 @@ fn setup_tray(app: &tauri::App) -> tauri::Result<()> {
                     }
                 });
             }
-            "quit" => app.exit(0),
+            "quit" => commands::dock::quit_app(app.clone()),
             _ => {}
         })
         .on_tray_icon_event(|tray, event| {

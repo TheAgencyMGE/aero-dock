@@ -1,6 +1,6 @@
 [package]
 name = "aero-dock"
-version = "1.0.0"
+version = "1.0.1"
 description = "Aero Dock - a free RocketDock alternative for Windows, in Frutiger Aero"
 authors = ["Ryan Panda"]
 license = "MIT"

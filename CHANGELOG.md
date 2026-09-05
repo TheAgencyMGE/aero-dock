@@ -5,6 +5,47 @@ All notable changes to Aero Dock are documented here.
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.1] - 2026-09-02
+
+### Fixed
+
+- Windows Search, the Start menu, the input host and other shell surfaces
+  no longer appear in the dock as if they were running apps. Filtering now
+  matches on process name, window class and package identity, and drops
+  ApplicationFrameHost frames that carry no AppUserModelID.
+- **Open file location** opens the real folder with the file selected.
+  Explorer needs its `/select,` path quoted inside the same argument and
+  passed through verbatim; the previous call was escaped in a way Explorer
+  answered by opening Documents. Packaged apps open the Apps folder, and a
+  pin whose target has gone falls back to the parent folder.
+- Dragging an icon to reorder tracks the cursor with no lag. Drag momentum
+  and elasticity are off, neighbours move on a stiffer spring, and icons
+  snap to their base size at drag start instead of animating down while
+  the cursor is on top of them.
+- Icons from apps that ship only a 16 or 32 px resource, such as Core Temp,
+  are cropped to their drawn pixels and scaled up, so every tile carries
+  the same optical weight. Non-square icons are padded rather than
+  stretched, at any dock size. The icon cache is versioned, so existing
+  installs regenerate on upgrade.
+- Auto-hide no longer slides the dock away while files are being dragged
+  onto it, which was the one moment it moved out from under the cursor on
+  purpose.
+- Quitting is reliable and easier to find. The tray menu keeps its Quit,
+  now below a separator, and Settings gained a **Quit** button next to the
+  settings file controls. Both paths restore the Windows taskbar before
+  exiting, so an unclean shutdown cannot leave you without one.
+
+### Changed
+
+- The auto-hide delay is configurable, from 200ms to 5 seconds. It was
+  fixed at 1.4 seconds before.
+- The built-in dock items can each be turned off: search button, settings
+  button, clock and date, and the battery, network, volume and Recycle Bin
+  glyphs. They were always shown before.
+- The search and settings icons are drawn as glass, with a gradient body,
+  a specular highlight and a seated centre, to match the app icons beside
+  them. They still take their colour from the active theme.
+
 ## [1.0.0] - 2026-08-26
 
 First public release.
@@ -46,4 +87,5 @@ First public release.
 - Packaged (UWP) apps are grouped by AppUserModelID. This covers the common
   cases and misses a few. See the README.
 
+[1.0.1]: https://github.com/TheAgencyMGE/aero-dock/releases/tag/v1.0.1
 [1.0.0]: https://github.com/TheAgencyMGE/aero-dock/releases/tag/v1.0.0
