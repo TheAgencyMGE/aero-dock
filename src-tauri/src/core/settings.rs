@@ -8,7 +8,7 @@ use std::path::{Path, PathBuf};
 
 use parking_lot::RwLock;
 use serde::{Deserialize, Serialize};
-use tauri::{AppHandle, Emitter, Manager};
+use tauri::{AppHandle, Emitter};
 
 use super::error::{AeroError, AeroResult};
 
@@ -202,7 +202,7 @@ pub struct SettingsStore {
 impl SettingsStore {
     /// Load from disk (or defaults when missing/corrupt) at the app config dir.
     pub fn load(app: &AppHandle) -> AeroResult<Self> {
-        let dir = app.path().app_config_dir()?;
+        let dir = crate::core::paths::config_dir(app)?;
         fs::create_dir_all(&dir)?;
         let path = dir.join("settings.json");
         let settings = Self::read_file(&path).unwrap_or_else(|e| {

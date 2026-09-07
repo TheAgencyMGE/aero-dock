@@ -9,7 +9,7 @@ import { useEffect, useRef, useState } from "react";
 import { applyAppearance } from "../../engine/themes/applyTheme";
 import { THEMES } from "../../engine/themes/themes";
 import { ipc } from "../../ipc/commands";
-import type { DockEdge, MonitorInfoEx, Settings } from "../../ipc/types";
+import type { DockEdge, MonitorInfoEx, Settings, StorageInfo } from "../../ipc/types";
 import { useSettings } from "../../state/settingsStore";
 import { AeroSegmented, AeroSlider, AeroToggle } from "./controls";
 import "./settings.css";
@@ -29,6 +29,7 @@ export function SettingsApp() {
   const { settings, hydrate, apply } = useSettings();
   const [status, setStatus] = useState<Status | null>(null);
   const [monitors, setMonitors] = useState<MonitorInfoEx[]>([]);
+  const [storage, setStorage] = useState<StorageInfo | null>(null);
   const importRef = useRef<HTMLInputElement>(null);
 
   const [hydrateFailed, setHydrateFailed] = useState(false);
@@ -41,6 +42,10 @@ export function SettingsApp() {
       .listMonitors()
       .then(setMonitors)
       .catch((e) => console.warn("monitor list unavailable", e));
+    ipc
+      .storageInfo()
+      .then(setStorage)
+      .catch((e) => console.warn("storage info unavailable", e));
   }, [hydrate]);
 
   // settings window uses the same token system for its own glass
@@ -405,6 +410,17 @@ export function SettingsApp() {
             <span className="ctl-label">Version</span>
             <span className="settings-about-value">Aero Dock {__APP_VERSION__}</span>
           </div>
+          {storage && (
+            <>
+              <div className="ctl-row">
+                <span className="ctl-label">Storage</span>
+                <span className="settings-about-value">
+                  {storage.portable ? "Portable" : "Installed"}
+                </span>
+              </div>
+              <p className="settings-note settings-path">{storage.dataDir}</p>
+            </>
+          )}
           <div className="ctl-row">
             <span className="ctl-label">Project</span>
             <div className="ctl-actions">

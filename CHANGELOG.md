@@ -5,6 +5,17 @@ All notable changes to Aero Dock are documented here.
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.1.0] - 2026-09-07
+
+### Added
+
+- A portable build. Unpack the zip anywhere and run it; settings, pinned
+  apps and the icon cache go in a `data` folder beside the exe instead of
+  `%APPDATA%`, and WebView2 is pointed at that folder too, so a portable
+  copy leaves nothing on the host machine. The switch is a `portable.txt`
+  file next to the executable, so one binary covers both. Settings, then
+  About, shows which mode is active and where the files are.
+
 ## [1.0.1] - 2026-09-04
 
 ### Fixed
@@ -87,5 +98,6 @@ First public release.
 - Packaged (UWP) apps are grouped by AppUserModelID. This covers the common
   cases and misses a few. See the README.
 
+[1.1.0]: https://github.com/TheAgencyMGE/aero-dock/releases/tag/v1.1.0
 [1.0.1]: https://github.com/TheAgencyMGE/aero-dock/releases/tag/v1.0.1
 [1.0.0]: https://github.com/TheAgencyMGE/aero-dock/releases/tag/v1.0.0

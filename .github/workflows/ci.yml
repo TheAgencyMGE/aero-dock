@@ -59,9 +59,19 @@ jobs:
       - name: Build the app bundle
         run: pnpm tauri build --bundles nsis
 
+      - name: Pack the portable zip
+        run: pnpm tauri:portable
+
       - name: Upload installer
         uses: actions/upload-artifact@v4
         with:
           name: aero-dock-nsis-installer
           path: src-tauri/target/release/bundle/nsis/*.exe
+          if-no-files-found: error
+
+      - name: Upload portable zip
+        uses: actions/upload-artifact@v4
+        with:
+          name: aero-dock-portable
+          path: src-tauri/target/release/bundle/portable/*.zip
           if-no-files-found: error

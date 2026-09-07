@@ -2,7 +2,7 @@
 
 use std::collections::HashMap;
 
-use tauri::{AppHandle, Manager};
+use tauri::AppHandle;
 
 use crate::core::{AeroError, AeroResult};
 use crate::platform::AppEntry;
@@ -51,7 +51,7 @@ pub async fn resolve_icons(
     app: AppHandle,
     targets: Vec<String>,
 ) -> AeroResult<HashMap<String, String>> {
-    let cache_dir = app.path().app_data_dir()?.join("icons");
+    let cache_dir = crate::core::paths::data_dir(&app)?.join("icons");
     tauri::async_runtime::spawn_blocking(move || {
         let mut out = HashMap::with_capacity(targets.len());
         for target in targets {

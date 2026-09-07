@@ -105,6 +105,23 @@ the dock, right click for settings and quit.
 > the first time. Click **More info**, then **Run anyway**. If you would rather
 > not trust a binary, [build it yourself](#building-from-source).
 
+### Portable
+
+There is a portable zip on the same release page. Unpack it anywhere and run
+`Aero Dock.exe`. No installer, no admin, nothing written outside the folder.
+
+Settings, pinned apps and the icon cache go in a `data` folder next to the
+exe, so the whole thing fits on a USB stick. What makes it portable is the
+`portable.txt` file shipped in the zip. Delete that file and the same
+executable goes back to using `%APPDATA%` like an installed copy.
+
+Settings, then About, tells you which mode you are in and where the files
+are.
+
+One caveat: **Start Aero Dock when I sign in** writes a registry entry
+pointing at wherever the exe sits at that moment. Turn it off before moving
+the folder.
+
 ### Requirements
 
 - Windows 10 version 1809 or later, or Windows 11
@@ -143,6 +160,7 @@ Your config is a single file:
 ```
 
 Extracted icons are cached as PNGs next to it. Delete that folder to reset.
+A portable copy puts both in `data\` beside the exe instead.
 
 ## Building from source
 
@@ -155,6 +173,7 @@ cd aero-dock
 pnpm install
 pnpm tauri:dev      # run with hot reload
 pnpm tauri:build    # NSIS installer in src-tauri/target/release/bundle/nsis
+pnpm tauri:portable # portable zip, after tauri:build
 pnpm check          # typecheck, clippy, Rust tests, production build
 ```
 

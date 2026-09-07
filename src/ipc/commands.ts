@@ -11,6 +11,7 @@ import type {
   RecentFile,
   RunningSnapshot,
   Settings,
+  StorageInfo,
   SystemStatus,
 } from "./types";
 
@@ -28,6 +29,7 @@ export const ipc = {
   exportSettingsFile: () => invoke<string>("export_settings_file"),
   importSettings: (json: string) => invoke<Settings>("import_settings", { json }),
   openSettings: () => invoke<void>("open_settings"),
+  storageInfo: () => invoke<StorageInfo>("storage_info"),
   quitApp: () => invoke<void>("quit_app"),
 
   // apps

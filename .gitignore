@@ -29,7 +29,7 @@ yarn-error.log*
 pnpm-debug.log*
 *.dmp
 *.mdmp
-core
+core.[0-9]*
 
 # ---- caches & temp ----
 .cache/

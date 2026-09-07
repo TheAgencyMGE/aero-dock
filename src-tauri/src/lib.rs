@@ -9,6 +9,14 @@ use crate::core::settings::SettingsStore;
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
+    // A portable copy takes WebView2's profile with it. Left alone, WebView2
+    // writes one under %LOCALAPPDATA% on whatever machine it was plugged into.
+    #[cfg(windows)]
+    if let Some(dir) = core::paths::webview_dir() {
+        let _ = std::fs::create_dir_all(&dir);
+        std::env::set_var("WEBVIEW2_USER_DATA_FOLDER", &dir);
+    }
+
     tauri::Builder::default()
         .plugin(tauri_plugin_single_instance::init(|app, _args, _cwd| {
             // Second launch: just make sure the existing dock is visible.
@@ -69,6 +77,7 @@ pub fn run() {
             commands::settings::export_settings_file,
             commands::settings::import_settings,
             commands::settings::open_settings,
+            commands::settings::storage_info,
             commands::apps::list_apps,
             commands::apps::resolve_icons,
             commands::apps::launch,

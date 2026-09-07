@@ -108,6 +108,25 @@ pub fn export_settings_file(app: AppHandle, store: State<'_, SettingsStore>) -> 
     Ok(path.to_string_lossy().to_string())
 }
 
+/// Where this copy keeps its files, and whether it is running portable.
+/// Settings shows it so nobody has to guess which folder to back up.
+#[derive(serde::Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct StorageInfo {
+    pub portable: bool,
+    pub data_dir: String,
+}
+
+#[tauri::command]
+pub fn storage_info(app: AppHandle) -> AeroResult<StorageInfo> {
+    Ok(StorageInfo {
+        portable: crate::core::paths::is_portable(),
+        data_dir: crate::core::paths::config_dir(&app)?
+            .to_string_lossy()
+            .to_string(),
+    })
+}
+
 /// Open (or focus) the settings window. Async on purpose: building a
 /// WebView2 inside a sync command deadlocks on Windows (the command
 /// blocks the main thread the webview needs for creation).

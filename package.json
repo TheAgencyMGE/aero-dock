@@ -1,6 +1,6 @@
 {
   "name": "aero-dock",
-  "version": "1.0.1",
+  "version": "1.1.0",
   "private": true,
   "description": "A modern free and open-source RocketDock and Nexus Dock alternative for Windows 10 and 11. Live window previews, Aero glass, cursor magnification, and full desktop customization, in the Frutiger Aero design language.",
   "license": "MIT",
@@ -37,6 +37,7 @@
     "tauri": "tauri",
     "tauri:dev": "tauri dev",
     "tauri:build": "tauri build",
+    "tauri:portable": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/pack-portable.ps1",
     "rust:test": "cargo test --manifest-path src-tauri/Cargo.toml",
     "rust:lint": "cargo clippy --manifest-path src-tauri/Cargo.toml --all-targets -- -D warnings",
     "check": "pnpm typecheck && pnpm rust:lint && pnpm rust:test && pnpm build"

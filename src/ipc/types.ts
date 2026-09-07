@@ -111,6 +111,12 @@ export interface SystemStatus {
   recycleBin: { items: number; bytes: number };
 }
 
+/** Where this copy keeps settings.json and the icon cache. */
+export interface StorageInfo {
+  portable: boolean;
+  dataDir: string;
+}
+
 /** Event channel names pushed from Rust. */
 export const EVENTS = {
   settingsChanged: "settings://changed",
