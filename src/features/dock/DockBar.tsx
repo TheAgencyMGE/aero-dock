@@ -20,6 +20,7 @@ import { SEARCH_PANEL, SearchOverlay, useSearch } from "../search/SearchOverlay"
 import { WidgetCluster } from "../widgets/WidgetCluster";
 import { ContextMenu } from "./ContextMenu";
 import { SearchButton, SettingsButton } from "./DockControls";
+import { MODE_FLYOUT_HEIGHT, ModeSwitcher, useModeSwitcher } from "./ModeSwitcher";
 import { DockIcon } from "./DockIcon";
 import { FolderFlyout } from "./FolderFlyout";
 import { StackFlyout } from "./StackFlyout";
@@ -37,6 +38,7 @@ const MENU_SPACE = 360; // extra cross-axis room while a context menu is open
 const FLYOUT_GAP = 16; // breathing room between a flyout and the window edge
 const TOAST_SPACE = 210; // extra cross-axis room while toasts are on screen
 const WIDGET_SPACE = 190; // clock + status glyphs + search & gear buttons
+const MODE_TILE_SPACE = 38; // the Modes tile, when Modes is switched on
 const REVEAL_STRIP = 8; // window height while auto-hidden (mouse sensor)
 // fallback only; the real delay is settings.dock.autoHideDelayMs
 const HIDE_ANIM_MS = 380;
@@ -77,7 +79,9 @@ export function DockBar({ settings, items, onLaunch }: DockBarProps) {
   const searchOpen = useSearch((s) => s.open);
   const setSearchOpen = useSearch((s) => s.setOpen);
   const welcomeOpen = !settings.onboardingComplete && pinnedItems.length === 0;
-  const menuOpen = menu.item !== null || searchOpen || welcomeOpen;
+  const modesOpen = useModeSwitcher((m) => m.open);
+  const modesOn = settings.modes.enabled && settings.modes.modes.length > 0;
+  const menuOpen = menu.item !== null || searchOpen || welcomeOpen || modesOpen;
   // toasts sit in the band above the dock, which is only tall enough for a
   // tooltip — without extra room the window would clip them
   const toastCount = useToasts((s) => s.items.length);
@@ -143,7 +147,8 @@ export function DockBar({ settings, items, onLaunch }: DockBarProps) {
     const mainBase = n * iconSize + (n - 1 + dividers) * GAP + dividers * 8 + PAD_MAIN * 2;
     // neighbors near the cursor grow too; ~2.5 icons' worth covers the worst case
     const mainGrowth = iconSize * (peak - 1) * 2.5;
-    const main = mainBase + mainGrowth + EDGE_SLACK + WIDGET_SPACE;
+    const main =
+      mainBase + mainGrowth + EDGE_SLACK + WIDGET_SPACE + (modesOn ? MODE_TILE_SPACE : 0);
     const label = vertical ? LABEL_SPACE_SIDE : LABEL_SPACE;
     // The dock band itself: icons at full magnification plus tooltip room.
     const band = iconSize * peak + PAD_CROSS * 2 + label;
@@ -154,6 +159,8 @@ export function DockBar({ settings, items, onLaunch }: DockBarProps) {
     const crossFull = Math.max(
       band,
       menu.item !== null || welcomeOpen ? band + MENU_SPACE : 0,
+      // the mode flyout is taller than the tooltip band it hangs off
+      modesOpen ? band + MODE_FLYOUT_HEIGHT + FLYOUT_GAP : 0,
       searchOpen
         ? SEARCH_PANEL.offsetFor(iconSize) + SEARCH_PANEL.height + FLYOUT_GAP
         : 0,
@@ -172,6 +179,8 @@ export function DockBar({ settings, items, onLaunch }: DockBarProps) {
     welcomeOpen,
     toastCount,
     windowShrunk,
+    modesOn,
+    modesOpen,
   ]);
 
   useEffect(() => {
@@ -264,6 +273,7 @@ export function DockBar({ settings, items, onLaunch }: DockBarProps) {
         {/* the bar can't clip itself (tooltips float above it), so the
             ambient sweep gets its own clipping layer */}
         <span className="glass-sweep" aria-hidden />
+        <ModeSwitcher settings={settings} edge={edge} />
         {settings.dock.showSearchButton && (
           <SearchButton onClick={() => setSearchOpen(!searchOpen)} />
         )}

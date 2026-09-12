@@ -16,6 +16,7 @@ import { springs } from "../../engine/animation/springs";
 import { effectsBus } from "../../engine/effects/effectsBus";
 import type { DockEdge } from "../../ipc/types";
 import type { DockItemView } from "../../state/dockStore";
+import { exeKey, useAppAudio } from "../../state/audioStore";
 import { useMenu } from "./menuStore";
 
 interface DockIconProps {
@@ -37,6 +38,39 @@ interface DockIconProps {
 }
 
 const PREVIEW_DWELL_MS = 550;
+/** How long a scroll keeps the window previews away. Matches the volume
+ *  indicator's own lifetime so the two never overlap. */
+const VOLUME_PREVIEW_MUTE_MS = 1500;
+
+/** Speaker with the waves dropped when muted, drawn to match the glass
+ *  controls rather than a font glyph. */
+function Speaker({ muted }: { muted: boolean }) {
+  return (
+    <svg viewBox="0 0 16 16" className="dock-volume-icon" aria-hidden>
+      <path
+        d="M3.4 6.2h2.2L8.4 3.6v8.8L5.6 9.8H3.4z"
+        fill="currentColor"
+        stroke="currentColor"
+        strokeWidth="1.1"
+        strokeLinejoin="round"
+      />
+      {muted ? (
+        <path
+          d="M10.6 6.2l3.2 3.6M13.8 6.2l-3.2 3.6"
+          stroke="currentColor"
+          strokeWidth="1.4"
+          strokeLinecap="round"
+          fill="none"
+        />
+      ) : (
+        <>
+          <path d="M10.5 5.9a3 3 0 0 1 0 4.2" stroke="currentColor" strokeWidth="1.3" fill="none" strokeLinecap="round" />
+          <path d="M12.4 4.3a5.6 5.6 0 0 1 0 7.4" stroke="currentColor" strokeWidth="1.3" fill="none" strokeLinecap="round" />
+        </>
+      )}
+    </svg>
+  );
+}
 
 /** Tooltip entrance offset: the pill drifts in from the dock's edge.
  * Centering lives in CSS `translate` because motion owns `transform`. */
@@ -73,6 +107,18 @@ export function DockIcon({
   // otherwise float over its bottom edge
   const flyoutOpen = useMenu((m) => m.item !== null);
   const dwellTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
+  // While the volume is being adjusted the window previews stay out of the
+  // way. They are a hover affordance, and a deliberate scroll outranks one.
+  const previewMutedUntil = useRef(0);
+
+  // per-app audio: scroll to change, middle-click to mute
+  const audio = useAppAudio((a) => a.levels[exeKey(item.audioExe)]);
+  const audioTick = useAppAudio((a) => a.tick);
+  const nudgeVolume = useAppAudio((a) => a.nudge);
+  const toggleMute = useAppAudio((a) => a.toggleMute);
+  // `audioTick` is read so the indicator re-renders when its timer runs out
+  void audioTick;
+  const adjusting = useAppAudio.getState().isVisible(item.audioExe) && audio !== undefined;
 
   // distance from cursor to this icon's center along the dock axis
   const distance = useTransform(mouseAxis, (cursor) => {
@@ -135,6 +181,27 @@ export function DockIcon({
         e.preventDefault();
         onContext(item, e.currentTarget);
       }}
+      onWheel={(e) => {
+        // one notch per detent, up scrolls louder
+        const notches = -Math.sign(e.deltaY);
+        if (notches === 0) return;
+        // a preview opened by hovering would sit right on top of the
+        // readout, so retire it and keep it away while the pill is up
+        clearTimeout(dwellTimer.current);
+        previewMutedUntil.current = Date.now() + VOLUME_PREVIEW_MUTE_MS;
+        const m = useMenu.getState();
+        if (m.kind === "windows" && m.item?.id === item.id) m.close();
+        void nudgeVolume(item.audioExe, notches);
+      }}
+      onMouseDown={(e) => {
+        // stop the middle-button autoscroll cursor appearing
+        if (e.button === 1) e.preventDefault();
+      }}
+      onAuxClick={(e) => {
+        if (e.button !== 1) return;
+        e.preventDefault();
+        void toggleMute(item.audioExe);
+      }}
       onMouseEnter={(e) => {
         setHovered(true);
         const m = useMenu.getState();
@@ -143,7 +210,10 @@ export function DockIcon({
           m.cancelScheduledClose();
         } else if (item.windows.length > 0) {
           const el = e.currentTarget;
-          dwellTimer.current = setTimeout(() => onHoverPreview(item, el), PREVIEW_DWELL_MS);
+          dwellTimer.current = setTimeout(() => {
+            if (Date.now() < previewMutedUntil.current) return;
+            onHoverPreview(item, el);
+          }, PREVIEW_DWELL_MS);
         }
       }}
       onMouseLeave={() => {
@@ -158,16 +228,39 @@ export function DockIcon({
       }}
       aria-label={item.name}
     >
-      {hovered && !flyoutOpen && !dragging && (
+      {adjusting && audio ? (
         <motion.span
-          className="dock-label"
+          className="dock-label dock-volume-pill"
           data-edge={edge}
           initial={{ opacity: 0, scale: 0.9, ...labelFrom(edge) }}
           animate={{ opacity: 1, scale: 1, x: 0, y: 0 }}
           transition={springs.bloom}
         >
-          {item.name}
+          <Speaker muted={audio.muted} />
+          <span className="dock-volume-value">
+            {audio.muted ? "Muted" : `${audio.volume}%`}
+          </span>
+          <span className="dock-volume-track" aria-hidden>
+            <span
+              className="dock-volume-fill"
+              style={{ width: `${audio.muted ? 0 : audio.volume}%` }}
+            />
+          </span>
         </motion.span>
+      ) : (
+        hovered &&
+        !flyoutOpen &&
+        !dragging && (
+          <motion.span
+            className="dock-label"
+            data-edge={edge}
+            initial={{ opacity: 0, scale: 0.9, ...labelFrom(edge) }}
+            animate={{ opacity: 1, scale: 1, x: 0, y: 0 }}
+            transition={springs.bloom}
+          >
+            {item.name}
+          </motion.span>
+        )
       )}
       <span
         className="dock-icon-float"
@@ -189,6 +282,11 @@ export function DockIcon({
           <span className="dock-icon-glyph">{initial}</span>
         )}
       </span>
+      {audio?.muted && (
+        <span className="dock-muted-badge" title={`${item.name} is muted`}>
+          <Speaker muted />
+        </span>
+      )}
       {item.windows.length > 0 && (
         <span className="dock-indicator" data-focused={item.focused} />
       )}

@@ -9,8 +9,16 @@ import { useEffect, useRef, useState } from "react";
 import { applyAppearance } from "../../engine/themes/applyTheme";
 import { THEMES } from "../../engine/themes/themes";
 import { ipc } from "../../ipc/commands";
-import type { DockEdge, MonitorInfoEx, Settings, StorageInfo } from "../../ipc/types";
+import type {
+  DockEdge,
+  MonitorInfoEx,
+  Settings,
+  StorageInfo,
+  SurfaceStyle,
+} from "../../ipc/types";
 import { useSettings } from "../../state/settingsStore";
+import { AudioCard } from "./AudioCard";
+import { ModesCard } from "./ModesCard";
 import { AeroSegmented, AeroSlider, AeroToggle } from "./controls";
 import "./settings.css";
 
@@ -50,7 +58,7 @@ export function SettingsApp() {
 
   // settings window uses the same token system for its own glass
   useEffect(() => {
-    if (settings) applyAppearance(settings);
+    if (settings) applyAppearance(settings, null, "settings");
   }, [settings]);
 
   // The window paints its sky immediately; this is what fills it until
@@ -145,6 +153,31 @@ export function SettingsApp() {
               </button>
             ))}
           </div>
+
+          <AeroSegmented<SurfaceStyle>
+            label="Dock material"
+            value={appearance.dockSurface}
+            options={[
+              { value: "aero", label: "Classic" },
+              { value: "liquid", label: "Liquid" },
+            ]}
+            onChange={(v) => set((d) => void (d.appearance.dockSurface = v))}
+          />
+          <AeroSegmented<SurfaceStyle>
+            label="Settings material"
+            value={appearance.settingsSurface}
+            options={[
+              { value: "aero", label: "Classic" },
+              { value: "liquid", label: "Liquid" },
+            ]}
+            onChange={(v) => set((d) => void (d.appearance.settingsSurface = v))}
+          />
+          <p className="settings-note">
+            Classic is the glossy Aero panel. Liquid keeps the same colours but
+            renders as thin glass: less tint in the body, the light moved to the
+            rim. The two windows are set separately, so you can mix them.
+          </p>
+
         </section>
 
         {/* ---- dock ---- */}
@@ -402,6 +435,16 @@ export function SettingsApp() {
             </p>
           )}
         </section>
+
+        <ModesCard
+          settings={settings}
+          onStatus={(tone, text) => setStatus({ tone, text })}
+        />
+
+        <AudioCard
+          settings={settings}
+          onStatus={(tone, text) => setStatus({ tone, text })}
+        />
 
         {/* ---- about ---- */}
         <section className="settings-card glass">

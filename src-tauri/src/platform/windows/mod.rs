@@ -1,3 +1,4 @@
+pub mod appaudio;
 pub mod apps;
 pub mod dock_window;
 pub mod icons;
@@ -9,3 +10,4 @@ pub mod taskbar;
 pub mod thumbnails;
 pub mod wallpaper;
 pub mod util;
+pub mod workspace;

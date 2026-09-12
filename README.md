@@ -49,6 +49,22 @@ Its last release was 2008.
 - Auto hide with an 8px reveal strip, a configurable delay, and it stays
   put while you drag files onto it
 
+**Modes**
+
+- A mode keeps its own pinned apps, window layout and per-app volumes
+- Give each one an icon from the preset grid, or any character you like
+- Switch from the tile on the dock and all three come back at once
+- Save the open windows into a mode, restore them later; windows that are
+  still open get moved, apps that were closed get opened
+- Optional automatic switching: name the apps that belong to a mode and
+  bringing one to the front loads it
+
+**Audio**
+
+- Scroll an app icon to set that app's volume, middle-click to mute
+- Right-click to choose which output an app uses
+- The same knob the Windows volume mixer shows, so the two agree
+
 **Apps and windows**
 
 - Running indicators. Click to focus, click again to cycle or minimize
@@ -72,6 +88,9 @@ Its last release was 2008.
 **Appearance**
 
 - Six themes: Aero, Ocean, Forest, Aurora, Sunset, Night
+- Two glass materials: Classic, the glossy Aero panel, and Liquid, the
+  same palette rendered as thin glass. Set per window, so the dock and
+  settings can differ
 - Optional wallpaper colour sync
 - Ambient scenes behind the dock: dust, rain, snow, bubbles, aurora
 - Sliders for glass, bloom, reflections, particles, opacity, speed
@@ -138,6 +157,11 @@ the folder.
 | Pin something | Drag it from Explorer onto the dock |
 | Reorder | Drag an icon along the dock |
 | Group into a stack | Right click an icon, then **Stack with previous item** |
+| Change one app's volume | Scroll its icon |
+| Mute one app | Middle-click its icon |
+| Choose an app's audio output | Right click it, then **Audio output** |
+| Switch modes | Click the mode tile on the dock |
+| Save your windows to a mode | Mode tile, then **Save windows to this mode** |
 | Search | Click the magnifier |
 | Settings | Click the gear, or right click the tray icon |
 | Show or hide the dock | Left click the tray icon |
@@ -160,6 +184,7 @@ Your config is a single file:
 ```
 
 Extracted icons are cached as PNGs next to it. Delete that folder to reset.
+Modes, including their saved window layouts, live in the same file.
 A portable copy puts both in `data\` beside the exe instead.
 
 ## Building from source
@@ -204,6 +229,11 @@ with your Windows build.
 - Windows only. The platform layer is isolated so a port is realistic, but no
   macOS or Linux backend exists.
 - UWP window grouping does not resolve for every app.
+- Windows has no public API for sending one app to a chosen audio output.
+  Aero Dock records the choice and opens the Windows page that performs
+  the routing, so the last step is a click there.
+- Restoring a workspace gives a relaunched app about a second and a half
+  to show a window. Anything slower keeps its own default geometry.
 - The installer is unsigned, so expect SmartScreen on first run.
 - Memory sits around 250MB, which is heavy for a dock. That is the cost of the
   WebView2 rendering stack.

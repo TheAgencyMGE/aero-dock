@@ -70,3 +70,61 @@
   font-weight: 400;
   font-size: 12.5px;
 }
+
+/* ---- per-app audio block ------------------------------------------ */
+
+.aero-menu-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+/* the right-hand value on a menu row: current volume, "system", "choose" */
+.aero-menu-hint {
+  flex: 0 0 auto;
+  font-size: 11px;
+  font-weight: 600;
+  opacity: 0.62;
+  font-variant-numeric: tabular-nums;
+}
+
+.aero-menu-devices {
+  padding: 2px 0 4px;
+  margin: 0 4px 2px;
+  border-radius: 8px;
+  background: rgba(8, 40, 72, 0.28);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.14);
+}
+
+.aero-menu-device {
+  padding-left: 22px;
+  position: relative;
+}
+
+/* a tick for whichever endpoint this app is currently set to */
+.aero-menu-device[data-active="true"]::before {
+  content: "";
+  position: absolute;
+  left: 9px;
+  top: 50%;
+  width: 5px;
+  height: 9px;
+  margin-top: -6px;
+  border: solid var(--aero-life, #7ad03a);
+  border-width: 0 2px 2px 0;
+  rotate: 45deg;
+}
+
+.aero-menu-device-name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.aero-menu-note {
+  padding: 5px 12px 6px;
+  font-size: 10.5px;
+  line-height: 1.35;
+  opacity: 0.6;
+}

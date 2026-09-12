@@ -1,0 +1,231 @@
+/* ==================================================================== */
+/* Surface materials                                                    */
+/*                                                                      */
+/* Two ways to render the same Frutiger Aero palette. The default,      */
+/* `aero`, is the glossy beveled panel the app has always used and      */
+/* lives in tokens.css. This file is the `liquid` alternative, applied  */
+/* per window via `data-surface` on the root element.                   */
+/*                                                                      */
+/* What Apple's Liquid Glass actually does is refract: it bends the     */
+/* content behind it rather than scattering it. The only way to get     */
+/* true refraction in CSS is an SVG displacement map used as a          */
+/* backdrop-filter, and that rebuilds the whole map whenever the        */
+/* element changes size. The dock changes size on every magnification   */
+/* frame, every flyout and every window resize, so that would burn GPU  */
+/* continuously for a effect nobody would consciously notice.           */
+/*                                                                      */
+/* So the lensing is faked with the parts that are cheap and static:    */
+/* Apple describes the material as three layers, and each maps onto     */
+/* something CSS does well.                                             */
+/*                                                                      */
+/*   highlight    a bright rim where light enters the glass             */
+/*   shadow       a wide soft drop, for separation from the background  */
+/*   illumination a faint inner glow, so the body reads as lit          */
+/*                                                                      */
+/* The tint comes almost entirely out of the body and moves to the rim, */
+/* which is what makes it read as a thin lens instead of a slab.        */
+/* ==================================================================== */
+
+:root[data-surface="liquid"] {
+  /* Barely any body tint. Legibility comes back through saturation and
+     the rim, not through opacity. */
+  --glass-tint-top: rgba(255, 255, 255, 0.28);
+  --glass-tint-mid: rgba(226, 244, 255, 0.10);
+  --glass-tint-bottom: rgba(150, 205, 240, 0.13);
+
+  /* The rim is the whole trick: bright where light enters at the top,
+     still lit but cooler underneath, never the dark bevel Aero uses. */
+  --glass-border: rgba(255, 255, 255, 0.5);
+  --glass-border-dark: rgba(190, 230, 255, 0.22);
+
+  /* Thin glass blurs more than thick glass, but it must not push colour
+     harder: over a blue sky a big saturate just makes denser blue, which
+     reads as a heavier slab. Lightness is what sells a lens, so the
+     saturation comes down and the brightness goes up instead. */
+  --glass-blur: 30px;
+  --glass-saturate: 1.25;
+
+  /* Liquid Glass leans on deeper, more continuous corners. */
+  --glass-radius: 26px;
+
+  /* The hard Vista gloss is what makes Aero read as plastic, so it is
+     almost entirely gone; what is left is a diffuse sheen. */
+  --gloss-strength: 0.14;
+}
+
+:root[data-surface="liquid"] .glass {
+  backdrop-filter: blur(calc(var(--glass-blur) * var(--glass-intensity)))
+    saturate(var(--glass-saturate)) brightness(1.12);
+  box-shadow:
+    /* shadow: separation from whatever is behind */
+    0 20px 52px rgba(4, 26, 48, 0.3),
+    0 2px 10px rgba(4, 26, 48, 0.14),
+    /* highlight: the rim is where a lens shows itself, so it carries
+       the detail the body gave up. A hairline of white on the outside,
+       then a brighter one just inside it, reads as thickness. */
+    0 0 0 0.5px rgba(255, 255, 255, 0.28),
+    inset 0 1px 0 rgba(255, 255, 255, 0.95),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.14),
+    inset 0 -1px 0 rgba(214, 240, 255, 0.4),
+    /* illumination: the body is lit, not merely transparent */
+    inset 0 8px 26px rgba(255, 255, 255, 0.1),
+    inset 0 -12px 30px rgba(150, 215, 255, 0.12);
+}
+
+/* Aero's gloss is a hard curved cap over the top half. A lens has no
+   such edge, so this becomes a soft sheen that fades out with no seam. */
+:root[data-surface="liquid"] .glass::before {
+  inset: 1px;
+  border-radius: inherit;
+  background:
+    linear-gradient(
+      180deg,
+      rgba(255, 255, 255, calc(1.6 * var(--gloss-strength))) 0%,
+      rgba(255, 255, 255, 0) 42%
+    ),
+    radial-gradient(
+      130% 68% at 50% -14%,
+      rgba(255, 255, 255, calc(1.5 * var(--gloss-strength))),
+      transparent 62%
+    );
+}
+
+/* ---- the dock is a different optical problem ----------------------- */
+
+/*
+ * The dock lives in a transparent window. Windows does not hand the
+ * desktop pixels to the webview, so `backdrop-filter` there has nothing
+ * to sample: it blurs only what is inside the page, which is nothing.
+ * Proof is easy to see, and easy to ship by accident: with the settings
+ * tints applied to the dock you can read body text straight through the
+ * bar, perfectly sharp, because no blur ever happened.
+ *
+ * The settings window is the opposite case. It paints its own sky, so
+ * there is something real behind the cards and the blur does work.
+ *
+ * That means thin tints are only safe in settings. On the dock the tint
+ * is the entire material, so Liquid there is a lighter, more even veil
+ * rather than a near-invisible one. It still reads as the other material
+ * because the rim, the corners and the missing gloss cap all carry over.
+ */
+:root[data-surface="liquid"][data-window="dock"] {
+  --glass-tint-top: rgba(238, 249, 255, 0.44);
+  --glass-tint-mid: rgba(198, 232, 252, 0.36);
+  --glass-tint-bottom: rgba(142, 199, 238, 0.42);
+  --glass-border: rgba(255, 255, 255, 0.72);
+  --glass-border-dark: rgba(206, 236, 255, 0.4);
+}
+
+:root[data-surface="liquid"][data-window="dock"] .glass {
+  box-shadow:
+    0 18px 44px rgba(4, 26, 48, 0.42),
+    0 0 0 0.5px rgba(255, 255, 255, 0.34),
+    inset 0 1px 0 rgba(255, 255, 255, 0.95),
+    inset 0 -1px 0 rgba(214, 240, 255, 0.45),
+    inset 0 -12px 30px rgba(150, 215, 255, 0.16);
+}
+
+/* Same reason: the small controls carry their own body on the dock. */
+:root[data-surface="liquid"][data-window="dock"] .dock-control-btn,
+:root[data-surface="liquid"][data-window="dock"] .mode-tile {
+  background: linear-gradient(
+    180deg,
+    rgba(255, 255, 255, 0.6) 0%,
+    rgba(206, 236, 255, 0.4) 52%,
+    rgba(140, 199, 238, 0.44) 100%
+  );
+}
+
+/* ---- dock furniture ------------------------------------------------ */
+
+/* The round controls follow the same rule: less body, brighter rim. */
+:root[data-surface="liquid"] .dock-control-btn,
+:root[data-surface="liquid"] .mode-tile {
+  background: linear-gradient(
+    180deg,
+    rgba(255, 255, 255, 0.26) 0%,
+    rgba(190, 228, 255, 0.13) 52%,
+    rgba(120, 190, 235, 0.18) 100%
+  );
+  backdrop-filter: blur(14px) saturate(1.7);
+  border-color: rgba(255, 255, 255, 0.55);
+  box-shadow:
+    0 4px 14px rgba(4, 26, 48, 0.3),
+    inset 0 1px 0 rgba(255, 255, 255, 0.85),
+    inset 0 0 14px rgba(170, 226, 255, 0.16);
+}
+
+:root[data-surface="liquid"] .mode-tile {
+  border-radius: 11px;
+}
+
+/* Tooltip and volume pills are small, so they keep more body than a
+   panel does or the text stops being readable over a busy desktop. */
+:root[data-surface="liquid"] .dock-label {
+  background: linear-gradient(
+    180deg,
+    rgba(120, 190, 240, 0.55),
+    rgba(30, 100, 160, 0.62)
+  );
+  backdrop-filter: blur(18px) saturate(1.7);
+  border-color: rgba(255, 255, 255, 0.5);
+  box-shadow:
+    0 6px 18px rgba(4, 26, 48, 0.4),
+    inset 0 1px 0 rgba(255, 255, 255, 0.6);
+}
+
+/* ---- buttons and fields -------------------------------------------- */
+
+:root[data-surface="liquid"] .aero-button {
+  background: linear-gradient(
+    180deg,
+    rgba(255, 255, 255, 0.42),
+    rgba(214, 238, 255, 0.2)
+  );
+  backdrop-filter: blur(12px) saturate(1.6);
+  border-color: rgba(255, 255, 255, 0.6);
+  box-shadow:
+    0 2px 8px rgba(4, 26, 48, 0.22),
+    inset 0 1px 0 rgba(255, 255, 255, 0.75);
+}
+
+:root[data-surface="liquid"] .aero-button:hover:not(:disabled) {
+  background: linear-gradient(
+    180deg,
+    rgba(255, 255, 255, 0.58),
+    rgba(214, 238, 255, 0.3)
+  );
+}
+
+:root[data-surface="liquid"] .ctl-text {
+  background: rgba(8, 40, 72, 0.24);
+  backdrop-filter: blur(10px);
+  border-color: rgba(255, 255, 255, 0.34);
+}
+
+/* ---- settings chrome ------------------------------------------------ */
+
+/* Apple's own guidance is to avoid glass on glass, so the cards get a
+   little more separation from the sky behind them rather than less. */
+:root[data-surface="liquid"] .settings-card {
+  border-radius: 22px;
+}
+
+:root[data-surface="liquid"] .mode-card,
+:root[data-surface="liquid"] .icon-picker-option,
+:root[data-surface="liquid"] .aero-menu-devices {
+  background: rgba(255, 255, 255, 0.1);
+  border-color: rgba(255, 255, 255, 0.26);
+}
+
+:root[data-surface="liquid"] .icon-picker-option:hover {
+  background: rgba(255, 255, 255, 0.24);
+}
+
+/* Text over a thinner material needs a touch more shadow to stay
+   readable against whatever happens to be behind the window. */
+:root[data-surface="liquid"] .settings-card h2,
+:root[data-surface="liquid"] .ctl-label,
+:root[data-surface="liquid"] .mode-card-title strong {
+  text-shadow: 0 1px 3px rgba(6, 34, 62, 0.45);
+}

@@ -26,6 +26,10 @@ export interface DockItemView {
   windows: WindowInfo[];
   /** One of this app's windows is foreground. */
   focused: boolean;
+  /** Executable the volume mixer knows this app by. A running window
+   *  reports its real process; a pin that is not running falls back to
+   *  the launch target, which is the same file. */
+  audioExe: string;
 }
 
 interface IconState {
@@ -96,6 +100,7 @@ export function buildDockItems(
       pinned: true,
       windows,
       focused: windows.some((w) => w.hwnd === focused),
+      audioExe: windows[0]?.exe ?? p.path,
     };
   });
 
@@ -116,6 +121,7 @@ export function buildDockItems(
         pinned: false,
         windows,
         focused: windows.some((w) => w.hwnd === focused),
+        audioExe: first.exe,
       });
     }
   }

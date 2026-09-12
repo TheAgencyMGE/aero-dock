@@ -5,13 +5,18 @@
 
 import { invoke } from "@tauri-apps/api/core";
 import type {
+  AppAudio,
   AppEntry,
+  AudioDevice,
   MonitorInfoEx,
+  OutputChoice,
   PinnedItem,
   RecentFile,
+  RestoreReport,
   RunningSnapshot,
   Settings,
   StorageInfo,
+  SwitchReport,
   SystemStatus,
 } from "./types";
 
@@ -74,6 +79,44 @@ export const ipc = {
     slots: { hwnd: number; x: number; y: number; w: number; h: number }[],
   ) => invoke<void>("show_window_previews", { slots }),
   hideWindowPreviews: () => invoke<void>("hide_window_previews"),
+
+  // per-app audio
+  listAppAudio: () => invoke<AppAudio[]>("list_app_audio"),
+  getAppAudio: (exe: string) => invoke<AppAudio | null>("get_app_audio", { exe }),
+  setAppAudio: (exe: string, level?: number, mute?: boolean) =>
+    invoke<AppAudio | null>("set_app_audio", {
+      exe,
+      level: level ?? null,
+      mute: mute ?? null,
+    }),
+  /** Positive notches scroll the volume up. */
+  nudgeAppVolume: (exe: string, notches: number) =>
+    invoke<AppAudio | null>("nudge_app_volume", { exe, notches }),
+  toggleAppMute: (exe: string) => invoke<AppAudio | null>("toggle_app_mute", { exe }),
+  listAudioDevices: () => invoke<AudioDevice[]>("list_audio_devices"),
+  setAppOutputDevice: (exe: string, deviceId: string | null, openSettings: boolean) =>
+    invoke<OutputChoice>("set_app_output_device", { exe, deviceId, openSettings }),
+
+  // modes
+  enableModes: (enabled: boolean) => invoke<Settings>("enable_modes", { enabled }),
+  createMode: (name: string, glyph: string | null, copyCurrentPins: boolean) =>
+    invoke<Settings>("create_mode", { name, glyph, copyCurrentPins }),
+  renameMode: (id: string, name: string, glyph: string | null) =>
+    invoke<Settings>("rename_mode", { id, name, glyph }),
+  deleteMode: (id: string) => invoke<Settings>("delete_mode", { id }),
+  switchMode: (id: string) => invoke<SwitchReport>("switch_mode", { id }),
+  captureWorkspace: (modeId?: string) =>
+    invoke<Settings>("capture_workspace", { modeId: modeId ?? null }),
+  restoreWorkspace: (modeId?: string) =>
+    invoke<RestoreReport>("restore_workspace", { modeId: modeId ?? null }),
+  clearWorkspace: (modeId: string) => invoke<Settings>("clear_workspace", { modeId }),
+  setModeApps: (modeId: string, apps: string[]) =>
+    invoke<Settings>("set_mode_apps", { modeId, apps }),
+  setAutoSwitch: (enabled: boolean) => invoke<Settings>("set_auto_switch", { enabled }),
+  setRestoreWorkspaceOnSwitch: (enabled: boolean) =>
+    invoke<Settings>("set_restore_workspace_on_switch", { enabled }),
+  foregroundChanged: (exe: string) =>
+    invoke<SwitchReport | null>("foreground_changed", { exe }),
 
   // dock window
   resizeDock: (width: number, height: number) =>

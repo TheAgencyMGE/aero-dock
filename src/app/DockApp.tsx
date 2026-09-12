@@ -11,6 +11,7 @@ import { EffectsLayer } from "../engine/effects/EffectsLayer";
 import { applyAppearance } from "../engine/themes/applyTheme";
 import { notify } from "../features/feedback/toastStore";
 import { ipc } from "../ipc/commands";
+import { useAppAudio } from "../state/audioStore";
 import { buildDockItems, useDockIcons, type DockItemView } from "../state/dockStore";
 import { useFileDrag } from "../state/dragStore";
 import { useRunning } from "../state/runningStore";
@@ -26,6 +27,44 @@ export function DockApp() {
     hydrate();
     hydrateRunning();
   }, [hydrate, hydrateRunning]);
+
+  // Read the mixer whenever the set of running apps changes. Sessions
+  // appear and disappear with the apps that own them, and this is the
+  // only signal for that; there is no polling anywhere.
+  const refreshAudio = useAppAudio((a) => a.refresh);
+  useEffect(() => {
+    void refreshAudio();
+  }, [refreshAudio, windows.length]);
+
+  // Auto-switching: when the foreground app changes, ask Rust whether a
+  // mode claims it. Rust owns the decision so the rules live in exactly
+  // one place, and it answers null when nothing should happen.
+  const autoSwitch = settings?.modes.enabled && settings.modes.autoSwitch;
+  const focusedExe = useMemo(
+    () => windows.find((w) => w.hwnd === focused)?.exe ?? "",
+    [windows, focused],
+  );
+  useEffect(() => {
+    if (!autoSwitch || !focusedExe) return;
+    let cancelled = false;
+    // a short settle avoids switching on windows that are only passing
+    // through the foreground during a restore or an alt-tab sweep
+    const timer = setTimeout(() => {
+      ipc
+        .foregroundChanged(focusedExe)
+        .then((report) => {
+          if (cancelled || !report) return;
+          // the new settings arrive on their own through
+          // `settings://changed`; this only says what happened
+          notify.info(`Switched to ${report.modeName}`);
+        })
+        .catch((e) => console.warn("auto mode switch failed", e));
+    }, 400);
+    return () => {
+      cancelled = true;
+      clearTimeout(timer);
+    };
+  }, [autoSwitch, focusedExe]);
 
   // pin files/shortcuts dropped onto the dock from Explorer
   useEffect(() => {

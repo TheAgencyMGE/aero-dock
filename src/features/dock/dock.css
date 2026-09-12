@@ -291,3 +291,83 @@
 .dock-label[data-edge="right"] {
   right: calc(100% + 14px);
 }
+
+/* ---- per-app volume ---------------------------------------------- */
+
+/* The volume readout borrows the tooltip pill so the two never fight
+   for the same space: while you are scrolling, this replaces the name. */
+.dock-volume-pill {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 5px 11px 7px;
+  min-width: 104px;
+  /* Clears the running indicator and mute badge inside the tile. It
+     cannot outrank the flyouts, which live in a different stacking
+     context; a scroll retires the window preview instead. */
+  z-index: 12;
+}
+
+.dock-volume-icon {
+  width: 14px;
+  height: 14px;
+  flex: 0 0 auto;
+  color: var(--aero-text-on-glass);
+  overflow: visible;
+}
+
+.dock-volume-value {
+  font-variant-numeric: tabular-nums;
+  font-size: 12px;
+  min-width: 38px;
+}
+
+.dock-volume-track {
+  position: absolute;
+  left: 10px;
+  right: 10px;
+  bottom: 4px;
+  height: 3px;
+  border-radius: 3px;
+  background: rgba(6, 34, 62, 0.45);
+  box-shadow: inset 0 1px 2px rgba(4, 24, 46, 0.55);
+  overflow: hidden;
+}
+
+.dock-volume-fill {
+  display: block;
+  height: 100%;
+  border-radius: 3px;
+  background: linear-gradient(90deg, #d9f4ff, var(--aero-accent) 60%, #7ad03a);
+  box-shadow: 0 0 6px rgba(160, 225, 255, 0.7);
+  transition: width 90ms ease-out;
+}
+
+/* A muted app stays marked even when you are not touching the wheel,
+   otherwise silence looks like a broken app. */
+.dock-muted-badge {
+  position: absolute;
+  top: -2px;
+  right: -2px;
+  width: 15px;
+  height: 15px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  color: #fff;
+  background: linear-gradient(180deg, rgba(230, 96, 96, 0.95), rgba(160, 32, 32, 0.95));
+  border: 1px solid rgba(255, 255, 255, 0.7);
+  box-shadow: 0 2px 6px rgba(10, 30, 60, 0.5);
+  pointer-events: none;
+}
+
+.dock-muted-badge .dock-volume-icon {
+  width: 10px;
+  height: 10px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .dock-volume-fill {
+    transition: none;
+  }
+}

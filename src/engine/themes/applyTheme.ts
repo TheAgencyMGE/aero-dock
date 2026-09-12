@@ -14,10 +14,26 @@ function hexToRgb(hex: string): [number, number, number] | null {
   return [(v >> 16) & 255, (v >> 8) & 255, v & 255];
 }
 
-export function applyAppearance(settings: Settings, wallpaperAccent?: string | null): void {
+/** Which window is being styled. The two carry their own material, so
+ *  the caller has to say which one it is. */
+export type SurfaceTarget = "dock" | "settings";
+
+export function applyAppearance(
+  settings: Settings,
+  wallpaperAccent?: string | null,
+  target: SurfaceTarget = "dock",
+): void {
   const root = document.documentElement.style;
   const a = settings.appearance;
   const d = settings.dock;
+
+  // The material is an attribute rather than a token because it swaps a
+  // whole block of tokens at once, plus the shape of the gloss layer.
+  document.documentElement.dataset.surface =
+    target === "settings" ? a.settingsSurface : a.dockSurface;
+  // The two windows composite differently, so a material has to know
+  // which one it is in. See surfaces.css for why that matters.
+  document.documentElement.dataset.window = target;
 
   // named theme: clear all theme-managed tokens, then set overrides
   const theme = themeById(a.theme);

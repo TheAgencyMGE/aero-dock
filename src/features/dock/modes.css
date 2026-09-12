@@ -1,0 +1,176 @@
+/* The Modes tile sits with the other dock controls and reads as one of
+   them: same glass body, same gloss, same hover lift. */
+
+.mode-tile {
+  flex: none;
+  /* The bar lays its icons out on flex-end so they sit on the shelf.
+     Controls opt out of that, exactly as the search and gear buttons do,
+     otherwise the tile sinks to the bottom edge on its own. */
+  align-self: center;
+  margin-right: 2px;
+  position: relative;
+  z-index: 3;
+  width: 30px;
+  height: 30px;
+  display: grid;
+  place-items: center;
+  border-radius: 9px;
+  border: 1px solid rgba(255, 255, 255, 0.6);
+  background: linear-gradient(
+    180deg,
+    rgba(232, 248, 255, 0.55) 0%,
+    rgba(140, 205, 245, 0.4) 48%,
+    rgba(60, 150, 210, 0.42) 52%,
+    rgba(20, 92, 152, 0.55) 100%
+  );
+  box-shadow:
+    0 3px 10px rgba(8, 40, 74, 0.35),
+    inset 0 1px 0 rgba(255, 255, 255, 0.85);
+  color: var(--aero-text-on-glass);
+  cursor: pointer;
+  transition: transform 140ms ease, box-shadow 140ms ease;
+}
+
+.mode-tile:hover {
+  transform: translateY(-1px);
+  box-shadow:
+    0 5px 14px rgba(8, 40, 74, 0.4),
+    inset 0 1px 0 rgba(255, 255, 255, 0.95);
+}
+
+.mode-tile[data-busy="true"] {
+  opacity: 0.6;
+  cursor: progress;
+}
+
+.mode-tile-glyph {
+  font-size: 14px;
+  font-weight: 700;
+  line-height: 1;
+  text-shadow: 0 1px 3px rgba(8, 40, 74, 0.7);
+}
+
+/* An emoji carries its own colour and shape, so it wants room and no
+   letterform shadow behind it. The two tiles are different sizes, so
+   they get their own measurements rather than one shared guess. */
+.mode-tile-glyph[data-emoji="true"],
+.mode-row-glyph[data-emoji="true"] {
+  font-weight: 400;
+  text-shadow: none;
+  filter: drop-shadow(0 1px 2px rgba(8, 40, 74, 0.55));
+}
+
+/* 30px tile */
+.mode-tile-glyph[data-emoji="true"] {
+  font-size: 18px;
+}
+
+/* 24px tile in the flyout list */
+.mode-row-glyph[data-emoji="true"] {
+  font-size: 14px;
+}
+
+/* ---- flyout ------------------------------------------------------- */
+
+.mode-flyout {
+  padding: 8px 6px 6px;
+  border-radius: 14px;
+  max-height: 300px;
+  overflow-y: auto;
+}
+
+.mode-flyout-title {
+  padding: 2px 10px 7px;
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  opacity: 0.6;
+  color: var(--aero-text-on-glass);
+}
+
+.mode-flyout-separator {
+  height: 1px;
+  margin: 5px 8px;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(255, 255, 255, 0.35),
+    transparent
+  );
+}
+
+.mode-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 7px 10px;
+  border: 0;
+  border-radius: 9px;
+  background: transparent;
+  color: var(--aero-text-on-glass);
+  text-align: left;
+  cursor: pointer;
+  font: inherit;
+}
+
+.mode-row:hover {
+  background: rgba(255, 255, 255, 0.16);
+}
+
+/* the loaded mode keeps a lit rail so it reads at a glance */
+.mode-row[data-active="true"] {
+  background: rgba(255, 255, 255, 0.13);
+  box-shadow: inset 2px 0 0 var(--aero-life, #7ad03a);
+}
+
+.mode-row-glyph {
+  flex: 0 0 auto;
+  width: 24px;
+  height: 24px;
+  display: grid;
+  place-items: center;
+  border-radius: 7px;
+  font-size: 12px;
+  font-weight: 700;
+  background: linear-gradient(
+    180deg,
+    rgba(226, 247, 255, 0.5),
+    rgba(40, 124, 186, 0.5)
+  );
+  border: 1px solid rgba(255, 255, 255, 0.5);
+}
+
+.mode-row-body {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.mode-row-name {
+  font-size: 12.5px;
+  font-weight: 600;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.mode-row-meta {
+  font-size: 10.5px;
+  opacity: 0.62;
+}
+
+.mode-row-plain {
+  font-size: 12px;
+  opacity: 0.85;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .mode-tile {
+    transition: none;
+  }
+  .mode-tile:hover {
+    transform: none;
+  }
+}

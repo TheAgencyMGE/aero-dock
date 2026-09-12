@@ -508,3 +508,213 @@
   word-break: break-all;
   opacity: 0.75;
 }
+
+/* ---- modes ---------------------------------------------------------- */
+
+.mode-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin: 10px 0 14px;
+}
+
+.mode-card {
+  padding: 12px 14px;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.07);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+}
+
+/* the loaded mode keeps a lit rail, the same cue the dock flyout uses */
+.mode-card[data-active="true"] {
+  border-color: rgba(255, 255, 255, 0.34);
+  box-shadow: inset 3px 0 0 var(--aero-life, #7ad03a);
+}
+
+.mode-card-head {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+}
+
+.mode-card-glyph {
+  flex: 0 0 auto;
+  width: 30px;
+  height: 30px;
+  display: grid;
+  place-items: center;
+  border-radius: 9px;
+  font-size: 14px;
+  font-weight: 700;
+  background: linear-gradient(180deg, rgba(226, 247, 255, 0.5), rgba(40, 124, 186, 0.5));
+  border: 1px solid rgba(255, 255, 255, 0.5);
+}
+
+.mode-card-title {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  flex: 1 1 auto;
+}
+
+.mode-card-meta {
+  font-size: 11px;
+  opacity: 0.65;
+}
+
+.mode-card-badge {
+  flex: 0 0 auto;
+  padding: 3px 9px;
+  border-radius: 999px;
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  background: linear-gradient(180deg, rgba(150, 226, 96, 0.9), rgba(80, 160, 40, 0.9));
+  border: 1px solid rgba(255, 255, 255, 0.55);
+}
+
+.mode-card-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 7px;
+  margin-top: 8px;
+}
+
+.mode-card-edit {
+  margin-top: 10px;
+  padding-top: 8px;
+  border-top: 1px solid rgba(255, 255, 255, 0.16);
+}
+
+/* a text field that matches the sliders and toggles beside it */
+.ctl-text {
+  flex: 1 1 auto;
+  min-width: 0;
+  padding: 6px 10px;
+  border-radius: 8px;
+  font: inherit;
+  font-size: 12.5px;
+  color: var(--aero-text-on-glass);
+  background: rgba(8, 40, 72, 0.32);
+  border: 1px solid rgba(255, 255, 255, 0.28);
+  box-shadow: inset 0 1px 3px rgba(4, 24, 46, 0.45);
+}
+
+.ctl-text:focus {
+  outline: none;
+  border-color: rgba(255, 255, 255, 0.6);
+  box-shadow:
+    inset 0 1px 3px rgba(4, 24, 46, 0.45),
+    0 0 0 2px rgba(120, 205, 255, 0.35);
+}
+
+.ctl-text-short {
+  flex: 0 0 68px;
+  text-align: center;
+}
+
+.ctl-text-mid {
+  flex: 0 0 140px;
+}
+
+.ctl-row-stacked {
+  align-items: flex-start;
+}
+
+/* ---- app volume ----------------------------------------------------- */
+
+.audio-row {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+}
+
+.audio-row .ctl-row {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+/* an inline action inside a note line */
+.aero-button-link {
+  padding: 0;
+  border: 0;
+  background: none;
+  font: inherit;
+  font-weight: 600;
+  color: var(--aero-accent, #2f9de3);
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+/* ---- mode icon picker ----------------------------------------------- */
+
+/* Laid out as a block under its own label: the grid is far wider than a
+   control, and a stacked field lets it wrap instead of squeezing. */
+.mode-icon-field {
+  padding: 7px 0;
+}
+
+.mode-icon-field > .ctl-label {
+  display: block;
+  flex: none;
+  margin-bottom: 7px;
+}
+
+.icon-picker-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+.icon-picker-option {
+  width: 30px;
+  height: 30px;
+  flex: none;
+  display: grid;
+  place-items: center;
+  border: 1px solid rgba(255, 255, 255, 0.22);
+  border-radius: 8px;
+  background: rgba(8, 40, 72, 0.28);
+  color: var(--aero-text-on-glass);
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 1;
+  cursor: pointer;
+  transition: background 120ms ease, border-color 120ms ease;
+}
+
+.icon-picker-option[data-emoji="true"] {
+  font-size: 16px;
+  font-weight: 400;
+}
+
+.icon-picker-option:hover {
+  background: rgba(255, 255, 255, 0.2);
+  border-color: rgba(255, 255, 255, 0.55);
+}
+
+/* the chosen one keeps the same green cue the active mode uses */
+.icon-picker-option[data-active="true"] {
+  background: rgba(255, 255, 255, 0.24);
+  border-color: var(--aero-life, #7ad03a);
+  box-shadow: 0 0 0 1px var(--aero-life, #7ad03a);
+}
+
+.icon-picker-custom {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 8px;
+}
+
+.icon-picker-custom .settings-note {
+  margin: 0;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .icon-picker-option {
+    transition: none;
+  }
+}

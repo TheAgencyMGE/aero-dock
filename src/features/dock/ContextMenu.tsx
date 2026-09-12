@@ -4,16 +4,24 @@
  */
 
 import { AnimatePresence, motion } from "motion/react";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { springs } from "../../engine/animation/springs";
 import { ipc } from "../../ipc/commands";
 import { notify } from "../feedback/toastStore";
-import type { Settings } from "../../ipc/types";
+import type { AudioDevice, Settings } from "../../ipc/types";
+import { exeKey, useAppAudio } from "../../state/audioStore";
 import type { DockItemView } from "../../state/dockStore";
 import { bloomOffset, flyoutStyle, useMenu } from "./menuStore";
 import "./contextmenu.css";
 
 const MENU_WIDTH = 240;
+
+/** The output an app is set to in the active mode, if any. */
+function chosenDevice(settings: Settings, exe: string): string | null {
+  const key = exeKey(exe);
+  const mode = settings.modes.modes.find((m) => m.id === settings.modes.activeId);
+  return mode?.audio.find((a) => a.exe === key)?.deviceId ?? null;
+}
 
 interface ContextMenuProps {
   settings: Settings;
@@ -163,6 +171,25 @@ export function ContextMenu({ settings, edge }: ContextMenuProps) {
   const { kind, item: openItem, anchor, close } = useMenu();
   const item = kind === "menu" ? openItem : null;
 
+  const audio = useAppAudio((a) => (item ? a.levels[exeKey(item.audioExe)] : undefined));
+  const toggleMute = useAppAudio((a) => a.toggleMute);
+  const [devices, setDevices] = useState<AudioDevice[]>([]);
+  const [showDevices, setShowDevices] = useState(false);
+
+  // collapse the device list whenever the menu moves to another icon
+  useEffect(() => {
+    setShowDevices(false);
+  }, [item?.id]);
+
+  // endpoints are only listed once the user asks for them
+  useEffect(() => {
+    if (!showDevices || devices.length > 0) return;
+    ipc
+      .listAudioDevices()
+      .then(setDevices)
+      .catch((e) => console.warn("audio device list failed", e));
+  }, [showDevices, devices.length]);
+
   // close on any click outside / Escape
   useEffect(() => {
     if (!item) return;
@@ -220,6 +247,73 @@ export function ContextMenu({ settings, edge }: ContextMenuProps) {
                   <span className="aero-menu-window-title">{w.title}</span>
                 </button>
               ))}
+              <div className="aero-menu-separator" />
+            </div>
+          )}
+          {item.kind !== "stack" && (
+            <div className="aero-menu-audio">
+              {audio && (
+                <button
+                  className="aero-menu-item"
+                  onClick={() => {
+                    void toggleMute(item.audioExe);
+                    close();
+                  }}
+                >
+                  {audio.muted ? "Unmute" : "Mute"}
+                  <span className="aero-menu-hint">
+                    {audio.muted ? "muted" : `${audio.volume}%`}
+                  </span>
+                </button>
+              )}
+              <button
+                className="aero-menu-item"
+                aria-expanded={showDevices}
+                onClick={() => setShowDevices((v) => !v)}
+              >
+                Audio output
+                <span className="aero-menu-hint">{showDevices ? "hide" : "choose"}</span>
+              </button>
+              {showDevices && (
+                <div className="aero-menu-devices">
+                  {devices.length === 0 && (
+                    <div className="aero-menu-note">Looking for outputs…</div>
+                  )}
+                  {devices.map((d) => {
+                    const current = chosenDevice(settings, item.audioExe);
+                    const active = current === null ? d.isDefault : current === d.id;
+                    return (
+                      <button
+                        key={d.id}
+                        className="aero-menu-item aero-menu-device"
+                        data-active={active}
+                        onClick={() => {
+                          ipc
+                            .setAppOutputDevice(item.audioExe, d.id, true)
+                            .then((choice) => {
+                              if (choice.openedSettings) {
+                                notify.info(
+                                  `Saved. Pick ${d.name} for ${item.name} in the Windows page that just opened.`,
+                                );
+                              } else {
+                                notify.info(`Saved ${d.name} for ${item.name}.`);
+                              }
+                            })
+                            .catch(notify.on("Could not set the audio output"));
+                          close();
+                        }}
+                      >
+                        <span className="aero-menu-device-name">{d.name}</span>
+                        {d.isDefault && <span className="aero-menu-hint">system</span>}
+                      </button>
+                    );
+                  })}
+                  <div className="aero-menu-note">
+                    Windows performs the routing itself, so the last step happens
+                    on its own settings page.
+                  </div>
+                </div>
+              )}
               <div className="aero-menu-separator" />
             </div>
           )}

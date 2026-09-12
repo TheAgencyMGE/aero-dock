@@ -114,6 +114,17 @@ fn shell_execute(verb: &str, target: &str, args: Option<&str>) -> AeroResult<()>
     Ok(())
 }
 
+/// Launch a target the way the dock does, from non-async code.
+/// Workspace restore uses this to bring closed apps back.
+pub fn launch_target(target: &str) -> AeroResult<()> {
+    launch_blocking(target, None)
+}
+
+/// Open a shell URI such as `ms-settings:apps-volume`.
+pub fn open_shell_uri(uri: &str) -> AeroResult<()> {
+    shell_execute("open", uri, None)
+}
+
 fn launch_blocking(target: &str, args: Option<&str>) -> AeroResult<()> {
     // packaged apps (Settings, Store apps…) activate by AUMID through
     // the activation manager — ShellExecuteW silently no-ops on these

@@ -302,13 +302,9 @@ const SHELL_AUMID_PREFIXES: &[&str] = &[
 
 const APP_FRAME_HOST: &str = "applicationframehost.exe";
 
-/// File name of a full executable path, lowercased.
-fn exe_basename(path: &str) -> String {
-    path.rsplit(['\\', '/'])
-        .next()
-        .unwrap_or(path)
-        .to_ascii_lowercase()
-}
+/// File name of a full executable path, lowercased. Shared with the
+/// audio and workspace code so "the same app" means one thing everywhere.
+use crate::core::names::exe_key as exe_basename;
 
 /// True when a window belongs to the Windows shell rather than to an
 /// application. Pure so the rules can be tested without a desktop.

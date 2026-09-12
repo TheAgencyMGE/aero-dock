@@ -5,6 +5,54 @@ All notable changes to Aero Dock are documented here.
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.2.0] - 2026-09-08
+
+Modes, and the two things a mode is made of.
+
+### Added
+
+- **Per-app audio.** Scroll an app on the dock to change that app's
+  volume, middle-click to mute or unmute it, and right-click to pick an
+  output. A readout appears while you scroll and a muted app keeps a
+  badge so silence never looks like a broken app. This is the same knob
+  the Windows volume mixer shows, so the two always agree. An app that
+  holds several audio sessions, which is normal for browsers and games,
+  is treated as one.
+- **Workspace snapshots.** Save which apps are open, where their windows
+  sit, how big they are and which monitor they are on, then put it all
+  back. Windows that are still open are moved rather than relaunched,
+  apps that have closed are opened once, and anything saved on a monitor
+  that is no longer plugged in comes back onto a screen that exists
+  instead of off the edge of the desktop.
+- **Dock Modes.** A mode holds its own pinned apps, its own workspace and
+  its own per-app volumes. Switching restores all three from the tile on
+  the dock. Modes can also switch on their own: name the apps that belong
+  to a mode and bringing one of them to the front loads it. Automatic
+  switching changes pins and volumes only, never window positions, so it
+  cannot fight the app you just clicked on.
+- Settings gained a Modes card for making, renaming, deleting and
+  switching modes, and an App volume card that mirrors the dock.
+- **Two glass materials.** Classic is the glossy, beveled Aero panel the
+  app has always used. Liquid keeps the same palette but renders as thin
+  glass: most of the tint leaves the body and the light moves to the rim,
+  with deeper corners and no hard gloss cap. The dock and the settings
+  window pick their material separately, so either can be glossy while
+  the other is a lens. Both start on Classic, so upgrading changes
+  nothing on screen; Liquid is one control away in Settings, then Theme.
+- Each mode picks its own tile icon from a grid of presets grouped by
+  what people name modes after, or any character you type. Without one it
+  falls back to the first letter of the mode's name.
+
+### Changed
+
+- Picking an output for an app records the choice on the mode and opens
+  the Windows page that performs the routing. Windows has no public API
+  for per-application endpoint routing, so the last step is its own.
+- The settings file gained a `modes` section. It is dormant on upgrade:
+  existing configs load unchanged and the dock behaves exactly as it did
+  until Modes is switched on, at which point the current dock becomes the
+  first mode.
+
 ## [1.1.0] - 2026-09-07
 
 ### Added
@@ -98,6 +146,7 @@ First public release.
 - Packaged (UWP) apps are grouped by AppUserModelID. This covers the common
   cases and misses a few. See the README.
 
+[1.2.0]: https://github.com/TheAgencyMGE/aero-dock/releases/tag/v1.2.0
 [1.1.0]: https://github.com/TheAgencyMGE/aero-dock/releases/tag/v1.1.0
 [1.0.1]: https://github.com/TheAgencyMGE/aero-dock/releases/tag/v1.0.1
 [1.0.0]: https://github.com/TheAgencyMGE/aero-dock/releases/tag/v1.0.0
