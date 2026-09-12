@@ -15,6 +15,7 @@ use std::collections::BTreeMap;
 
 use serde::Serialize;
 use windows::core::Interface;
+use windows::core::HRESULT;
 use windows::Win32::Foundation::S_OK;
 use windows::Win32::Media::Audio::{
     eConsole, eMultimedia, eRender, IAudioSessionControl2, IAudioSessionManager2, IMMDevice,
@@ -25,6 +26,9 @@ use windows::Win32::System::Com::{CoCreateInstance, CLSCTX_ALL, CLSCTX_INPROC_SE
 use crate::core::names::{display_name, exe_key};
 use crate::core::AeroResult;
 use crate::platform::ComApartment;
+
+/// HRESULT_FROM_WIN32(ERROR_NOT_FOUND): no audio endpoint exists.
+const ERROR_NOT_FOUND_HRESULT: HRESULT = HRESULT(0x8007_0490u32 as i32);
 
 /// One app's mixer entry, collapsed across all of its sessions.
 #[derive(Debug, Clone, Serialize, PartialEq)]
@@ -53,7 +57,6 @@ pub struct AudioDevice {
     pub is_default: bool,
 }
 
-
 /// Scalar (0.0..=1.0) to the 0..=100 the UI speaks.
 fn to_percent(scalar: f32) -> u8 {
     (scalar.clamp(0.0, 1.0) * 100.0).round() as u8
@@ -64,10 +67,23 @@ pub fn step_level(current: u8, delta: i32) -> u8 {
     (current as i32 + delta).clamp(0, 100) as u8
 }
 
-fn default_render_device() -> AeroResult<IMMDevice> {
+/// The endpoint everything plays through, or None when the machine has
+/// no output at all.
+///
+/// A PC with no sound card, or one with every device disabled, answers
+/// `GetDefaultAudioEndpoint` with ERROR_NOT_FOUND. That is not a failure
+/// worth reporting: it means there is nothing to have a volume, which is
+/// exactly what an empty session list already says. Headless build
+/// machines are the common case, but so is a desktop with the speakers
+/// unplugged.
+fn default_render_device() -> AeroResult<Option<IMMDevice>> {
     let enumerator: IMMDeviceEnumerator =
         unsafe { CoCreateInstance(&MMDeviceEnumerator, None, CLSCTX_INPROC_SERVER)? };
-    Ok(unsafe { enumerator.GetDefaultAudioEndpoint(eRender, eConsole)? })
+    match unsafe { enumerator.GetDefaultAudioEndpoint(eRender, eConsole) } {
+        Ok(device) => Ok(Some(device)),
+        Err(e) if e.code() == ERROR_NOT_FOUND_HRESULT => Ok(None),
+        Err(e) => Err(e.into()),
+    }
 }
 
 /// Walk every session on the default render endpoint.
@@ -77,7 +93,9 @@ fn default_render_device() -> AeroResult<IMMDevice> {
 fn for_each_session(
     mut visit: impl FnMut(u32, &IAudioSessionControl2, &ISimpleAudioVolume) -> bool,
 ) -> AeroResult<()> {
-    let device = default_render_device()?;
+    let Some(device) = default_render_device()? else {
+        return Ok(());
+    };
     let manager: IAudioSessionManager2 = unsafe { device.Activate(CLSCTX_ALL, None)? };
     let sessions = unsafe { manager.GetSessionEnumerator()? };
     let count = unsafe { sessions.GetCount()? };
@@ -311,9 +329,10 @@ mod tests {
     }
 
     #[test]
-    fn enumerating_sessions_does_not_error_on_a_real_machine() {
-        // machine-agnostic: there may be zero apps playing audio, but the
-        // walk itself must not fail
+    fn enumerating_sessions_does_not_error_even_with_no_audio_hardware() {
+        // Machine-agnostic on purpose. There may be zero apps playing, and
+        // on a build machine there may be no sound card at all; neither is
+        // an error, both just mean nothing has a volume.
         let apps = list_apps().expect("session enumeration should succeed");
         for a in &apps {
             assert!(a.volume <= 100);
