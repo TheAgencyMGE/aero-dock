@@ -1,6 +1,6 @@
 [package]
 name = "aero-dock"
-version = "1.2.2"
+version = "1.3.0"
 description = "Aero Dock - a free RocketDock alternative for Windows, in Frutiger Aero"
 authors = ["Ryan Panda"]
 license = "MIT"
@@ -58,6 +58,9 @@ features = [
   "Win32_Graphics_Gdi",
   "Win32_Graphics_Dwm",
   "Win32_Media_Audio",
+  "Win32_System_SystemInformation",
+  "Media_Control",
+  "Foundation",
   "Win32_Media_Audio_Endpoints",
   "Win32_Networking_NetworkListManager",
   "Win32_Devices_FunctionDiscovery",

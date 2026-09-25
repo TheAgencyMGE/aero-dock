@@ -66,6 +66,15 @@ Its last release was 2008.
 - Right-click to choose which output an app uses
 - The same knob the Windows volume mixer shows, so the two agree
 
+**Desktop widgets**
+
+- Glass widgets on the wallpaper: clock, calendar, weather, system stats
+  and a music player
+- Drag to move, drag a corner to resize; the rest of the desktop keeps
+  working normally
+- Each one picks its own material, tint, opacity and ambient effects
+- Off until you turn them on
+
 **Apps and windows**
 
 - Running indicators. Click to focus, click again to cycle or minimize
@@ -164,6 +173,8 @@ the folder.
 | Choose an app's audio output | Right click it, then **Audio output** |
 | Switch modes | Click the mode tile on the dock |
 | Save your windows to a mode | Mode tile, then **Save windows to this mode** |
+| Move a widget | Drag it |
+| Resize a widget | Drag its bottom right corner |
 | Search | Click the magnifier |
 | Settings | Click the gear, or right click the tray icon |
 | Show or hide the dock | Left click the tray icon |
@@ -175,6 +186,12 @@ First launch offers to import a starter set of your apps, or to start empty.
 
 Aero Dock makes no network requests. No telemetry, no analytics, no crash
 reporting, no update check, no account.
+
+The one exception is the weather widget, and it takes two deliberate steps
+to get there: adding the widget, and allowing it in Settings, then Widgets.
+It then asks Open-Meteo for conditions at the coordinates you typed in and
+sends nothing else, with no account and no key. Leave it alone and nothing
+in the app ever reaches the network.
 
 The one outbound action is opening a URL in your browser, and only when you
 click something that obviously does that, like the GitHub button in Settings.

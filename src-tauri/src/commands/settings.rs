@@ -176,7 +176,7 @@ pub fn import_settings(
 
 /// The browser arguments the dock window was configured with.
 #[cfg(windows)]
-fn dock_browser_args(app: &AppHandle) -> Option<String> {
+pub(crate) fn dock_browser_args(app: &AppHandle) -> Option<String> {
     app.config()
         .app
         .windows

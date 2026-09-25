@@ -26,7 +26,7 @@
 /* which is what makes it read as a thin lens instead of a slab.        */
 /* ==================================================================== */
 
-:root[data-surface="liquid"] {
+[data-surface="liquid"] {
   /* Barely any body tint. Legibility comes back through saturation and
      the rim, not through opacity. */
   --glass-tint-top: rgba(255, 255, 255, 0.28);
@@ -53,7 +53,7 @@
   --gloss-strength: 0.14;
 }
 
-:root[data-surface="liquid"] .glass {
+[data-surface="liquid"] .glass {
   backdrop-filter: blur(calc(var(--glass-blur) * var(--glass-intensity)))
     saturate(var(--glass-saturate)) brightness(1.12);
   box-shadow:
@@ -74,7 +74,7 @@
 
 /* Aero's gloss is a hard curved cap over the top half. A lens has no
    such edge, so this becomes a soft sheen that fades out with no seam. */
-:root[data-surface="liquid"] .glass::before {
+[data-surface="liquid"] .glass::before {
   inset: 1px;
   border-radius: inherit;
   background:
@@ -108,7 +108,7 @@
  * rather than a near-invisible one. It still reads as the other material
  * because the rim, the corners and the missing gloss cap all carry over.
  */
-:root[data-surface="liquid"][data-window="dock"] {
+[data-surface="liquid"][data-window="dock"] {
   --glass-tint-top: rgba(240, 250, 255, 0.34);
   --glass-tint-mid: rgba(206, 236, 253, 0.27);
   --glass-tint-bottom: rgba(150, 204, 240, 0.33);
@@ -116,7 +116,7 @@
   --glass-border-dark: rgba(206, 236, 255, 0.4);
 }
 
-:root[data-surface="liquid"][data-window="dock"] .glass {
+[data-surface="liquid"][data-window="dock"] .glass {
   /* The reference signature is a single inner glow running the whole way
      round rather than a top bevel, so the rim reads as thickness instead
      of as a lit edge. Without a backdrop to refract, this ring plus the
@@ -131,7 +131,7 @@
 }
 
 /* No hard gloss cap: that is the single thing that reads as plastic. */
-:root[data-surface="liquid"][data-window="dock"] .glass::before {
+[data-surface="liquid"][data-window="dock"] .glass::before {
   inset: 1px;
   border-radius: inherit;
   background: linear-gradient(
@@ -142,8 +142,8 @@
 }
 
 /* Same reason: the small controls carry their own body on the dock. */
-:root[data-surface="liquid"][data-window="dock"] .dock-control-btn,
-:root[data-surface="liquid"][data-window="dock"] .mode-tile {
+[data-surface="liquid"][data-window="dock"] .dock-control-btn,
+[data-surface="liquid"][data-window="dock"] .mode-tile {
   background: linear-gradient(
     180deg,
     rgba(255, 255, 255, 0.6) 0%,
@@ -155,8 +155,8 @@
 /* ---- dock furniture ------------------------------------------------ */
 
 /* The round controls follow the same rule: less body, brighter rim. */
-:root[data-surface="liquid"] .dock-control-btn,
-:root[data-surface="liquid"] .mode-tile {
+[data-surface="liquid"] .dock-control-btn,
+[data-surface="liquid"] .mode-tile {
   background: linear-gradient(
     180deg,
     rgba(255, 255, 255, 0.26) 0%,
@@ -171,13 +171,13 @@
     inset 0 0 14px rgba(170, 226, 255, 0.16);
 }
 
-:root[data-surface="liquid"] .mode-tile {
+[data-surface="liquid"] .mode-tile {
   border-radius: 11px;
 }
 
 /* Tooltip and volume pills are small, so they keep more body than a
    panel does or the text stops being readable over a busy desktop. */
-:root[data-surface="liquid"] .dock-label {
+[data-surface="liquid"] .dock-label {
   background: linear-gradient(
     180deg,
     rgba(120, 190, 240, 0.55),
@@ -192,7 +192,7 @@
 
 /* ---- buttons and fields -------------------------------------------- */
 
-:root[data-surface="liquid"] .aero-button {
+[data-surface="liquid"] .aero-button {
   background: linear-gradient(
     180deg,
     rgba(255, 255, 255, 0.42),
@@ -205,7 +205,7 @@
     inset 0 1px 0 rgba(255, 255, 255, 0.75);
 }
 
-:root[data-surface="liquid"] .aero-button:hover:not(:disabled) {
+[data-surface="liquid"] .aero-button:hover:not(:disabled) {
   background: linear-gradient(
     180deg,
     rgba(255, 255, 255, 0.58),
@@ -213,7 +213,7 @@
   );
 }
 
-:root[data-surface="liquid"] .ctl-text {
+[data-surface="liquid"] .ctl-text {
   background: rgba(8, 40, 72, 0.24);
   backdrop-filter: blur(10px);
   border-color: rgba(255, 255, 255, 0.34);
@@ -223,7 +223,7 @@
 
 /* Apple's own guidance is to avoid glass on glass, so the cards get a
    little more separation from the sky behind them rather than less. */
-:root[data-surface="liquid"] .settings-card {
+[data-surface="liquid"] .settings-card {
   border-radius: 22px;
 }
 
@@ -232,7 +232,7 @@
    is doing the work the body has to get out of its way, so the tint drops
    to almost nothing and the rim becomes a single inner glow, which is what
    the reference implementation uses. */
-:root[data-surface="liquid"] .settings-card.glass {
+[data-surface="liquid"] .settings-card.glass {
   background: rgba(255, 255, 255, 0.06);
   border: 1px solid rgba(255, 255, 255, 0.28);
   box-shadow:
@@ -242,7 +242,7 @@
 
 /* The Vista gloss cap fights the refraction, so a card keeps only a
    whisper of sheen at the very top. */
-:root[data-surface="liquid"] .settings-card.glass::before {
+[data-surface="liquid"] .settings-card.glass::before {
   inset: 1px;
   border-radius: inherit;
   background: linear-gradient(
@@ -252,14 +252,14 @@
   );
 }
 
-:root[data-surface="liquid"] .mode-card,
-:root[data-surface="liquid"] .icon-picker-option,
-:root[data-surface="liquid"] .aero-menu-devices {
+[data-surface="liquid"] .mode-card,
+[data-surface="liquid"] .icon-picker-option,
+[data-surface="liquid"] .aero-menu-devices {
   background: rgba(255, 255, 255, 0.1);
   border-color: rgba(255, 255, 255, 0.26);
 }
 
-:root[data-surface="liquid"] .icon-picker-option:hover {
+[data-surface="liquid"] .icon-picker-option:hover {
   background: rgba(255, 255, 255, 0.24);
 }
 
@@ -268,7 +268,7 @@
    something to distort, so under this material they get bigger and a
    little brighter. They are already the most Frutiger Aero thing in the
    window, which is why they earn the room. */
-:root[data-surface="liquid"] .settings-bubble {
+[data-surface="liquid"] .settings-bubble {
   /* Still, and deliberately. Anything moving behind a refracting surface
      forces every card above it to re-raster on every frame, and with a
      displacement map in the stack that costs more than a whole CPU core.
@@ -293,16 +293,16 @@
    refracting backdrop that is not a free flourish: every frame of it
    re-rasters the filter on every card it crosses. A lens already plays
    with light, so the sweep stands down here. */
-:root[data-surface="liquid"] .glass:not(.glass-open)::after,
-:root[data-surface="liquid"] .glass-sweep::after {
+[data-surface="liquid"] .glass:not(.glass-open)::after,
+[data-surface="liquid"] .glass-sweep::after {
   animation: none;
   opacity: 0;
 }
 
 /* Text over a thinner material needs a touch more shadow to stay
    readable against whatever happens to be behind the window. */
-:root[data-surface="liquid"] .settings-card h2,
-:root[data-surface="liquid"] .ctl-label,
-:root[data-surface="liquid"] .mode-card-title strong {
+[data-surface="liquid"] .settings-card h2,
+[data-surface="liquid"] .ctl-label,
+[data-surface="liquid"] .mode-card-title strong {
   text-shadow: 0 1px 3px rgba(6, 34, 62, 0.45);
 }

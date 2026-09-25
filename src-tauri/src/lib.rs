@@ -63,6 +63,17 @@ pub fn run() {
             } else {
                 platform::windows::taskbar::restore_taskbar();
             }
+            // Widgets were on last time, so put them back. Spawned
+            // because building a webview inside setup would deadlock on
+            // the thread the webview needs.
+            if app.state::<SettingsStore>().get().widgets.enabled {
+                let handle = handle.clone();
+                tauri::async_runtime::spawn(async move {
+                    if let Err(e) = commands::widgets::open_widget_layer(handle).await {
+                        log::warn!("could not restore the widget layer: {e}");
+                    }
+                });
+            }
             commands::apps::warm_app_cache();
             Ok(())
         })
@@ -122,6 +133,20 @@ pub fn run() {
             commands::modes::set_auto_switch,
             commands::modes::set_restore_workspace_on_switch,
             commands::modes::foreground_changed,
+            commands::widgets::widget_desktop_bounds,
+            commands::widgets::open_widget_layer,
+            commands::widgets::close_widget_layer,
+            commands::widgets::set_widget_hit_rects,
+            commands::widgets::set_widget_drag_mode,
+            commands::widgets::enable_widgets,
+            commands::widgets::add_widget,
+            commands::widgets::remove_widget,
+            commands::widgets::place_widget,
+            commands::widgets::style_widget,
+            commands::widgets::allow_weather_network,
+            commands::widgets::widget_system_load,
+            commands::widgets::widget_now_playing,
+            commands::widgets::widget_media_control,
         ])
         .build(tauri::generate_context!())
         .expect("error while building Aero Dock")

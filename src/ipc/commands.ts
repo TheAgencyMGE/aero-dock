@@ -17,8 +17,12 @@ import type {
   Settings,
   StorageInfo,
   SwitchReport,
+  SystemLoad,
   SystemStatus,
+  WidgetKind,
+  WidgetStyle,
 } from "./types";
+import type { DesktopBounds, HitRect, MediaAction, NowPlaying } from "./types";
 
 export const ipc = {
   // settings
@@ -119,6 +123,29 @@ export const ipc = {
     invoke<Settings>("set_restore_workspace_on_switch", { enabled }),
   foregroundChanged: (exe: string) =>
     invoke<SwitchReport | null>("foreground_changed", { exe }),
+
+  // desktop widgets
+  widgetDesktopBounds: () => invoke<DesktopBounds>("widget_desktop_bounds"),
+  openWidgetLayer: () => invoke<void>("open_widget_layer"),
+  closeWidgetLayer: () => invoke<void>("close_widget_layer"),
+  /** Only these rectangles take clicks; the rest passes to the desktop. */
+  setWidgetHitRects: (rects: HitRect[]) => invoke<void>("set_widget_hit_rects", { rects }),
+  setWidgetDragMode: (dragging: boolean) =>
+    invoke<void>("set_widget_drag_mode", { dragging }),
+  enableWidgets: (enabled: boolean) => invoke<Settings>("enable_widgets", { enabled }),
+  addWidget: (kind: WidgetKind, x?: number, y?: number) =>
+    invoke<Settings>("add_widget", { kind, x: x ?? null, y: y ?? null }),
+  removeWidget: (id: string) => invoke<Settings>("remove_widget", { id }),
+  placeWidget: (id: string, x: number, y: number, width: number, height: number) =>
+    invoke<Settings>("place_widget", { id, x, y, width, height }),
+  styleWidget: (id: string, style: WidgetStyle) =>
+    invoke<Settings>("style_widget", { id, style }),
+  allowWeatherNetwork: (allowed: boolean) =>
+    invoke<Settings>("allow_weather_network", { allowed }),
+  widgetSystemLoad: () => invoke<SystemLoad>("widget_system_load"),
+  widgetNowPlaying: () => invoke<NowPlaying>("widget_now_playing"),
+  widgetMediaControl: (action: MediaAction) =>
+    invoke<boolean>("widget_media_control", { action }),
 
   // dock window
   resizeDock: (width: number, height: number) =>

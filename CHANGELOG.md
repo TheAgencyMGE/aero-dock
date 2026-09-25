@@ -5,6 +5,47 @@ All notable changes to Aero Dock are documented here.
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.3.0] - 2026-09-24
+
+### Added
+
+- **Aero Widgets.** Glass widgets that sit on the desktop: clock, calendar,
+  weather, system stats and a music player. Drag one to move it, drag its
+  bottom right corner to resize, and everywhere else on the desktop keeps
+  working normally.
+- Each widget picks its own material, Classic or Liquid, independently of
+  the dock and the settings window, along with its own tint, opacity and
+  ambient bubbles.
+- The clock has an analogue face with a sweeping second hand or a digital
+  readout, 12 or 24 hour. The calendar starts the week where your locale
+  starts it. System stats reads processor, memory and uptime. The music
+  widget follows whatever Windows is playing and can skip and pause it,
+  with no per-app setup.
+- Widgets are off until you turn them on, and turning them on adds a clock
+  rather than leaving an empty desktop.
+
+### Changed
+
+- The Liquid material can now be applied to any element rather than only a
+  whole window, which is what lets a single widget use it.
+
+### Privacy
+
+- Weather is the first and only part of Aero Dock that makes a network
+  request, and it takes two deliberate steps to reach that point: adding
+  the widget, and allowing it in settings. It then asks Open-Meteo for
+  conditions at coordinates you type in, and sends nothing else. There is
+  no account and no key. Every other widget runs entirely offline, and the
+  rest of the app still makes no network requests at all.
+
+### Notes
+
+- All the widgets share one window rather than taking one each. A second
+  webview costs about what the dock costs in memory, so five of them would
+  have undone the work in 1.2.1. The shared window covers the whole desktop
+  and is given a region matching the widget rectangles, so Windows treats
+  it as existing only where a widget actually is.
+
 ## [1.2.2] - 2026-09-20
 
 ### Changed
@@ -185,6 +226,7 @@ First public release.
 - Packaged (UWP) apps are grouped by AppUserModelID. This covers the common
   cases and misses a few. See the README.
 
+[1.3.0]: https://github.com/TheAgencyMGE/aero-dock/releases/tag/v1.3.0
 [1.2.2]: https://github.com/TheAgencyMGE/aero-dock/releases/tag/v1.2.2
 [1.2.1]: https://github.com/TheAgencyMGE/aero-dock/releases/tag/v1.2.1
 [1.2.0]: https://github.com/TheAgencyMGE/aero-dock/releases/tag/v1.2.0

@@ -12,6 +12,7 @@ use tauri::{AppHandle, Emitter};
 
 use super::error::{AeroError, AeroResult};
 use super::names::exe_key;
+use super::widgets::WidgetsSettings;
 use super::workspace::WorkspaceSnapshot;
 
 pub const SETTINGS_EVENT: &str = "settings://changed";
@@ -281,6 +282,7 @@ pub struct Settings {
     pub hide_taskbar: bool,
     pub onboarding_complete: bool,
     pub modes: ModesSettings,
+    pub widgets: WidgetsSettings,
 }
 
 impl Default for Settings {
@@ -294,6 +296,7 @@ impl Default for Settings {
             hide_taskbar: false,
             onboarding_complete: false,
             modes: ModesSettings::default(),
+            widgets: WidgetsSettings::default(),
         }
     }
 }
@@ -316,6 +319,7 @@ impl Settings {
         // below ~200ms the dock hides while you are still reaching for it
         d.auto_hide_delay_ms = d.auto_hide_delay_ms.clamp(200, 10_000);
         self.sanitize_modes();
+        self.widgets.sanitize();
         // Every pin, unpin and reorder edits `pinned` directly, so the
         // active mode has to pick those up here. Without this a pin made
         // between two switches would be thrown away by the next switch.

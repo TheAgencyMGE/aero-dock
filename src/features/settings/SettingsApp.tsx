@@ -20,6 +20,7 @@ import type {
 import { useSettings } from "../../state/settingsStore";
 import { AudioCard } from "./AudioCard";
 import { ModesCard } from "./ModesCard";
+import { WidgetsCard } from "./WidgetsCard";
 import { AeroSegmented, AeroSlider, AeroToggle } from "./controls";
 import "./settings.css";
 
@@ -446,6 +447,11 @@ export function SettingsApp() {
         />
 
         <AudioCard
+          settings={settings}
+          onStatus={(tone, text) => setStatus({ tone, text })}
+        />
+
+        <WidgetsCard
           settings={settings}
           onStatus={(tone, text) => setStatus({ tone, text })}
         />

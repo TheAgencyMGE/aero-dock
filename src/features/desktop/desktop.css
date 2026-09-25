@@ -1,0 +1,414 @@
+/* ====================================================================
+   Desktop widgets
+
+   The overlay itself paints nothing. Anything with a background here
+   would show up as a rectangle over the wallpaper, so the page stays
+   fully transparent and only the widgets draw.
+
+   Each widget is three layers: an ambient layer of still bubbles at the
+   back, the glass panel above it, and the content on top. That ordering
+   is what lets the Liquid material refract out here, since the overlay
+   window is transparent and a backdrop filter has no desktop pixels to
+   bend. The glass bends its own bubbles instead.
+   ==================================================================== */
+
+.aero-desktop {
+  position: fixed;
+  inset: 0;
+  background: transparent;
+  overflow: hidden;
+}
+
+.aero-widget {
+  position: absolute;
+  border-radius: 20px;
+  /* the region makes the rest of the window click-through, so a widget
+     is allowed to be a normal interactive element */
+  cursor: grab;
+  transition: filter 160ms ease;
+}
+
+.aero-widget[data-locked="true"] {
+  cursor: default;
+}
+
+.aero-widget[data-editing="true"]:hover {
+  filter: drop-shadow(0 10px 26px rgba(4, 26, 48, 0.4));
+}
+
+.aero-widget:active {
+  cursor: grabbing;
+}
+
+/* ---- ambient: what the glass has to refract ---------------------- */
+
+.aero-widget-ambient {
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+/* Deliberately still. Anything moving behind a refracting panel makes it
+   redraw every frame, and a desktop full of widgets doing that is the one
+   way this gets expensive. */
+.aero-widget-ambient i {
+  position: absolute;
+  border-radius: 50%;
+  /* Light enough to read as a highlight rather than a grey blob, but
+     with a crisp rim, because the rim is the part refraction bends most
+     visibly. */
+  background: radial-gradient(
+    circle at 34% 30%,
+    rgba(255, 255, 255, 0.55),
+    rgba(222, 244, 255, 0.1) 46%,
+    rgba(190, 230, 255, 0) 72%
+  );
+  border: 1px solid rgba(255, 255, 255, 0.34);
+  box-shadow: inset 0 0 12px rgba(255, 255, 255, 0.18);
+}
+
+/* ---- the glass panel --------------------------------------------- */
+
+.aero-widget-glass {
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  display: flex;
+  overflow: hidden;
+}
+
+.aero-widget-body {
+  position: relative;
+  z-index: 2;
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  padding: 12px 14px;
+  color: var(--aero-text-on-glass);
+}
+
+/* A widget over an unknown wallpaper needs its text to hold up without
+   knowing what is behind it. */
+.aero-widget-body,
+.aero-widget-body * {
+  text-shadow: 0 1px 3px rgba(5, 30, 56, 0.55);
+}
+
+.aero-widget-resize {
+  position: absolute;
+  right: 2px;
+  bottom: 2px;
+  width: 18px;
+  height: 18px;
+  z-index: 3;
+  cursor: nwse-resize;
+  border-radius: 0 0 16px 0;
+  background: linear-gradient(
+    135deg,
+    transparent 46%,
+    rgba(255, 255, 255, 0.85) 48%,
+    transparent 52%,
+    rgba(255, 255, 255, 0.85) 62%,
+    transparent 66%
+  );
+}
+
+.w-empty {
+  margin: auto;
+  font-size: 12px;
+  text-align: center;
+  opacity: 0.85;
+  padding: 0 6px;
+  line-height: 1.4;
+}
+
+/* ---- clock -------------------------------------------------------- */
+
+.w-clock-face {
+  flex: 1;
+  display: grid;
+  place-items: center;
+  min-height: 0;
+}
+
+.w-clock-svg {
+  width: 100%;
+  height: 100%;
+  max-height: 100%;
+  filter: drop-shadow(0 3px 8px rgba(5, 30, 56, 0.35));
+}
+
+.w-clock-digital {
+  margin: auto;
+  text-align: center;
+}
+
+.w-clock-time {
+  font-size: clamp(26px, 13cqw, 58px);
+  font-weight: 300;
+  letter-spacing: -0.01em;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+}
+
+.w-clock-colon {
+  opacity: 0.7;
+  margin: 0 2px;
+}
+
+.w-clock-seconds {
+  font-size: 0.48em;
+  margin-left: 6px;
+  opacity: 0.8;
+  vertical-align: super;
+}
+
+.w-clock-meridiem {
+  font-size: 11px;
+  letter-spacing: 0.22em;
+  opacity: 0.75;
+  margin-top: 4px;
+}
+
+.w-clock-date {
+  margin-top: 8px;
+  font-size: 12px;
+  opacity: 0.85;
+}
+
+/* ---- calendar ----------------------------------------------------- */
+
+.w-cal {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.w-cal-head {
+  text-align: center;
+  font-size: 13px;
+  font-weight: 700;
+  padding-bottom: 6px;
+}
+
+.w-cal-grid {
+  flex: 1;
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 1px;
+  align-content: start;
+}
+
+.w-cal-weekday {
+  font-size: 9.5px;
+  font-weight: 700;
+  opacity: 0.6;
+  text-align: center;
+  padding-bottom: 2px;
+}
+
+.w-cal-cell {
+  display: grid;
+  place-items: center;
+  font-size: 11px;
+  aspect-ratio: 1;
+  border-radius: 50%;
+  font-variant-numeric: tabular-nums;
+}
+
+.w-cal-cell[data-today="true"] {
+  background: radial-gradient(circle at 35% 30%, #ffffff, var(--aero-life, #7ad03a) 65%, #3f8f1d);
+  color: #08324f;
+  font-weight: 700;
+  text-shadow: none;
+  box-shadow: 0 0 10px rgba(122, 208, 58, 0.7);
+}
+
+/* ---- system stats -------------------------------------------------- */
+
+.w-stats {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 10px;
+  min-width: 0;
+}
+
+.w-stat-top {
+  display: flex;
+  justify-content: space-between;
+  font-size: 11.5px;
+  font-weight: 600;
+}
+
+.w-stat-value {
+  font-variant-numeric: tabular-nums;
+}
+
+.w-stat-track {
+  height: 6px;
+  margin-top: 4px;
+  border-radius: 6px;
+  background: rgba(6, 34, 62, 0.4);
+  box-shadow: inset 0 1px 2px rgba(4, 24, 46, 0.5);
+  overflow: hidden;
+}
+
+.w-stat-fill {
+  height: 100%;
+  border-radius: 6px;
+  background: linear-gradient(90deg, #d9f4ff, var(--aero-accent, #2f9de3) 55%, var(--aero-life, #7ad03a));
+  box-shadow: 0 0 8px rgba(160, 225, 255, 0.6);
+  transition: width 420ms ease-out;
+}
+
+.w-stat-detail {
+  font-size: 10px;
+  opacity: 0.66;
+  margin-top: 3px;
+}
+
+.w-stat-uptime {
+  font-size: 10.5px;
+  opacity: 0.7;
+  text-align: right;
+}
+
+/* ---- weather ------------------------------------------------------- */
+
+.w-weather {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+}
+
+.w-weather-icon {
+  width: 62px;
+  height: 62px;
+  flex: 0 0 auto;
+  filter: drop-shadow(0 3px 8px rgba(5, 30, 56, 0.4));
+}
+
+.w-weather-text {
+  min-width: 0;
+}
+
+.w-weather-temp {
+  font-size: 34px;
+  font-weight: 300;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+}
+
+.w-weather-unit {
+  font-size: 0.45em;
+  margin-left: 2px;
+  opacity: 0.8;
+  vertical-align: super;
+}
+
+.w-weather-label {
+  font-size: 12px;
+  font-weight: 600;
+  margin-top: 3px;
+}
+
+.w-weather-place {
+  font-size: 10.5px;
+  opacity: 0.7;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* ---- music --------------------------------------------------------- */
+
+.w-music {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 10px;
+  min-width: 0;
+}
+
+.w-music-title {
+  font-size: 13.5px;
+  font-weight: 700;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.w-music-artist {
+  font-size: 11.5px;
+  opacity: 0.75;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.w-music-controls {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+}
+
+.w-music-btn {
+  width: 30px;
+  height: 30px;
+  display: grid;
+  place-items: center;
+  padding: 0;
+  border-radius: 50%;
+  cursor: pointer;
+  color: var(--aero-text-on-glass);
+  border: 1px solid rgba(255, 255, 255, 0.55);
+  background: linear-gradient(
+    180deg,
+    rgba(255, 255, 255, 0.5) 0%,
+    rgba(190, 228, 255, 0.28) 52%,
+    rgba(120, 190, 235, 0.32) 100%
+  );
+  box-shadow: 0 2px 6px rgba(8, 40, 74, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.8);
+  transition: transform 140ms ease, box-shadow 140ms ease;
+}
+
+.w-music-btn[data-primary="true"] {
+  width: 38px;
+  height: 38px;
+}
+
+.w-music-btn svg {
+  width: 15px;
+  height: 15px;
+}
+
+.w-music-btn[data-primary="true"] svg {
+  width: 18px;
+  height: 18px;
+}
+
+.w-music-btn:hover {
+  transform: scale(1.08);
+  box-shadow: 0 0 12px rgba(150, 220, 255, 0.75), inset 0 1px 0 rgba(255, 255, 255, 0.9);
+}
+
+.w-music-btn:active {
+  transform: scale(0.94);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .aero-widget,
+  .w-stat-fill,
+  .w-music-btn {
+    transition: none;
+  }
+}

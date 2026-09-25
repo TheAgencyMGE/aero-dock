@@ -109,6 +109,90 @@ export interface ModesSettings {
   restoreWorkspaceOnSwitch: boolean;
 }
 
+export type WidgetKind = "clock" | "calendar" | "weather" | "systemStats" | "music";
+
+/** Per-kind settings. Flat and optional so a kind can add one without a
+ *  migration; each widget reads only the fields it cares about. */
+export interface WidgetOptions {
+  seconds: boolean;
+  twentyFourHour: boolean;
+  analog: boolean;
+  latitude: number | null;
+  longitude: number | null;
+  place: string | null;
+  celsius: boolean;
+}
+
+/** One widget on the desktop. Position is CSS pixels inside the overlay,
+ *  whose origin is the top left of the virtual desktop. */
+export interface WidgetInstance {
+  id: string;
+  kind: WidgetKind;
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+  opacity: number;
+  surface: SurfaceStyle;
+  accent: string | null;
+  ambient: boolean;
+  locked: boolean;
+  options: WidgetOptions;
+}
+
+export interface WidgetsSettings {
+  enabled: boolean;
+  widgets: WidgetInstance[];
+  /** Weather is the only widget that leaves the machine. */
+  allowWeatherNetwork: boolean;
+}
+
+/** Appearance changes, all optional so the UI sends only what changed. */
+export interface WidgetStyle {
+  opacity?: number;
+  surface?: SurfaceStyle;
+  /** null clears the tint back to the theme accent. */
+  accent?: string | null;
+  ambient?: boolean;
+  locked?: boolean;
+  options?: WidgetOptions;
+}
+
+export interface DesktopBounds {
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+}
+
+/** Physical-pixel rectangle the overlay accepts clicks in. */
+export interface HitRect {
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+  radius: number;
+}
+
+export interface SystemLoad {
+  cpuPercent: number;
+  memoryPercent: number;
+  memoryUsedMb: number;
+  memoryTotalMb: number;
+  uptimeSeconds: number;
+}
+
+export interface NowPlaying {
+  active: boolean;
+  title: string;
+  artist: string;
+  album: string;
+  playing: boolean;
+  source: string;
+}
+
+export type MediaAction = "playpause" | "next" | "previous";
+
 export interface Settings {
   schemaVersion: number;
   dock: DockSettings;
@@ -118,6 +202,7 @@ export interface Settings {
   hideTaskbar: boolean;
   onboardingComplete: boolean;
   modes: ModesSettings;
+  widgets: WidgetsSettings;
 }
 
 export interface AppEntry {
