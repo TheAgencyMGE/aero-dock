@@ -7,9 +7,11 @@
 //! kind means adding a variant and a component, and nothing else here
 //! has to change.
 //!
-//! Positions are in virtual-desktop pixels, so a widget can sit on any
-//! monitor, including ones left of or above the primary where the
-//! coordinates go negative.
+//! Positions are offsets from the top left of the widget overlay, which
+//! covers every monitor, so a widget can sit on any of them. They are not
+//! virtual-desktop coordinates: the overlay's own origin is already the
+//! leftmost, topmost point of the desktop, so a monitor left of the
+//! primary is reached with a small offset rather than a negative one.
 
 use serde::{Deserialize, Serialize};
 

@@ -5,6 +5,36 @@ All notable changes to Aero Dock are documented here.
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.3.2] - 2026-09-29
+
+### Added
+
+- A support link, for anyone who wants to put something toward continued
+  development. It sits beside the title in settings, on a card of its own
+  further down, in About next to the GitHub link, and in the tray menu.
+  Aero Dock stays free, with no paid tier and nothing held back, and there
+  is no prompt on launch and nothing that asks twice.
+
+### Fixed
+
+- **A widget drag that never ended could stop the whole desktop taking
+  clicks.** Dragging opens the overlay up so the pointer cannot slip out of
+  it, and only the release put it back. If that release never arrived,
+  because focus moved or the pointer capture was lost, the overlay kept
+  swallowing every click on the desktop. It is now restored whatever
+  becomes of the pointer.
+- The clickable region went stale when the desktop changed shape. 1.3.1
+  resized the overlay but never recalculated which parts of it were solid,
+  so after a resolution change parts of the screen could stop responding
+  while the overlay held space no widget was in.
+- Right-clicking a widget started a drag and carried it off with the
+  pointer. Only the primary button moves a widget now.
+- Prose in settings wrapped by breaking words in half. The rule suited the
+  long file path it was written for and nothing else; paths have their own.
+- Corrected what the widget code says about its own coordinates. They are
+  offsets from the corner of the overlay, not virtual-desktop positions,
+  which matters to anyone taking the multi-monitor work further.
+
 ## [1.3.1] - 2026-09-29
 
 ### Fixed
@@ -255,6 +285,7 @@ First public release.
 - Packaged (UWP) apps are grouped by AppUserModelID. This covers the common
   cases and misses a few. See the README.
 
+[1.3.2]: https://github.com/TheAgencyMGE/aero-dock/releases/tag/v1.3.2
 [1.3.1]: https://github.com/TheAgencyMGE/aero-dock/releases/tag/v1.3.1
 [1.3.0]: https://github.com/TheAgencyMGE/aero-dock/releases/tag/v1.3.0
 [1.2.2]: https://github.com/TheAgencyMGE/aero-dock/releases/tag/v1.2.2

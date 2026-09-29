@@ -74,6 +74,10 @@ export function WidgetFrame({ widget, allowNetwork, onGeometry, onDragState, edi
 
   const begin = useCallback(
     (e: React.PointerEvent, kind: "move" | "resize") => {
+      // Primary button only. Right-clicking a widget used to start a drag
+      // and carry it off with the pointer, which is not what anyone means
+      // by a right-click.
+      if (e.button !== 0) return;
       if (widget.locked) return;
       e.preventDefault();
       e.stopPropagation();

@@ -79,6 +79,58 @@ export function DesktopWidgets() {
     syncRegion(widgets);
   }, [widgets, syncRegion]);
 
+  // Listeners below outlive the render that created them, so they read the
+  // geometry from here rather than closing over a stale copy.
+  const latest = useRef<WidgetInstance[]>([]);
+  useEffect(() => {
+    latest.current = widgets;
+  }, [widgets]);
+
+  // A drag opens the whole overlay to input, and only the release puts the
+  // region back. If that release never arrives, because focus moved or the
+  // pointer capture was lost, the overlay would keep swallowing every click
+  // on the desktop. These put it back whatever happened to the pointer.
+  useEffect(() => {
+    const release = () => {
+      if (!dragging.current) return;
+      dragging.current = false;
+      syncRegion(latest.current);
+    };
+    window.addEventListener("pointerup", release);
+    window.addEventListener("pointercancel", release);
+    window.addEventListener("blur", release);
+    return () => {
+      window.removeEventListener("pointerup", release);
+      window.removeEventListener("pointercancel", release);
+      window.removeEventListener("blur", release);
+    };
+  }, [syncRegion]);
+
+  // The region is in physical pixels measured against this window, so it
+  // goes stale the moment the desktop changes shape: parts of the screen
+  // stop taking clicks while the overlay claims space no widget is in.
+  // Nothing in the page notices a resolution change on its own, so the
+  // screen is checked now and then. Reading three numbers costs nothing and
+  // the call only goes out when they actually differ.
+  useEffect(() => {
+    const resync = () => {
+      if (dragging.current) return;
+      syncRegion(latest.current);
+    };
+    window.addEventListener("resize", resync);
+    let seen = `${screen.width}x${screen.height}@${window.devicePixelRatio}`;
+    const watch = window.setInterval(() => {
+      const now = `${screen.width}x${screen.height}@${window.devicePixelRatio}`;
+      if (now === seen) return;
+      seen = now;
+      resync();
+    }, 4000);
+    return () => {
+      window.removeEventListener("resize", resync);
+      window.clearInterval(watch);
+    };
+  }, [syncRegion]);
+
   const onDragState = useCallback(
     (isDragging: boolean) => {
       dragging.current = isDragging;
