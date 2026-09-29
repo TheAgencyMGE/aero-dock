@@ -18,13 +18,13 @@ import type {
   SurfaceStyle,
 } from "../../ipc/types";
 import { useSettings } from "../../state/settingsStore";
+import { KOFI_URL, REPO_URL } from "../../links";
 import { AudioCard } from "./AudioCard";
 import { ModesCard } from "./ModesCard";
 import { WidgetsCard } from "./WidgetsCard";
 import { AeroSegmented, AeroSlider, AeroToggle } from "./controls";
 import "./settings.css";
 
-const REPO_URL = "https://github.com/TheAgencyMGE/aero-dock";
 
 const pctFmt = (v: number) => `${Math.round(v * 100)}%`;
 
@@ -122,6 +122,11 @@ export function SettingsApp() {
     }
   };
 
+  const openLink = (url: string) =>
+    ipc
+      .launch(url)
+      .catch((e) => setStatus({ tone: "error", text: `Could not open the browser: ${e}` }));
+
   return (
     <div className="settings-root">
       {/* ambient scenery: slow bubbles rising through the light */}
@@ -136,6 +141,14 @@ export function SettingsApp() {
           <h1>Aero Dock</h1>
           <p>Bring beauty back to the desktop.</p>
         </div>
+        <button
+          className="settings-support-chip"
+          title="Support Aero Dock on Ko-fi"
+          onClick={() => void openLink(KOFI_URL)}
+        >
+          <span aria-hidden>☕</span>
+          Support
+        </button>
       </header>
 
       <main className="settings-scroll">
@@ -456,6 +469,22 @@ export function SettingsApp() {
           onStatus={(tone, text) => setStatus({ tone, text })}
         />
 
+        {/* ---- support ---- */}
+        <section className="settings-card glass settings-support">
+          <h2>
+            Support Aero Dock <span aria-hidden>☕</span>
+          </h2>
+          <p className="settings-note settings-support-copy">
+            Aero Dock is free and independently developed. If you enjoy using
+            it, you can support continued development.
+          </p>
+          <div className="settings-support-actions">
+            <button className="settings-support-cta" onClick={() => void openLink(KOFI_URL)}>
+              Support on Ko-fi <span aria-hidden>&rarr;</span>
+            </button>
+          </div>
+        </section>
+
         {/* ---- about ---- */}
         <section className="settings-card glass">
           <h2>About</h2>
@@ -477,15 +506,11 @@ export function SettingsApp() {
           <div className="ctl-row">
             <span className="ctl-label">Project</span>
             <div className="ctl-actions">
-              <button
-                className="aero-button"
-                onClick={() =>
-                  ipc
-                    .launch(REPO_URL)
-                    .catch((e) => setStatus({ tone: "error", text: `Could not open the browser: ${e}` }))
-                }
-              >
+              <button className="aero-button" onClick={() => void openLink(REPO_URL)}>
                 View on GitHub
+              </button>
+              <button className="aero-button" onClick={() => void openLink(KOFI_URL)}>
+                Support on Ko-fi
               </button>
             </div>
           </div>

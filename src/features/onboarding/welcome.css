@@ -98,3 +98,27 @@
   color: rgba(225, 242, 255, 0.65) !important;
   margin-top: 12px !important;
 }
+
+/* Quiet on purpose. The two buttons above are what this card is for, and
+   this should read as a footnote rather than a third choice. */
+.welcome-support {
+  font-size: 10.5px !important;
+  color: rgba(225, 242, 255, 0.62) !important;
+  margin-top: 6px !important;
+}
+
+.welcome-support-link {
+  padding: 0;
+  border: none;
+  background: none;
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+  color: rgba(255, 228, 170, 0.92);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.welcome-support-link:hover {
+  color: #ffe9bd;
+}

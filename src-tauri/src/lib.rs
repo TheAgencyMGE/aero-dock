@@ -162,15 +162,20 @@ pub fn run() {
 
 /// Tray icon: the dock's home base. Left-click toggles dock visibility;
 /// the menu covers show/hide, settings, and quit.
+/// Where the support link points. Kept in step with `KOFI_URL` in
+/// `src/links.ts`, which is what the windows themselves use.
+const KOFI_URL: &str = "https://ko-fi.com/theagencymge";
+
 fn setup_tray(app: &tauri::App) -> tauri::Result<()> {
     use tauri::menu::{Menu, MenuItem, PredefinedMenuItem};
     use tauri::tray::{MouseButton, MouseButtonState, TrayIconBuilder, TrayIconEvent};
 
     let toggle = MenuItem::with_id(app, "toggle", "Show/hide dock", true, None::<&str>)?;
     let settings = MenuItem::with_id(app, "settings", "Settings…", true, None::<&str>)?;
+    let support = MenuItem::with_id(app, "support", "Support Aero Dock ☕", true, None::<&str>)?;
     let quit = MenuItem::with_id(app, "quit", "Quit Aero Dock", true, None::<&str>)?;
     let separator = PredefinedMenuItem::separator(app)?;
-    let menu = Menu::with_items(app, &[&toggle, &settings, &separator, &quit])?;
+    let menu = Menu::with_items(app, &[&toggle, &settings, &support, &separator, &quit])?;
 
     fn toggle_dock(app: &tauri::AppHandle) {
         if let Some(w) = app.get_webview_window("dock") {
@@ -203,6 +208,13 @@ fn setup_tray(app: &tauri::App) -> tauri::Result<()> {
                         log::error!("open settings from tray failed: {e}");
                     }
                 });
+            }
+            "support" => {
+                // the shell opens it in whatever browser the user uses;
+                // nothing external is ever loaded into our own windows
+                if let Err(e) = commands::apps::launch_target(KOFI_URL) {
+                    log::warn!("could not open the support page: {e}");
+                }
             }
             "quit" => commands::dock::quit_app(app.clone()),
             _ => {}

@@ -174,7 +174,9 @@
   padding: 4px 2px 0;
   position: relative;
   z-index: 3;
-  word-break: break-all;
+  /* Break a word only when it genuinely cannot fit, such as a long path.
+     break-all would split ordinary prose mid-word on any narrow line. */
+  overflow-wrap: anywhere;
 }
 
 /* ---- theme swatches ---- */
@@ -746,4 +748,110 @@
 .ctl-colour::-webkit-color-swatch {
   border: none;
   border-radius: 6px;
+}
+
+/* ====================================================================
+   Support
+
+   The one warm thing in a window built out of water and glass, which is
+   the whole reason it reads as a separate offer rather than another
+   setting. It borrows the same construction as every other control here,
+   a gradient body with an inset highlight, so it still belongs: only the
+   hue is different, and only on this one card.
+   ==================================================================== */
+
+/* Sits opposite the title, so it is in view the moment settings opens
+   without pushing any setting further down the scroll. */
+.settings-support-chip {
+  margin-left: auto;
+  align-self: center;
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 13px;
+  border-radius: 999px;
+  font-family: inherit;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  color: #6b4217;
+  border: 1px solid rgba(255, 255, 255, 0.8);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.92), rgba(255, 226, 176, 0.72));
+  box-shadow: 0 2px 6px rgba(120, 78, 20, 0.22), inset 0 1px 0 #fff;
+}
+
+.settings-support-chip:hover {
+  background: linear-gradient(180deg, #ffffff, rgba(255, 214, 142, 0.9));
+  box-shadow: 0 2px 10px rgba(255, 196, 110, 0.6), inset 0 1px 0 #fff;
+}
+
+.settings-support h2 span {
+  font-size: 0.95em;
+}
+
+.settings-support-copy {
+  max-width: 46ch;
+}
+
+.settings-support-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 12px;
+}
+
+/* Deliberately heavier than .aero-button: this is the one thing on the
+   card, so it carries the hierarchy on its own rather than needing the
+   card to shout. */
+.settings-support-cta {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 9px 20px;
+  border-radius: 11px;
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  color: #5d3809;
+  border: 1px solid rgba(255, 255, 255, 0.85);
+  background: linear-gradient(180deg, #fff6e6, #ffc978 58%, #eda23f);
+  text-shadow: 0 1px 0 rgba(255, 255, 255, 0.55);
+  box-shadow: 0 3px 10px rgba(170, 110, 30, 0.38), inset 0 1px 0 rgba(255, 255, 255, 0.9);
+}
+
+.settings-support-cta:hover {
+  box-shadow: 0 0 16px rgba(255, 200, 120, 0.75), inset 0 1px 0 #fff;
+}
+
+.settings-support-cta:active {
+  transform: translateY(1px);
+}
+
+.settings-support-chip,
+.settings-support-cta {
+  transition:
+    transform calc(0.14s / var(--anim-speed)) ease,
+    box-shadow calc(0.22s / var(--anim-speed)) ease,
+    background calc(0.22s / var(--anim-speed)) ease;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .settings-support-chip,
+  .settings-support-cta {
+    transition: none;
+  }
+}
+
+/* The header wraps on a narrow window, and the chip should lead the second
+   line rather than sit stranded on the right of it. */
+@media (max-width: 520px) {
+  .settings-header {
+    flex-wrap: wrap;
+  }
+
+  .settings-support-chip {
+    margin-left: 0;
+  }
 }

@@ -5,6 +5,8 @@
 
 import { motion } from "motion/react";
 import { useState } from "react";
+import { ipc } from "../../ipc/commands";
+import { KOFI_URL } from "../../links";
 import type { DockEdge } from "../../ipc/types";
 import { bloomOffset, edgePanelStyle } from "../dock/menuStore";
 import { springs } from "../../engine/animation/springs";
@@ -51,6 +53,19 @@ export function Welcome({ edge }: { edge: DockEdge }) {
       </div>
       <p className="welcome-hint">
         Tip: drop any app or folder from Explorer onto the dock to pin it.
+      </p>
+      <p className="welcome-support">
+        Free and independently developed.{" "}
+        <button
+          className="welcome-support-link"
+          onClick={() =>
+            ipc
+              .launch(KOFI_URL)
+              .catch((e) => notify.error("Could not open the browser", e))
+          }
+        >
+          Support on Ko-fi ☕
+        </button>
       </p>
     </motion.div>
   );

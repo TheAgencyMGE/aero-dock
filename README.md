@@ -258,6 +258,13 @@ with your Windows build.
   left alone for a minute. That is still heavy for a dock, and nearly all of
   it is the WebView2 rendering stack rather than the dock itself.
 
+## Support
+
+Aero Dock is free and independently developed. If you enjoy using it, you can
+support continued development on [Ko-fi](https://ko-fi.com/theagencymge).
+
+It stays free either way, with no paid tier and nothing held back.
+
 ## Contributing
 
 Pull requests welcome. [CONTRIBUTING.md](CONTRIBUTING.md) has the setup and the
