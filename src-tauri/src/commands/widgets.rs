@@ -139,6 +139,42 @@ pub async fn open_widget_layer(app: AppHandle) -> AeroResult<()> {
     Ok(())
 }
 
+/// Re-apply the overlay's geometry if the desktop has changed shape since
+/// the window was built. Plugging in a monitor or changing resolution
+/// would otherwise leave it covering the old area, with widgets clipped
+/// off the edge and the hit region landing in the wrong place.
+pub fn reflow_widget_layer(app: &AppHandle) -> AeroResult<()> {
+    let Some(window) = app.get_webview_window(WIDGETS_LABEL) else {
+        return Ok(());
+    };
+    let bounds = desktop_bounds();
+    let size = window.inner_size()?;
+    let position = window.outer_position()?;
+    if size.width != bounds.width || size.height != bounds.height {
+        window.set_size(tauri::PhysicalSize::new(bounds.width, bounds.height))?;
+    }
+    if position.x != bounds.x || position.y != bounds.y {
+        window.set_position(tauri::PhysicalPosition::new(bounds.x, bounds.y))?;
+    }
+    Ok(())
+}
+
+/// The overlay's size in the units widget positions are stored in, which
+/// is CSS pixels rather than the physical ones the window is sized in.
+fn layer_logical_size(app: &AppHandle) -> Option<(f64, f64)> {
+    let window = app.get_webview_window(WIDGETS_LABEL)?;
+    let size = window.inner_size().ok()?;
+    let scale = window.scale_factor().ok()?;
+    if scale <= 0.0 {
+        return None;
+    }
+    Some((size.width as f64 / scale, size.height as f64 / scale))
+}
+
+/// How much of a widget has to stay on the desktop. Dragging one fully
+/// past an edge would leave nothing to grab it by again.
+const KEEP_REACHABLE: f64 = 44.0;
+
 #[tauri::command]
 pub fn close_widget_layer(app: AppHandle) -> AeroResult<()> {
     if let Some(w) = app.get_webview_window(WIDGETS_LABEL) {
@@ -156,6 +192,12 @@ pub fn set_widget_hit_rects(app: AppHandle, rects: Vec<HitRect>) -> AeroResult<(
         let Some(w) = app.get_webview_window(WIDGETS_LABEL) else {
             return Ok(());
         };
+        // The frontend re-syncs whenever the widget list or its own size
+        // changes, which makes this the cheapest place to notice that the
+        // desktop itself changed shape.
+        if let Err(e) = reflow_widget_layer(&app) {
+            log::warn!("could not reflow the widget layer: {e}");
+        }
         let hwnd = w.hwnd()?;
         widget_layer::set_hit_region(windows::Win32::Foundation::HWND(hwnd.0), &rects)?;
     }
@@ -270,14 +312,35 @@ pub fn place_widget(
     width: u32,
     height: u32,
 ) -> AeroResult<Settings> {
+    let logical = layer_logical_size(&app);
     store.update(&app, |s| {
         if let Some(w) = s.widgets.widgets.iter_mut().find(|w| w.id == id) {
-            w.x = x;
-            w.y = y;
             w.width = width;
             w.height = height;
+            match logical {
+                Some((lw, lh)) => {
+                    let keep = KEEP_REACHABLE.min(width as f64).min(height as f64);
+                    w.x = (x as f64).clamp(keep - width as f64, lw - keep) as i32;
+                    w.y = (y as f64).clamp(keep - height as f64, lh - keep) as i32;
+                }
+                None => {
+                    w.x = x;
+                    w.y = y;
+                }
+            }
         }
     })
+}
+
+/// Serde folds a JSON `null` into `None` for a nested option, which loses
+/// the difference between "clear this" and "do not touch it". This keeps
+/// the two apart, so a sent null really does clear the field.
+fn nullable_field<'de, D, T>(de: D) -> Result<Option<Option<T>>, D::Error>
+where
+    D: serde::Deserializer<'de>,
+    T: serde::Deserialize<'de>,
+{
+    <Option<T> as serde::Deserialize>::deserialize(de).map(Some)
 }
 
 /// The appearance side of one widget. Every field is optional so the UI
@@ -288,6 +351,7 @@ pub struct WidgetStyle {
     pub opacity: Option<f32>,
     pub surface: Option<crate::core::settings::SurfaceStyle>,
     /// Outer option: was it sent. Inner: clearing the tint back to theme.
+    #[serde(default, deserialize_with = "nullable_field")]
     pub accent: Option<Option<String>>,
     pub ambient: Option<bool>,
     pub locked: Option<bool>,
@@ -369,6 +433,21 @@ mod tests {
     fn generated_ids_do_not_collide() {
         let ids: HashSet<String> = (0..200).map(|_| new_id()).collect();
         assert_eq!(ids.len(), 200);
+    }
+
+    #[test]
+    fn clearing_a_tint_is_distinguishable_from_not_sending_one() {
+        // The "Use theme" button sends accent: null and means "clear it".
+        // Leaving the field out means "do not touch it". Those must not
+        // collapse into the same value, or the button does nothing.
+        let cleared: WidgetStyle = serde_json::from_str(r#"{"accent":null}"#).unwrap();
+        assert_eq!(cleared.accent, Some(None), "null must mean clear");
+
+        let untouched: WidgetStyle = serde_json::from_str(r#"{}"#).unwrap();
+        assert_eq!(untouched.accent, None, "absent must mean leave alone");
+
+        let set: WidgetStyle = serde_json::from_str(r##"{"accent":"#aabbcc"}"##).unwrap();
+        assert_eq!(set.accent, Some(Some("#aabbcc".to_string())));
     }
 
     #[test]

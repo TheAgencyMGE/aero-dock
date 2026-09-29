@@ -32,8 +32,15 @@ const STRENGTH = 52;
 const ABERRATION = 3;
 const BLUR = 3;
 
+/** Matches MAX_SIZE in core/widgets.rs. Clamping here too means a resize
+ *  stops at the limit instead of snapping back after it is saved. */
+const MAX_SIZE = 1600;
+/** Matches KEEP_REACHABLE in commands/widgets.rs. */
+const KEEP_REACHABLE = 44;
+
 interface Props {
   widget: WidgetInstance;
+  allowNetwork: boolean;
   /** Live geometry during a drag, before it has been persisted. */
   onGeometry: (id: string, x: number, y: number, w: number, h: number) => void;
   onDragState: (dragging: boolean) => void;
@@ -42,7 +49,9 @@ interface Props {
 
 type Mode = { kind: "move" | "resize"; startX: number; startY: number; ox: number; oy: number; ow: number; oh: number };
 
-export function WidgetFrame({ widget, onGeometry, onDragState, editing }: Props) {
+const clamp = (v: number, lo: number, hi: number) => Math.min(Math.max(v, lo), hi);
+
+export function WidgetFrame({ widget, allowNetwork, onGeometry, onDragState, editing }: Props) {
   const def = definitionFor(widget.kind);
   const mode = useRef<Mode | null>(null);
 
@@ -92,7 +101,14 @@ export function WidgetFrame({ widget, onGeometry, onDragState, editing }: Props)
       const dx = e.screenX - m.startX;
       const dy = e.screenY - m.startY;
       if (m.kind === "move") {
-        onGeometry(widget.id, m.ox + dx, m.oy + dy, m.ow, m.oh);
+        // Stop a drag at the edge rather than letting the widget leave the
+        // desktop, which would leave nothing to grab it by. Rust clamps the
+        // saved value too; this is what makes it feel deliberate.
+        const keepX = Math.min(KEEP_REACHABLE, m.ow);
+        const keepY = Math.min(KEEP_REACHABLE, m.oh);
+        const x = clamp(m.ox + dx, keepX - m.ow, window.innerWidth - keepX);
+        const y = clamp(m.oy + dy, keepY - m.oh, window.innerHeight - keepY);
+        onGeometry(widget.id, x, y, m.ow, m.oh);
       } else {
         const minW = def?.minWidth ?? 120;
         const minH = def?.minHeight ?? 120;
@@ -100,8 +116,8 @@ export function WidgetFrame({ widget, onGeometry, onDragState, editing }: Props)
           widget.id,
           m.ox,
           m.oy,
-          Math.max(minW, m.ow + dx),
-          Math.max(minH, m.oh + dy),
+          clamp(m.ow + dx, minW, MAX_SIZE),
+          clamp(m.oh + dy, minH, MAX_SIZE),
         );
       }
     },
@@ -153,7 +169,9 @@ export function WidgetFrame({ widget, onGeometry, onDragState, editing }: Props)
       )}
 
       <div className="aero-widget-glass glass" style={backdrop ? { backdropFilter: backdrop } : undefined}>
-        <div className="aero-widget-body">{Body ? <Body widget={widget} /> : null}</div>
+        <div className="aero-widget-body">
+          {Body ? <Body widget={widget} allowNetwork={allowNetwork} /> : null}
+        </div>
       </div>
 
       {editing && !widget.locked && (

@@ -17,6 +17,10 @@ import { WeatherWidget } from "./widgets/WeatherWidget";
 /** Every widget component gets the instance it is rendering. */
 export interface WidgetProps {
   widget: WidgetInstance;
+  /** Whether the user has allowed the one widget that goes online to do
+   *  so. Passed to every widget rather than read globally, so a kind that
+   *  needs the network cannot forget to ask. */
+  allowNetwork: boolean;
 }
 
 export interface WidgetDefinition {

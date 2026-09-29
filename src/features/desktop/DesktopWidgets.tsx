@@ -104,6 +104,7 @@ export function DesktopWidgets() {
         <WidgetFrame
           key={widget.id}
           widget={widget}
+          allowNetwork={settings.widgets.allowWeatherNetwork}
           editing={hover}
           onGeometry={onGeometry}
           onDragState={onDragState}

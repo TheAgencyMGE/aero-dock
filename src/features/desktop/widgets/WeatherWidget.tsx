@@ -13,7 +13,6 @@
  */
 
 import { useCallback, useEffect, useState } from "react";
-import type { WidgetInstance } from "../../../ipc/types";
 import type { WidgetProps } from "../registry";
 
 /** Refreshed on the quarter hour; weather does not change faster. */
@@ -82,19 +81,19 @@ function WeatherIcon({ icon, isDay }: { icon: Icon; isDay: boolean }) {
   );
 }
 
-interface Props extends WidgetProps {
-  widget: WidgetInstance;
-}
-
-export function WeatherWidget({ widget }: Props) {
+export function WeatherWidget({ widget, allowNetwork }: WidgetProps) {
   const { latitude, longitude, place, celsius } = widget.options;
   const [reading, setReading] = useState<Reading | null>(null);
   const [failed, setFailed] = useState(false);
 
   const located = latitude !== null && longitude !== null;
+  // Both switches, every time. The permission is checked here, next to the
+  // call that would leave the machine, rather than somewhere that can drift
+  // out of step with it.
+  const permitted = allowNetwork && located;
 
   const fetchWeather = useCallback(async () => {
-    if (!located) return;
+    if (!permitted) return;
     try {
       const url =
         "https://api.open-meteo.com/v1/forecast" +
@@ -124,19 +123,26 @@ export function WeatherWidget({ widget }: Props) {
     } catch {
       setFailed(true);
     }
-  }, [located, latitude, longitude, celsius]);
+  }, [permitted, latitude, longitude, celsius]);
 
   useEffect(() => {
-    if (!located) return;
+    if (!permitted) return;
     void fetchWeather();
     const id = setInterval(() => void fetchWeather(), POLL_MS);
     return () => clearInterval(id);
-  }, [located, fetchWeather]);
+  }, [permitted, fetchWeather]);
 
   if (!located) {
     return (
       <div className="w-empty">
         Set a location for this widget in Settings, then Widgets.
+      </div>
+    );
+  }
+  if (!allowNetwork) {
+    return (
+      <div className="w-empty">
+        Weather is offline. Allow it in Settings, then Widgets.
       </div>
     );
   }

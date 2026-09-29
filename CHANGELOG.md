@@ -5,6 +5,35 @@ All notable changes to Aero Dock are documented here.
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.3.1] - 2026-09-29
+
+### Fixed
+
+- **Weather could reach the network without permission.** Setting
+  coordinates was enough to make the widget fetch, so the switch in
+  settings decided only what the settings window said, not what the
+  widget did. The permission is now checked next to the request itself,
+  and a widget that is not allowed says so on its face. This was the
+  promise 1.3.0 made in its own release notes, and the code did not keep
+  it.
+- **"Use theme" did not clear a widget tint.** Clearing sent a null, which
+  was indistinguishable from sending nothing at all by the time it reached
+  the settings store, so the button did nothing. Clearing and not touching
+  are now told apart.
+- A widget could be dragged past the edge of the desktop until there was
+  nothing left to grab it by. A drag now stops with part of the widget
+  still reachable, and the saved position is held to the same rule however
+  it was set.
+- Resizing past the maximum size snapped back after the drop, because the
+  frontend allowed what the settings store then clamped. Both ends now
+  agree.
+- The widget overlay kept the size of the desktop it was built for, so
+  changing resolution or adding a monitor left widgets clipped and clicks
+  landing in the wrong place. Its geometry is now rechecked whenever the
+  widgets redraw.
+- A latitude or longitude that is not a real coordinate is dropped rather
+  than sent, where it would only have come back as an error.
+
 ## [1.3.0] - 2026-09-25
 
 ### Added
@@ -226,6 +255,7 @@ First public release.
 - Packaged (UWP) apps are grouped by AppUserModelID. This covers the common
   cases and misses a few. See the README.
 
+[1.3.1]: https://github.com/TheAgencyMGE/aero-dock/releases/tag/v1.3.1
 [1.3.0]: https://github.com/TheAgencyMGE/aero-dock/releases/tag/v1.3.0
 [1.2.2]: https://github.com/TheAgencyMGE/aero-dock/releases/tag/v1.2.2
 [1.2.1]: https://github.com/TheAgencyMGE/aero-dock/releases/tag/v1.2.1

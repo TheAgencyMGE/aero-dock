@@ -205,6 +205,20 @@ impl WidgetsSettings {
             w.x = w.x.clamp(-POSITION_LIMIT, POSITION_LIMIT);
             w.y = w.y.clamp(-POSITION_LIMIT, POSITION_LIMIT);
             w.opacity = w.opacity.clamp(0.3, 1.0);
+
+            // A coordinate outside the globe is a typo, and sending it
+            // anywhere would only come back as an error. Dropping it puts
+            // the widget back to asking for a location.
+            if let Some(lat) = w.options.latitude {
+                if !lat.is_finite() || lat.abs() > 90.0 {
+                    w.options.latitude = None;
+                }
+            }
+            if let Some(lon) = w.options.longitude {
+                if !lon.is_finite() || lon.abs() > 180.0 {
+                    w.options.longitude = None;
+                }
+            }
             if let Some(accent) = &w.accent {
                 if !is_hex_colour(accent) {
                     w.accent = None;
@@ -245,6 +259,30 @@ mod tests {
 
     fn widget(id: &str) -> WidgetInstance {
         WidgetInstance::new(id.into(), WidgetKind::Clock, 10, 10)
+    }
+
+    #[test]
+    fn a_coordinate_off_the_globe_is_dropped() {
+        let mut s = WidgetsSettings {
+            enabled: true,
+            widgets: vec![WidgetInstance {
+                kind: WidgetKind::Weather,
+                options: WidgetOptions {
+                    latitude: Some(999.0),
+                    longitude: Some(-0.13),
+                    ..WidgetOptions::default()
+                },
+                ..widget("w")
+            }],
+            allow_weather_network: false,
+        };
+        s.sanitize();
+        assert_eq!(s.widgets[0].options.latitude, None, "999 is not a latitude");
+        assert_eq!(
+            s.widgets[0].options.longitude,
+            Some(-0.13),
+            "a good longitude survives"
+        );
     }
 
     #[test]
